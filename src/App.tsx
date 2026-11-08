@@ -1,7 +1,7 @@
 import { useEffect,useRef,useState } from 'react';
 import DOMPurify from 'dompurify';
 import { RichEditor } from './Editor';
-import { createMaster,createSection,createSlot,createVariant,isChoiceType,masterSchema,uid,validateMaster,type MasterTest,type Section,type Slot,type Variant } from './model';
+import { createMaster,createSection,createSlot,isChoiceType,masterSchema,uid,validateMaster,type MasterTest,type Section,type Slot,type Variant } from './model';
 import { generateVersions,type GeneratedVersion } from './generate';
 import { db,download,exportBackup,loadLatest,saveMaster } from './storage';
 import { exportFilename,versionMarkdown } from './export';
