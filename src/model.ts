@@ -1,0 +1,76 @@
+import { z } from 'zod';
+
+export type QuestionType = 'singleChoice' | 'multipleSelect' | 'shortAnswer' | 'writtenResponse';
+export interface Choice { id: string; html: string }
+export interface Variant {
+  id: string; type: QuestionType; stem: string; choices: Choice[];
+  correctChoiceIds: string[]; referenceAnswer: string;
+  points: number; shuffleChoices: boolean;
+}
+export interface Slot { kind: 'slot'; id: string; shufflePosition: boolean; variants: Variant[] }
+export interface Group { kind: 'group'; id: string; sharedHtml: string; shuffleWithinGroup: boolean; items: Slot[] }
+export type TestItem = Slot | Group;
+export interface Section {
+  id: string; title: string; proficiency: string; instructions: string;
+  shuffleQuestions: boolean; items: TestItem[];
+}
+export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string }
+export type RichText = string;
+export const uid = (): string => crypto.randomUUID();
+
+const choiceSchema = z.object({ id: z.string().min(1), html: z.string() });
+const variantSchema = z.object({
+  id: z.string().min(1), type: z.enum(['singleChoice','multipleSelect','shortAnswer','writtenResponse']),
+  stem: z.string(), choices: z.array(choiceSchema), correctChoiceIds: z.array(z.string()),
+  referenceAnswer: z.string(), points: z.number().nonnegative().finite(), shuffleChoices: z.boolean()
+});
+const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shufflePosition:z.boolean(),variants:z.array(variantSchema)});
+const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema)});
+const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficiency:z.string(),instructions:z.string(),shuffleQuestions:z.boolean(),items:z.array(z.union([slotSchema,groupSchema]))});
+export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:z.array(sectionSchema),updatedAt:z.string()});
+
+export function createVariant(type: QuestionType = 'singleChoice'): Variant {
+  const choices = type === 'singleChoice' || type === 'multipleSelect'
+    ? Array.from({length:4},()=>({id:uid(),html:''})) : [];
+  return {id:uid(),type,stem:'',choices,correctChoiceIds:[],referenceAnswer:'',points:1,shuffleChoices:true};
+}
+export function createSlot():Slot {return {kind:'slot',id:uid(),shufflePosition:true,variants:[createVariant()]};}
+export function createSection():Section {return {id:uid(),title:'New section',proficiency:'',instructions:'',shuffleQuestions:true,items:[createSlot()]};}
+export function createMaster():MasterTest {return {schemaVersion:1,id:uid(),title:'Untitled assessment',instructions:'',updatedAt:new Date().toISOString(),sections:[{...createSection(),title:'Section 1'}]};}
+export const slotsOf = (s:Section):Slot[] => s.items.flatMap(item=>item.kind==='slot'?[item]:item.items);
+export const isChoiceType = (type:QuestionType):boolean => type==='singleChoice'||type==='multipleSelect';
+export function cleanText(html:string):string {return html.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();}
+export function validateMaster(master:MasterTest):string[] {
+  const parsed=masterSchema.safeParse(master);
+  if(!parsed.success) return ['Invalid master test structure: '+parsed.error.issues[0]?.message];
+  const errors:string[]=[]; const ids=new Set<string>();
+  function unique(id:string,where:string){if(ids.has(id)) errors.push('Duplicate ID in '+where); ids.add(id);}
+  unique(master.id,'test');
+  if(!master.title.trim()) errors.push('Test title is required.');
+  if(!master.sections.length) errors.push('At least one section is required.');
+  for(const [si,section] of master.sections.entries()){
+    const label='Section '+(si+1);unique(section.id,label);
+    if(!section.title.trim()) errors.push(label+' needs a title.');
+    if(!section.items.length) errors.push(label+' needs at least one question.');
+    for(const slot of slotsOf(section)){
+      unique(slot.id,label+' question');
+      if(!slot.variants.length) errors.push(label+': question has no variants.');
+      const points=slot.variants[0]?.points;
+      for(const [vi,v] of slot.variants.entries()){
+        unique(v.id,label+' variant');
+        const loc=label+', question '+(slotsOf(section).indexOf(slot)+1)+', variant '+(vi+1);
+        if(!cleanText(v.stem)) errors.push(loc+': prompt is empty.');
+        if(v.points!==points) errors.push(loc+': points differ between alternatives.');
+        if(isChoiceType(v.type)){
+          if(v.choices.length<2) errors.push(loc+': needs at least two choices.');
+          const choiceIds=new Set<string>();
+          for(const c of v.choices){unique(c.id,loc+' choice');choiceIds.add(c.id);if(!cleanText(c.html)) errors.push(loc+': choice is blank.');}
+          if(v.correctChoiceIds.length!==(v.type==='singleChoice'?1:v.correctChoiceIds.length) || !v.correctChoiceIds.length) errors.push(loc+': select the correct answer(s).');
+          for(const correct of v.correctChoiceIds)if(!choiceIds.has(correct))errors.push(loc+': answer points to a missing choice.');
+          if(new Set(v.correctChoiceIds).size!==v.correctChoiceIds.length) errors.push(loc+': duplicate correct answers.');
+        } else if(!cleanText(v.referenceAnswer)) errors.push(loc+': reference answer is empty.');
+      }
+    }
+  }
+  return errors;
+}
