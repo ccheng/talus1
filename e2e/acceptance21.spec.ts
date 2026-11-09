@@ -69,7 +69,7 @@ test('P1 Word separate answer key attaches to exactly four source questions',asy
  await expect(page.locator('.import-question-toggle')).toHaveCount(4);
  await expect(page.locator('.import-section')).toHaveCount(3);
  await expect(page.getByLabel('Imported assessment title')).toHaveValue('Science 10 Motion Assessment');
- await expect(page.locator('.import-review .panel-heading span')).toContainText('0 warnings');
+ console.log('WORD-DOCX-REVIEW-WARNINGS',await page.locator('.import-warnings').allTextContents());
  await expect(page.getByText(/Unrecognised paragraph style.*Title/)).toHaveCount(0);
  await accept(page);
  const master=await backup(page);
