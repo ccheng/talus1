@@ -6,3 +6,7 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Playwright generated reports and recordings
+playwright-report/
+test-results/
