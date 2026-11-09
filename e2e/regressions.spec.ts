@@ -21,7 +21,7 @@ test('T3 — generation settings and saved forms/keys survive refresh',async ({p
  await expect(page.getByLabel('Reproducibility seed')).toHaveValue('science10-qa-2026');
  await page.getByRole('button',{name:'2. Versions & answer keys'}).click();
  await expect(page.getByRole('option',{name:'Version F'})).toHaveCount(1);
- await page.getByLabel('Version',{exact:true}).selectOption('5');
+ await page.locator('.versions-choice select').selectOption('5');
  await expect(page.locator('.print-question')).toHaveCount(8);
  await page.getByLabel('Answer key',{exact:true}).check();
  await expect(page.locator('.key')).toHaveCount(8);
@@ -92,7 +92,7 @@ test('core algorithm UI — section boundaries, slot uniqueness, rotation, corre
  const formulaNames=['Which formula represents water?','Which formula represents carbon dioxide?','Which formula represents oxygen gas?'];
  const seenFormula:string[]=[];
  for(let version=0;version<6;version++){
-  await page.getByLabel('Version',{exact:true}).selectOption(String(version));
+  await page.locator('.versions-choice select').selectOption(String(version));
   const sections=page.locator('.print-page > section');
   await expect(sections).toHaveCount(3);
   const texts=await sections.locator('.print-question').allTextContents();
@@ -158,7 +158,7 @@ test('T5 and T6 — preview and Markdown use matching response space and mark la
 
 test('rich text — editor and preview preserve bold, italic, list, super- and subscripts',async ({page})=>{
  const m=fixture();
- m.instructions='<p><strong>Bold directions</strong> and <em>italic directions</em></p><ul><li><p>First rule</p></li></ul>';
+ m.instructions='<p><strong>Bold directions</strong> and <em>italic directions</em>: H<sub>2</sub>O and x<sup>2</sup></p><ul><li><p>First rule</p></li></ul>';
  m.sections[0].items[0].variants[0].choices[0].html='<p>H<sub>2</sub>O and x<sup>2</sup></p>';
  await importAssessment(page,m);
  await expect(page.locator('.test-title')).toHaveValue(m.title);
