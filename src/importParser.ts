@@ -1,4 +1,4 @@
-import { createSection,createSlot,createVariant,uid,type MasterTest,type QuestionType,type Section,type Slot } from './model';
+import { createSection,createSlot,createVariant,uid,type MasterTest,type QuestionType,type Section } from './model';
 
 export interface SourceLine { text:string; html:string; number:number }
 export interface ImportQuestion {
@@ -129,7 +129,21 @@ export function parseText(source:string,title='Imported assessment'):ImportDraft
 export function parseHtml(html:string,title='Imported assessment',format:ImportDraft['format']='html'):ImportDraft{return parseLines(htmlLines(html),title,format);}
 export function reviewWarnings(draft:ImportDraft):string[]{
  return draft.sections.flatMap(s=>s.questions.flatMap(q=>{
-  classify(q);return q.warnings.map(w=>s.title+': '+w);
+  const errors:string[]=[];
+  if(!htmlText(q.stem).trim())errors.push('Question prompt is empty');
+  if(!Number.isFinite(q.marks)||q.marks<0)errors.push('Marks must be nonnegative');
+  if(q.type==='singleChoice'||q.type==='multipleSelect'){
+   if(q.choices.length<2)errors.push('At least two answer choices required');
+   if(q.choices.some(c=>!htmlText(c).trim()))errors.push('Blank answer choice');
+   const valid=q.correct.filter(x=>Number.isInteger(x)&&x>=0&&x<q.choices.length);
+   if(!valid.length)errors.push('Correct answer not identified');
+   if(q.type==='singleChoice'&&valid.length!==1)errors.push('Single-answer question must have exactly one answer');
+   if(new Set(valid).size!==valid.length||valid.length!==q.correct.length)errors.push('Invalid or duplicated correct answer');
+  }else{
+   if(!htmlText(q.answer).trim())errors.push('Reference answer not identified');
+   if(!Number.isInteger(q.responseLines)||q.responseLines<1||q.responseLines>30)errors.push('Response lines must be 1–30');
+  }
+  return errors.map(w=>s.title+': '+w);
  }));
 }
 export function toTalusSections(draft:ImportDraft):Section[]{
