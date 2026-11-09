@@ -4,6 +4,17 @@
 
 Talus is a client-side assessment authoring and test versioning application. No hosted account or backend is required.
 
+## Milestone 1.1 — corrective release (November 8, 2026)
+
+- T1: One ZIP file contains all student forms, answer keys, and a generation manifest, avoiding browser multi-download limits.
+- T2: Each edit is synchronously saved in local browser storage; IndexedDB remains an additional copy. If both fail, the UI warns and attempts to prevent closing with unsaved work.
+- T3: Saved generation count, seed, immutable run ID, and per-version slot/variant/choice manifests. The UI restores generated versions from validated saved metadata after refresh.
+- T4: Editing invalidates versions and replaces stale success banners with an explicit regeneration message.
+- T5: Customizable response lines (defaults: 2 for short answers, 8 for written responses), shown in both preview and Markdown.
+- T6: Correct singular/plural mark labels in both preview and Markdown.
+
+Old schemaVersion 1 backups remain importable; the new optional fields are backward compatible. A generated run ID is tied to its source assessment revision. This is a browser-local app; users should export JSON backups routinely. For storage failures, navigation warning support varies by browser.
+
 ## Milestone 1 functionality
 
 - Create assessments with independently shuffled sections; section order remains fixed.
