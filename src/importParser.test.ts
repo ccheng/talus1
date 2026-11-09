@@ -65,3 +65,92 @@ describe('Milestone 2A deterministic import',()=>{
   const converted=toTalusSections(d);expect(converted[0].items).toHaveLength(1);
  });
 });
+
+describe('Milestone 2.1 acceptance evidence regressions',()=>{
+ it('P0 preserves malformed A/B multiple-choice lines and blocks an unmatched D answer key',()=>{
+  const source='Section 1: Applications\\n1. Which object has the highest speed?\\nA. A cart moving at 2 m/s\\nB.\\nAnswer: D';
+  const draft=parseText(source);
+  const q=draft.sections[0].questions[0];
+  expect(q.type).toBe('singleChoice');
+  expect(q.choices).toHaveLength(2);
+  expect(q.choices[0]).toContain('A cart moving at 2 m/s');
+  expect(q.choices[1]).toBe('');
+  expect(q.answer).toBe('');
+  expect(q.correct).toEqual([]);
+  expect(reviewWarnings(draft).join(' ')).toMatch(/blank answer choice/i);
+  expect(reviewWarnings(draft).join(' ')).toMatch(/does not match the detected answer choices/i);
+  const master=mergeIntoMaster(createMaster(),draft,'replace');
+  expect(validateMaster(master).join(' ')).toMatch(/unresolved import review|blank/i);
+ });
+ it('P1 maps a separate numbered answer-key section without adding student questions',()=>{
+  const source=[
+   'Science 10 Motion Assessment',
+   'Show your work and include SI units.',
+   'Section 1: Foundations (Base)',
+   '1. Which SI unit measures acceleration?',
+   'A. m','B. s','C. m/s²','D. m/s',
+   '2. A cart travels 12 m in 3 s. Calculate its average speed.',
+   'Section 2: Applications (Proficient)',
+   '3. What does the area under a velocity-time graph represent?',
+   'A. Acceleration','B. Displacement','C. Time','D. Force',
+   'Section 3: Transfer (Exemplary)',
+   '4. A runner travels 12 m east then 6 m west. Calculate displacement.',
+   'Answer Key','1. C','2. 4 m/s','3. B','4. 6 m east'
+  ];
+  const lines=source.map((text,i)=>({text,html:text,number:i+1}));
+  const draft=parseLines(lines,'motion','docx');
+  expect(draft.title).toBe('Science 10 Motion Assessment');
+  expect(draft.instructions).toContain('Show your work');
+  expect(draft.sections).toHaveLength(3);
+  const questions=draft.sections.flatMap(s=>s.questions);
+  expect(questions).toHaveLength(4);
+  expect(questions[0].choices).toHaveLength(4);
+  expect(questions[2].choices).toHaveLength(4);
+  expect(questions.map(q=>q.correct)).toEqual([[2],[],[1],[]]);
+  expect(questions[1].answer).toBe('4 m/s');
+  expect(questions[3].answer).toBe('6 m east');
+  expect(reviewWarnings(draft)).toEqual([]);
+  expect(validateMaster(mergeIntoMaster(createMaster(),draft,'replace'))).toEqual([]);
+ });
+ it('P1 parses compact chemistry Markdown line boundaries without losing questions or keys',()=>{
+  const source=[
+   '# Science 10 Chemical Reactions','Read every question and show all work.',
+   '## Section 1: Foundations (Base)',
+   '1. Which formula represents water?',
+   'A. H<sub>2</sub>O','B. CO<sub>2</sub>','C. O<sub>2</sub>','D. NaCl','Answer: A',
+   '2. State the charge of the ion Mg<sup>2+</sup>. Explain why.',
+   '- Refer to electrons.','- Use the sign in your answer.',
+   'Answer: Positive two. Magnesium has lost two electrons.',
+   '## Section 2: Applications (Proficient)',
+   '3. In the closed flask, what is the total mass after the reaction?',
+   'A. 80 g','B. 100 g','C. 120 g','D. Cannot be determined','Answer: B'
+  ].join('\\n');
+  const draft=parseText(source);
+  expect(draft.title).toBe('Science 10 Chemical Reactions');
+  expect(draft.sections.map(s=>s.questions.length)).toEqual([2,1]);
+  expect(draft.sections[0].questions[0].correct).toEqual([0]);
+  expect(draft.sections[1].questions[0].correct).toEqual([1]);
+  expect(draft.sections[0].questions[1].answer).toContain('Positive two');
+  expect(draft.sections[0].questions[1].stem).toContain('<ul>');
+  expect(draft.sections[0].questions[1].stem).not.toContain('Answer:');
+  expect(validateMaster(mergeIntoMaster(createMaster(),draft,'replace'))).toEqual([]);
+ });
+ it('P2 strips numbering from fully emphasized Word questions and recognizes Q4 prefixes',()=>{
+  const lines=[
+   {text:'Section 1: Proficient',html:'Section 1: Proficient',number:1},
+   {text:'12) Explain why mass and weight differ.',html:'<em>12) Explain why mass and weight differ.</em>',number:2},
+   {text:'Answer: Mass is constant while weight depends on gravity.',html:'Answer: Mass is constant while weight depends on gravity.',number:3},
+   {text:'Q4. Explain how velocity can be negative.',html:'Q4. Explain how velocity can be negative.',number:4},
+   {text:'Answer: Velocity includes direction.',html:'Answer: Velocity includes direction.',number:5}
+  ];
+  const questions=parseLines(lines).sections[0].questions;
+  expect(questions).toHaveLength(2);
+  expect(questions[0].stem).toBe('<em>Explain why mass and weight differ.</em>');
+  expect(questions[1].stem).not.toMatch(/Q4/);
+ });
+ it('blocks ambiguous duplicate numbered answer-key mappings rather than guessing',()=>{
+  const draft=parseText('Section 1: A\\n1. First question\\n2. Other question\\n1. Repeated number\\nAnswer Key\\n1. B');
+  expect(draft.warnings.join(' ')).toContain('could not be matched uniquely');
+  expect(validateMaster(mergeIntoMaster(createMaster(),draft,'replace')).join(' ')).toContain('Unresolved imported source warnings');
+ });
+});
