@@ -224,3 +224,20 @@ test('P2 reordered review questions retain correct source-to-answer mappings',as
  expect(variants[1].stem).toContain('First question');
  expect(variants[1].referenceAnswer).toContain('first');
 });
+
+test('tablet Chromium touch emulation: source, review and accept are usable',async ({browser})=>{
+ const context=await browser.newContext({viewport:{width:768,height:1024},hasTouch:true,isMobile:true,deviceScaleFactor:2});
+ try{
+  const page=await context.newPage();
+  await parsePlain(page,'Section 1: Motion\\n1. What is speed?\\nA. Distance per time\\nB. Force per mass\\nAnswer: A');
+  await expect(page.locator('.import-source')).toBeVisible();
+  await expect(page.locator('.import-review')).toBeVisible();
+  await page.getByLabel('Imported assessment title').tap();
+  await page.getByLabel('Imported assessment title').fill('Touch-reviewed assessment');
+  await expect(page.getByRole('button',{name:'Accept reviewed import'})).toBeVisible();
+  page.once('dialog',dialog=>dialog.accept());
+  await page.getByRole('button',{name:'Accept reviewed import'}).tap();
+  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Touch-reviewed assessment');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
+ }finally{await context.close();}
+});
