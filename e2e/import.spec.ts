@@ -34,8 +34,7 @@ test('paste → parse → edit review → accept → generate → save and refre
  await expect(page.getByLabel('Section 1 name')).toHaveValue('Section 1: Foundations');
  await expect(page.getByLabel('Section 2 name')).toHaveValue('Section 2: Applications');
  await page.getByLabel('Imported assessment title').fill('Science 10 Imported and Reviewed');
- await page.getByRole('button',{name:/Question 1 Which formula is water/}).click();
- await expect(page.getByLabel('Question 1 prompt in section 1')).toContainText('Which formula is water?');
+ await expect(page.getByLabel('Question 1 prompt in section 1')).toHaveValue(/Which formula is water/);
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Science 10 Imported and Reviewed');
@@ -45,9 +44,9 @@ test('paste → parse → edit review → accept → generate → save and refre
 test('incomplete import warns and does not invent an answer; review can repair',async ({page})=>{
  await page.getByLabel('Assessment source').fill('1. Which is correct?\nA. Yes\nB. No');
  await page.getByRole('button',{name:'Detect sections and questions'}).click();
- console.log('IMPORT INCOMPLETE COUNTS',await page.locator('.import-review .panel-heading span').allTextContents());
+ console.log('IMPORT INCOMPLETE FLAGS',await page.locator('.import-question-warnings').allTextContents());
  await expect(page.locator('.import-review .panel-heading span')).toContainText('1 questions');
- await expect(page.getByText('Correct answer not identified')).toBeVisible();
+ await expect(page.locator('.import-question-warnings')).toContainText('Correct answer not identified');
  await page.getByLabel('Correct A').check();
  await expect(page.locator('.import-review .panel-heading span')).toContainText('1 questions');
  page.once('dialog',dialog=>dialog.accept());
