@@ -1,3 +1,19 @@
+## Milestone 2.1 — Import correctness and review reliability (November 2026)
+
+The 2A/2B independent Work-mode acceptance report identified three release blockers and additional review issues. Corrective release 2.1 addresses them:
+
+- **P0 malformed multiple choice:** preserve empty or out-of-order answer choices and reject keys that do not match them. No silent downgrade to a valid short-answer question. Missing/invalid choices and unresolved source mappings disable version generation, including after importing a JSON backup.
+- **P1 compact Markdown:** parse original source lines rather than relying on Markdown paragraph spacing, preserving numbered questions, lettered answers, bold/italic and scientific HTML scripts. Lists are represented as real list elements.
+- **P1 detached Word answer keys:** recognize a separate *Answer Key* heading and map numbered entries back to their uniquely numbered source questions. Unmapped or ambiguous key entries are flagged and block generation until explicitly reviewed; key entries never become student questions.
+- **P2 review reliability:** warn on merging separately keyed questions; retain staged review while moving between Import and Author; strip Word question numbering even inside emphasis; expose section-removal relocation and discarded instructions in a confirmation; provide Move up/Move down buttons for explicit question ordering.
+- **P2 document metadata and formatting:** recognize a Word title plus preamble, or a Markdown H1 title and preamble, without creating an artificial instructions-only section. Preserve Markdown lists.
+- **P3 accessibility:** per-choice removal buttons have distinct accessible names. Browser regression tests include tablet viewports.
+- **Fail-closed validation:** unresolved *question-level* and important *document-level* source warnings persist in Talus JSON backups. The authoring interface displays them and requires an explicit acknowledgment after correction; they prevent version generation until resolved. Existing version 1 backups remain importable.
+
+Regression tests cover representative content and reproduction sequences from the Work-mode report, including its exact malformed-MC input and compact chemistry Markdown, synthetic DOCX documents based on the reported Word contents, document/key boundaries, output answer keys and student Markdown, and review controls. The standard Vitest and Chromium Playwright checks run automatically on every push and block deployment on failure.
+
+**Important:** Deterministic parsing is still not a general guarantee that every unusual document can be interpreted perfectly. Compare parsed questions and keys with the original before accepting and distributing forms. Complex images, diagrams, tables and equation fidelity remain planned for Milestone 2C. The Work-mode acceptance report's own DOCX binary fixtures should also be retested independently in a real browser.
+
 # Talus Test Versioner
 
 **Live application:** https://ccheng.github.io/talus1/
