@@ -149,7 +149,7 @@ export function reviewWarnings(draft:ImportDraft):string[]{
    if(q.choices.some(c=>!htmlText(c).trim()))errors.push('Blank answer choice');
    const valid=q.correct.filter(x=>Number.isInteger(x)&&x>=0&&x<q.choices.length);
    if(!valid.length)errors.push('Correct answer not identified');
-   if(q.type==='singleChoice'&&valid.length!==1)errors.push('Single-answer question must have exactly one answer');
+   if(q.type==='singleChoice'&&valid.length>1)errors.push('Single-answer question must have exactly one answer');
    if(new Set(valid).size!==valid.length||valid.length!==q.correct.length)errors.push('Invalid or duplicated correct answer');
   }else{
    if(!htmlText(q.answer).trim())errors.push('Reference answer not identified');
