@@ -28,3 +28,9 @@ export function download(content:string,filename:string,mime='text/plain;charset
   const url=URL.createObjectURL(new Blob([content],{type:mime}));
   const link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
+
+export function downloadBytes(bytes:Uint8Array,filename:string,mime='application/zip'):void{
+ const url=URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:mime}));
+ const link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
