@@ -68,7 +68,7 @@ describe('Milestone 2A deterministic import',()=>{
 
 describe('Milestone 2.1 acceptance evidence regressions',()=>{
  it('P0 preserves malformed A/B multiple-choice lines and blocks an unmatched D answer key',()=>{
-  const source='Section 1: Applications\\n1. Which object has the highest speed?\\nA. A cart moving at 2 m/s\\nB.\\nAnswer: D';
+  const source='Section 1: Applications\n1. Which object has the highest speed?\nA. A cart moving at 2 m/s\nB.\nAnswer: D';
   const draft=parseText(source);
   const q=draft.sections[0].questions[0];
   expect(q.type).toBe('singleChoice');
@@ -124,7 +124,7 @@ describe('Milestone 2.1 acceptance evidence regressions',()=>{
    '## Section 2: Applications (Proficient)',
    '3. In the closed flask, what is the total mass after the reaction?',
    'A. 80 g','B. 100 g','C. 120 g','D. Cannot be determined','Answer: B'
-  ].join('\\n');
+  ].join('\n');
   const draft=parseText(source);
   expect(draft.title).toBe('Science 10 Chemical Reactions');
   expect(draft.sections.map(s=>s.questions.length)).toEqual([2,1]);
@@ -149,7 +149,7 @@ describe('Milestone 2.1 acceptance evidence regressions',()=>{
   expect(questions[1].stem).not.toMatch(/Q4/);
  });
  it('blocks ambiguous duplicate numbered answer-key mappings rather than guessing',()=>{
-  const draft=parseText('Section 1: A\\n1. First question\\n2. Other question\\n1. Repeated number\\nAnswer Key\\n1. B');
+  const draft=parseText('Section 1: A\n1. First question\n2. Other question\n1. Repeated number\nAnswer Key\n1. B');
   expect(draft.warnings.join(' ')).toContain('could not be matched uniquely');
   expect(validateMaster(mergeIntoMaster(createMaster(),draft,'replace')).join(' ')).toContain('Unresolved imported source warnings');
  });
