@@ -4,6 +4,20 @@
 
 Talus is a client-side assessment authoring and test versioning application. No hosted account or backend is required.
 
+## Milestone 2A + 2B — importing and reviewing existing assessments
+
+Use **Import assessment** in the header to open a two-pane workflow.
+
+- **Input:** Paste plain text or Markdown copied from Word/Google Docs; upload `.docx`, `.md`, `.txt`, or `.html` documents. Word files are converted entirely in the browser using Mammoth, and Markdown is rendered locally using Marked.
+- **Deterministic detection:** Identify numbered questions (e.g. `1.`), section/part headings, lettered options (`A.`), explicit answer lines (`Answer: B` or `Answer: A, C`), and point values (`(2 marks)`). Section order is preserved. Unrecognized text stays in the source/review area rather than being silently discarded.
+- **Review:** Keep the source on the left and the parsed assessment on the right. Edit the test title, section names and proficiency tags, prompts, choices, correct-answer selections, reference answers, marks, response lines, and question types. Split or merge questions, move them to other sections, and add/remove questions or sections.
+- **Safe acceptance:** Nothing changes in the active master until **Accept reviewed import**. Choose to replace the open assessment or append the reviewed sections. Replacement requires confirmation. Missing answers are flagged; accepting unresolved warnings requires confirmation and the resulting assessment remains invalid for version generation until corrected.
+- **After import:** Use the existing authoring, shuffle/version generation, answer key, ZIP batch export, autosave, and JSON backup features normally.
+
+**Format limits (Milestone 2A/B):** Deterministic parsing handles common numbered formats, not every Word numbering or layout convention. The preview preserves supported inline formatting, but splitting a question and some imported structures may require manual correction. Embedded diagrams/images, complex tables/equations, and high-fidelity document formatting are Milestone 2C work. Browser-local AI parsing is deferred to Milestone 2D. Text pasted into the plain-text field does not preserve clipboard rich text; upload the Word document instead for supported inline formatting. Verify imported assessment content and answers before distributing versions.
+
+The browser CI suite now includes actual paste/Markdown/DOCX import tests, warning resolution, split/merge review, and an end-to-end import-to-version-generation/persistence test. Parser unit tests verify section boundaries, answer keys, section appending and missing-key warnings.
+
 ## Milestone 1.1 — corrective release (November 8, 2026)
 
 - T1: One ZIP file contains all student forms, answer keys, and a generation manifest, avoiding browser multi-download limits.
