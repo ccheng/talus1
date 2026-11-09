@@ -208,3 +208,17 @@ for(const viewport of [{width:768,height:1024},{width:1024,height:768}]){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
  });
 }
+
+test('P2 reordered review questions retain correct source-to-answer mappings',async ({page})=>{
+ await parsePlain(page,'Section 1: Motion\n1. First question?\nAnswer: first\n2. Second question?\nAnswer: second');
+ await page.locator('.import-question-toggle').nth(1).click();
+ await page.getByRole('button',{name:'Move up'}).click();
+ await expect(page.locator('.import-question-toggle').first()).toContainText('Second question');
+ await accept(page);
+ const master=await backup(page);
+ const variants=master.sections[0].items.map((i:{variants:unknown[]})=>i.variants[0]) as any[];
+ expect(variants[0].stem).toContain('Second question');
+ expect(variants[0].referenceAnswer).toContain('second');
+ expect(variants[1].stem).toContain('First question');
+ expect(variants[1].referenceAnswer).toContain('first');
+});
