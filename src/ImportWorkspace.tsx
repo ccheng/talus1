@@ -137,7 +137,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
      {draft.sections.map((s,si)=><div className="import-section" key={s.id}>
       <div className="import-section-head"><strong>Section {si+1}</strong><label>Name<input aria-label={'Section '+(si+1)+' name'} value={s.title} onChange={e=>updateSection(s.id,'title',e.target.value)}/></label>
        <label>Proficiency<input aria-label={'Section '+(si+1)+' proficiency'} value={s.proficiency} onChange={e=>updateSection(s.id,'proficiency',e.target.value)}/></label>
-       <button className="danger" disabled={draft.sections.length===1} onClick={()=>{const at=draft.sections.findIndex(x=>x.id===s.id);const dest=draft.sections[at===0?1:at-1];if(!window.confirm('Remove '+s.title+'? Its '+s.questions.length+' question(s) will move to '+dest.title+'.'))return;modify(d=>{const index=d.sections.findIndex(x=>x.id===s.id);const target=d.sections[index===0?1:index-1];target.questions.push(...d.sections[index].questions);d.sections.splice(index,1);});}}>Remove section (move questions)</button>
+       <button className="danger" disabled={draft.sections.length===1} onClick={()=>{const at=draft.sections.findIndex(x=>x.id===s.id);const dest=draft.sections[at===0?1:at-1];if(!window.confirm('Remove '+s.title+'? Its '+s.questions.length+' question(s) will move to '+dest.title+'.'+(s.instructions?' Section instructions will be discarded.':'')))return;modify(d=>{const index=d.sections.findIndex(x=>x.id===s.id);const target=d.sections[index===0?1:index-1];target.questions.push(...d.sections[index].questions);d.sections.splice(index,1);});}}>Remove section (move questions)</button>
       </div>
       <label>Section instructions<textarea rows={2} aria-label={'Section '+(si+1)+' instructions'} value={s.instructions} onChange={e=>updateSection(s.id,'instructions',e.target.value)}/></label>
       {s.questions.map((q,qi)=>{
@@ -147,6 +147,8 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
         <strong>Question {qi+1}</strong><span>{text(q.stem).slice(0,85)||'(empty prompt)'}</span>{flags.length?<span className="import-flag">Needs review</span>:<span className="import-ok">Ready</span>}
        </button>{expanded===q.id&&<div className="import-question-body">
         <div className="import-question-actions"><span className="help">Source lines {q.sourceStart}–{q.sourceEnd}</span>
+         <button className="secondary" disabled={qi===0} onClick={()=>modify(d=>{const sec=d.sections.find(x=>x.id===s.id);if(sec){const index=sec.questions.findIndex(x=>x.id===q.id);if(index>0)[sec.questions[index-1],sec.questions[index]]=[sec.questions[index],sec.questions[index-1]];}})}>Move up</button>
+         <button className="secondary" disabled={qi===s.questions.length-1} onClick={()=>modify(d=>{const sec=d.sections.find(x=>x.id===s.id);if(sec){const index=sec.questions.findIndex(x=>x.id===q.id);if(index<sec.questions.length-1)[sec.questions[index+1],sec.questions[index]]=[sec.questions[index],sec.questions[index+1]];}})}>Move down</button>
          <button className="secondary" title="Split off final paragraph as next question" onClick={()=>splitQuestion(q.id)}>Split last paragraph</button>
          <button className="secondary" disabled={qi===0} onClick={()=>mergeWithPrevious(q.id)}>Merge into previous</button>
          <button className="danger" onClick={()=>modify(d=>{const sec=d.sections.find(x=>x.id===s.id);if(sec)sec.questions=sec.questions.filter(x=>x.id!==q.id);})}>Remove question</button>
