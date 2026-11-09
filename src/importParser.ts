@@ -21,6 +21,14 @@ export function htmlLines(html:string):SourceLine[]{
  function walk(root:Element){
   for(const child of Array.from(root.children)){
    const tag=child.tagName.toLowerCase();
+   if(tag==='ol'){
+    let i=Number(child.getAttribute('start')||'1');
+    for(const li of Array.from(child.children)){
+     if(li.tagName.toLowerCase()!=='li')continue;
+     append(i+'. '+li.innerHTML,i+'. '+(li.textContent??''));i++;
+    }
+    continue;
+   }
    if(['p','h1','h2','h3','h4','li','pre','blockquote'].includes(tag)){
     const prefix=tag.startsWith('h')?'# ':'';
     append(prefix+child.innerHTML,prefix+(child.textContent??''));continue;
@@ -39,8 +47,12 @@ const marks=/\s*\((\d+(?:\.\d+)?)\s*(?:marks?|pts?|points?)\)\s*$/i;
 const sectionLevel=(s:string)=>/base/i.test(s)?'Base':/proficien|applications?/i.test(s)?'Proficient':/exemplar|transfer/i.test(s)?'Exemplary':'';
 const htmlText=(str:string)=>str.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
 function stripPrefix(html:string,pattern:RegExp,plain:string):string{
- const clean=htmlText(html);if(clean.trim()===plain.trim())return escape(plain.replace(pattern,''));
- return html; // do not discard formatting when a Word numbering run spans rich text
+ // Remove the visible numbering/choice label without discarding inline Word formatting.
+ const direct=html.replace(pattern,'');
+ if(direct!==html)return direct;
+ const clean=htmlText(html);
+ if(clean.trim()===plain.trim())return escape(plain.replace(pattern,''));
+ return html; // preserve uncertain structures verbatim for the review stage
 }
 function isHeader(text:string,next?:SourceLine):boolean{
  const t=text.trim();
