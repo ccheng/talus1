@@ -20,7 +20,7 @@ describe('immediate autosave regression',()=>{
   expect(selectActiveMaster(loadDraftSync(),newer)?.title).toBe(imported.title);
   expect(selectActiveMaster(loadDraftSync(),newer)?.generationSettings).toEqual({count:6,seed:'qa-original'});
   const getOriginal=db.masters.orderBy;
-  db.masters.orderBy=(()=>({last:async()=>newer})) as typeof db.masters.orderBy;
+  db.masters.orderBy=(()=>({last:async()=>newer})) as unknown as typeof db.masters.orderBy;
   try{
     const refreshed=await loadLatest();
     expect(refreshed?.id).toBe(imported.id);
