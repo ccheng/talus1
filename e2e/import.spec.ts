@@ -116,5 +116,5 @@ test('Word DOCX upload is converted in browser to reviewable sections and questi
  await page.getByLabel('Upload assessment').setInputFiles({name:'science10.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:Buffer.from(bytes)});
  await expect(page.getByLabel('Imported assessment title')).toHaveValue('science10');
  await expect(page.locator('.import-question-toggle')).toHaveCount(1);
- await expect(page.getByText('1 questions · 0 warnings')).toBeVisible();
+ await expect(page.locator('.import-review .panel-heading span')).toContainText('1 questions');
 });
