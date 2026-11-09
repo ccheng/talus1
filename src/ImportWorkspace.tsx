@@ -2,7 +2,7 @@ import {useState,type ChangeEvent} from 'react';
 import DOMPurify from 'dompurify';
 import * as mammoth from 'mammoth';
 import {marked} from 'marked';
-import {parseText,parseHtml,parseLines,textLines,reviewWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
+import {parseText,parseHtml,parseLines,textLines,reviewWarnings,wordConversionWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
 import type {MasterTest,QuestionType} from './model';
 
 const uid=()=>crypto.randomUUID();
@@ -34,7 +34,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
    if(/\.docx$/i.test(file.name)){
     const doc=await mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});
     const parsed=parseHtml(DOMPurify.sanitize(doc.value),title,'docx');
-    parsed.warnings.push(...doc.messages.map(m=>'Word conversion: '+m.message));
+    parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed));
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setSource(parsed.source);setMessage('Word file parsed. Verify section headings and question boundaries.');
    }else if(/\.(md|markdown)$/i.test(file.name)){
