@@ -15,8 +15,8 @@ function answerFor(q:RenderedQuestion):string {
 }
 export function versionMarkdown(master:MasterTest,v:GeneratedVersion,answers=false):string {
   let out='# '+master.title+' — '+(answers?'Answer Key ':'Version ')+v.label+'\n\n';
-  if(master.lastGeneration)out+='Run ID: '+master.lastGeneration.runId+'\\n\\n';
-  if(md(master.instructions))out+=md(master.instructions)+'\\n\\n';
+  if(master.lastGeneration)out+='Run ID: '+master.lastGeneration.runId+'\n\n';
+  if(md(master.instructions))out+=md(master.instructions)+'\n\n';
   for(const s of v.sections){
     out+='## '+s.title+(s.proficiency?' ('+s.proficiency+')':'')+'\n\n';
     if(md(s.instructions))out+=md(s.instructions)+'\n\n';
