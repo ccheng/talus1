@@ -208,9 +208,9 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
  }
  if(!seenQuestions)warnings.push('No numbered questions detected. Review the source and add questions manually.');
  for(const section of sections){
-   if(/\\b(?:Answer|Key)\\s*:/i.test(section.instructions))warnings.push('Possible student-facing answer-key text in '+section.title+' instructions');
+   if(/\b(?:Answer|Key)\s*:/i.test(section.instructions))warnings.push('Possible student-facing answer-key text in '+section.title+' instructions');
    for(const question of section.questions){
-    if(/\\b(?:Answer|Key)\\s*:/i.test(question.stem))question.reviewFlags?.push('Possible answer-key text embedded in student prompt');
+    if(/\b(?:Answer|Key)\s*:/i.test(question.stem))question.reviewFlags?.push('Possible answer-key text embedded in student prompt');
    }
  }
  return {title,instructions,source:lines.map(x=>x.text).join('\n'),lines,sections,warnings,format};
