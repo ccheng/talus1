@@ -128,7 +128,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   // DOCX Title is often its first plain paragraph, followed by instructions and a section.
   if(!seenQuestions&&!q&&!sourceTitle&&!sections.length&&current.title==='Section 1'&&i===0&&
      !numbered.test(raw)&&!choice.test(raw)&&!/^[-*]\s/.test(raw)&&
-     (format==='docx'||format==='html') && meaningful.some(l=>/^(?:section|part)\s+\d+/i.test(l.text.trim()))){
+     (format==='docx'||format==='html') && meaningful.some(l=>/^(?:#{1,6}\s*)?(?:section|part)\s+\d+/i.test(l.text.trim()))){
     title=raw.replace(/^#{1,6}\s*/,'');sourceTitle=true;continue;
   }
   const n=numbered.exec(raw);
