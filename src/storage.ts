@@ -14,11 +14,16 @@ export function loadDraftSync():MasterTest|undefined{
   try{const raw=localStorage.getItem('talus-draft-v1');return raw?JSON.parse(raw) as MasterTest:undefined;}
   catch{return undefined;}
 }
+// The synchronous draft represents the user's explicitly selected open assessment.
+// updatedAt belongs to the authored document, not the import/selection event:
+// an intentionally imported older backup must win over a newer IndexedDB record.
+export function selectActiveMaster(draft:MasterTest|undefined, stored:MasterTest|undefined):MasterTest|undefined {
+ return draft??stored;
+}
 export async function loadLatest():Promise<MasterTest|undefined>{
- const draft=loadDraftSync();let stored:MasterTest|undefined;
- try{stored=await db.masters.orderBy('updatedAt').last();}catch{if(!draft)throw Error('Local storage unavailable');}
- if(!draft)return stored;
- return !stored||draft.updatedAt>=stored.updatedAt?draft:stored;
+ const draft=loadDraftSync();
+ if(draft)return draft;
+ return db.masters.orderBy('updatedAt').last();
 }
 export function exportBackup(master:MasterTest):void{
   download(JSON.stringify(master,null,2),fileBase(master)+'.talus.json','application/json');
