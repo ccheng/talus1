@@ -108,3 +108,103 @@ test('P2 Word italic question prefix is removed without removing emphasis',async
  expect(prompt).toContain('<em>Explain why mass and weight differ.</em>');
  expect(prompt).not.toContain('12)');
 });
+
+const chemistry=[
+ '# Science 10 Chemical Reactions',
+ 'Read **every question** and show *all work*.',
+ '## Section 1: Foundations (Base)',
+ '1. Which formula represents **water**?',
+ 'A. H<sub>2</sub>O','B. CO<sub>2</sub>','C. O<sub>2</sub>','D. NaCl','Answer: A',
+ '2. State the charge of the ion Mg<sup>2+</sup>. Explain *why*.',
+ '- Refer to electrons.','- Use the sign in your answer.',
+ 'Answer: Positive two. Magnesium has lost two electrons.',
+ '## Section 2: Applications (Proficient)',
+ '3. In the closed flask, what is the total mass after the reaction?',
+ 'A. 80 g','B. 100 g','C. 120 g','D. Cannot be determined','Answer: B'
+].join('\n');
+
+for(const mode of ['compact-paste','spaced-paste','markdown-upload'] as const){
+ test('P1 compact chemistry Markdown '+mode+' retains all student content and keys',async ({page})=>{
+  await openImport(page);
+  if(mode==='markdown-upload'){
+   await page.getByLabel('Upload assessment').setInputFiles({name:'chemistry.md',mimeType:'text/markdown',buffer:Buffer.from(chemistry)});
+  }else{
+   await page.getByLabel('Pasted input format').selectOption('markdown');
+   await page.getByLabel('Assessment source').fill(mode==='spaced-paste'?chemistry.split('\n').filter(Boolean).join('\n\n'):chemistry);
+   await page.getByRole('button',{name:'Detect sections and questions'}).click();
+  }
+  await expect(page.locator('.import-section')).toHaveCount(2);
+  await expect(page.locator('.import-question-toggle')).toHaveCount(3);
+  await expect(page.getByLabel('Imported assessment title')).toHaveValue('Science 10 Chemical Reactions');
+  await accept(page);
+  const master=await backup(page);
+  expect(master.sections.map((s:{items:unknown[]})=>s.items.length)).toEqual([2,1]);
+  const v=master.sections.flatMap((s:{items:{variants:unknown[]}[]})=>s.items.map(i=>i.variants[0])) as any[];
+  expect(v[0].choices).toHaveLength(4);
+  expect(v[2].choices).toHaveLength(4);
+  expect(v[0].correctChoiceIds).toEqual([v[0].choices[0].id]);
+  expect(v[2].correctChoiceIds).toEqual([v[2].choices[1].id]);
+  expect(v[1].referenceAnswer).toContain('Positive two');
+  expect(v[1].stem).toContain('<ul>');
+  expect(v[1].stem).toContain('<li>');
+  expect(v[1].stem).not.toContain('Answer:');
+  await expect(page.getByText('Validation: Ready')).toBeVisible();
+  await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+  const d=page.waitForEvent('download');
+  await page.getByRole('button',{name:'Student Markdown'}).click();
+  const markdown=await readFile(await (await d).path()!,'utf8');
+  expect(markdown).not.toContain('**Answer:**');
+  expect(markdown).not.toContain('Positive two');
+ });
+}
+
+test('P2 keyed merge creates a persistent question-level warning blocking generation',async ({page})=>{
+ await parsePlain(page,'Section 1: Science\n1. What is 2 + 2?\nAnswer: 4\n2. What is 3 + 3?\nAnswer: 6');
+ await page.locator('.import-question-toggle').nth(1).click();
+ await page.getByRole('button',{name:'Merge into previous'}).click();
+ await expect(page.locator('.import-question-toggle')).toHaveCount(1);
+ await expect(page.locator('.import-question-warnings')).toContainText('Merged two keyed questions');
+ await accept(page);
+ await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'I have corrected and reviewed this question'}).click();
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+});
+
+test('P2 staged import review survives navigation without changing active test',async ({page})=>{
+ await parsePlain(page,'Section 1: A\n1. Write the number four.\nAnswer: 4');
+ await page.getByLabel('Imported assessment title').fill('STAGED REVIEW');
+ await page.getByRole('button',{name:'1. Author'}).click();
+ await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Untitled assessment');
+ await page.getByRole('button',{name:'Import existing test'}).click();
+ await expect(page.getByLabel('Imported assessment title')).toHaveValue('STAGED REVIEW');
+});
+
+test('P2 populated section removal explains relocation and supports cancellation',async ({page})=>{
+ await parsePlain(page,'Section 1: First\n1. One?\nAnswer: 1\nSection 2: Second\n2. Two?\nAnswer: 2');
+ page.once('dialog',dialog=>dialog.dismiss());
+ await page.getByRole('button',{name:'Remove section (move questions)'}).last().click();
+ await expect(page.locator('.import-section')).toHaveCount(2);
+ page.once('dialog',dialog=>{expect(dialog.message()).toContain('will move to');void dialog.accept();});
+ await page.getByRole('button',{name:'Remove section (move questions)'}).last().click();
+ await expect(page.locator('.import-section')).toHaveCount(1);
+ await expect(page.locator('.import-question-toggle')).toHaveCount(2);
+});
+
+test('P3 choice removal buttons expose separate A and B accessible names',async ({page})=>{
+ await parsePlain(page,'Section 1: Science\n1. Which?\nA. Yes\nB. No\nAnswer: A');
+ await expect(page.getByRole('button',{name:'Remove choice A'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Remove choice B'})).toBeVisible();
+ await page.getByRole('button',{name:'Remove choice A'}).click();
+ await expect(page.locator('.import-question-warnings')).toContainText('Correct answer not identified');
+});
+
+for(const viewport of [{width:768,height:1024},{width:1024,height:768}]){
+ test('P2 tablet '+viewport.width+'x'+viewport.height+' keeps import controls reachable',async ({page})=>{
+  await page.setViewportSize(viewport);
+  await parsePlain(page,'Section 1: Science\n1. How many?\nA. One\nB. Two\nAnswer: A');
+  await expect(page.getByLabel('Assessment source')).toBeVisible();
+  await expect(page.getByLabel('Choice A')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Accept reviewed import'})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
+ });
+}
