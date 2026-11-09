@@ -1,6 +1,7 @@
 import { useEffect,useRef,useState } from 'react';
 import DOMPurify from 'dompurify';
 import { RichEditor } from './Editor';
+import { ImportWorkspace } from './ImportWorkspace';
 import { createMaster,createSection,createSlot,isChoiceType,masterSchema,uid,validateMaster,markLabel,responseLineCount,type MasterTest,type Section,type Slot,type Variant } from './model';
 import { generateVersions,generationRecord,restoreGenerated,type GeneratedVersion } from './generate';
 import { db,download,downloadBytes,exportBackup,fileBase,loadLatest,saveDraftSync,saveMaster } from './storage';
@@ -8,7 +9,7 @@ import { exportFilename,versionMarkdown,bundleZip } from './export';
 
 const safe=(html:string)=>({__html:DOMPurify.sanitize(html)});
 export default function App(){
- const [master,setMaster]=useState<MasterTest|null>(null),[saved,setSaved]=useState('Loading…'),[tab,setTab]=useState<'author'|'preview'>('author');
+ const [master,setMaster]=useState<MasterTest|null>(null),[saved,setSaved]=useState('Loading…'),[tab,setTab]=useState<'author'|'preview'|'import'>('author');
  const [sectionIndex,setSectionIndex]=useState(0),[selectedId,setSelectedId]=useState(''),[altIndex,setAltIndex]=useState(0);
  const [count,setCount]=useState(3),[seed,setSeed]=useState('talus-2026'),[versions,setVersions]=useState<GeneratedVersion[]>([]);
  const [versionIndex,setVersionIndex]=useState(0),[showKey,setShowKey]=useState(false),[notice,setNotice]=useState('');
@@ -42,6 +43,10 @@ export default function App(){
    const current=masterRef.current;if(!current)return;
    commitMaster({...current,generationSettings:{count:nextCount,seed:nextSeed}});
  }
+ function acceptImported(m:MasterTest){
+   commitMaster(m);setSectionIndex(0);setSelectedId(m.sections[0]?.items[0]?.id??'');setAltIndex(0);
+   setVersions([]);setTab('author');setNotice('Reviewed assessment imported. Resolve remaining validation warnings before generating.');
+ }
  const section=master?.sections[sectionIndex],slots=section?.items.flatMap(i=>i.kind==='slot'?[i]:i.items)??[];
  const slot=slots.find(s=>s.id===selectedId)??slots[0],variant=slot?.variants[altIndex]??slot?.variants[0];
  function editSection(fn:(s:Section)=>Section){update(m=>({...m,sections:m.sections.map((s,i)=>i===sectionIndex?fn(s):s)}));}
@@ -63,10 +68,10 @@ export default function App(){
  const errors=validateMaster(master),current=versions[versionIndex];
  function exportFile(v:GeneratedVersion,key:boolean){download(versionMarkdown(master!,v,key),exportFilename(master!,v,key),'text/markdown;charset=utf-8');}
  return <div className="app">
- <header className="app-header"><div className="brand"><span className="brand-mark">T</span><strong>Talus</strong><span className="pill">Milestone 1.1</span></div><small className="save-state">{saved}</small><div className="header-actions"><input ref={inputRef} type="file" hidden accept=".json,application/json" onChange={e=>{const f=e.target.files?.[0];if(f)void importJson(f);e.target.value='';}}/><button className="secondary" onClick={()=>inputRef.current?.click()}>Import JSON</button><button className="secondary" onClick={()=>exportBackup(master)}>Backup JSON</button><button className="secondary" onClick={()=>{if(!confirm('Create a new test? Backup your current test first.'))return;const m=createMaster();commitMaster(m);setCount(3);setSeed('talus-2026');setVersions([]);setNotice('');setSectionIndex(0);setSelectedId(m.sections[0].items[0].id);setAltIndex(0);setTab('author');}}>New test</button></div></header>
- <nav className="nav-tabs"><button className={tab==='author'?'active':''} onClick={()=>setTab('author')}>1. Author</button><button className={tab==='preview'?'active':''} onClick={()=>setTab('preview')}>2. Versions &amp; answer keys</button></nav>
+ <header className="app-header"><div className="brand"><span className="brand-mark">T</span><strong>Talus</strong><span className="pill">Milestone 2A / 2B</span></div><small className="save-state">{saved}</small><div className="header-actions"><input ref={inputRef} type="file" hidden accept=".json,application/json" onChange={e=>{const f=e.target.files?.[0];if(f)void importJson(f);e.target.value='';}}/><button className="secondary" onClick={()=>setTab('import')}>Import assessment</button><button className="secondary" onClick={()=>inputRef.current?.click()}>Import JSON</button><button className="secondary" onClick={()=>exportBackup(master)}>Backup JSON</button><button className="secondary" onClick={()=>{if(!confirm('Create a new test? Backup your current test first.'))return;const m=createMaster();commitMaster(m);setCount(3);setSeed('talus-2026');setVersions([]);setNotice('');setSectionIndex(0);setSelectedId(m.sections[0].items[0].id);setAltIndex(0);setTab('author');}}>New test</button></div></header>
+ <nav className="nav-tabs"><button className={tab==='import'?'active':''} onClick={()=>setTab('import')}>Import existing test</button><button className={tab==='author'?'active':''} onClick={()=>setTab('author')}>1. Author</button><button className={tab==='preview'?'active':''} onClick={()=>setTab('preview')}>2. Versions &amp; answer keys</button></nav>
  {notice&&<div className="notice">{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss">×</button></div>}
- {tab==='author'?<div className="workspace">
+ {tab==='import'?<ImportWorkspace master={master} onAccept={acceptImported} onClose={()=>setTab('author')}/>:tab==='author'?<div className="workspace">
   <aside className="sidebar"><div className="side-title">Sections <button onClick={addSection} title="Add section">+</button></div>{master.sections.map((s,i)=><button key={s.id} className={'side-item '+(i===sectionIndex?'selected':'')} onClick={()=>{setSectionIndex(i);setSelectedId(s.items[0]?.id??'');setAltIndex(0);}}>{s.title||'Untitled section'} <small>{s.items.length}</small></button>)}<div className="side-title">Questions <button onClick={addQuestion} title="Add question">+</button></div>{slots.map((s,i)=><button key={s.id} className={'side-item '+(slot?.id===s.id?'selected':'')} onClick={()=>{setSelectedId(s.id);setAltIndex(0);}}>Question {i+1} <small>{s.variants.length} alt.</small></button>)}<button className="secondary full" onClick={addQuestion}>+ Question</button></aside>
   <main className="editor-area"><section className="panel"><h2>Assessment</h2><label>Title<input className="test-title" value={master.title} onChange={e=>update(m=>({...m,title:e.target.value}))}/></label><label>General instructions<RichEditor compact value={master.instructions} onChange={html=>update(m=>({...m,instructions:html}))}/></label></section>
   {section&&<section className="panel"><div className="panel-heading"><h2>Section settings</h2>{master.sections.length>1&&<button className="danger" onClick={()=>{if(!confirm('Delete section and its questions?'))return;update(m=>({...m,sections:m.sections.filter(s=>s.id!==section.id)}));const other=master.sections.find(s=>s.id!==section.id);setSectionIndex(0);setSelectedId(other?.items[0]?.id??'');}}>Delete section</button>}</div><div className="columns"><label>Section name<input value={section.title} onChange={e=>editSection(s=>({...s,title:e.target.value}))}/></label><label>Proficiency level<input value={section.proficiency} placeholder="Knowledge, Proficient, Exemplary…" onChange={e=>editSection(s=>({...s,proficiency:e.target.value}))}/></label></div><label className="check"><input type="checkbox" checked={section.shuffleQuestions} onChange={e=>editSection(s=>({...s,shuffleQuestions:e.target.checked}))}/> Shuffle questions inside this section only</label><label>Section instructions<RichEditor compact value={section.instructions} onChange={html=>editSection(s=>({...s,instructions:html}))}/></label></section>}
