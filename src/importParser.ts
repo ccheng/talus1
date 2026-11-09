@@ -50,7 +50,7 @@ export function htmlLines(html:string):SourceLine[]{
 const sectionHeader=/^(?:#{1,4}\s*)?(?:(?:section|part|topic|level)\s+[\w\d]+\s*[:.\-–)]\s*.+|(?:base|proficient|proficiency|exemplary|foundations|applications|transfer|knowledge|application|understanding)(?:\s+(?:section|questions|level))?\s*:?|(?:#{1,4}\s+.+))$/i;
 const numbered=/^\s*(?:(?:question|Q)\s*)?(\d{1,3})\s*[.)]\s*(.+)$/i;
 const choice=/^\s*(?:\(?([A-Ha-h])\)|([A-Ha-h])[.)])\s*(.*)$/;
-const answer=/^\s*(?:answer|correct(?:\s+answer)?|key|solution)\s*[:\-]\s*(.+)$/i;
+const answer=/^\s*(?:answer|correct(?:\s+answer)?|key|solution)\s*[:\-]\s*(.*)$/i;
 const marks=/\s*\((\d+(?:\.\d+)?)\s*(?:marks?|pts?|points?)\)\s*$/i;
 const sectionLevel=(s:string)=>/base/i.test(s)?'Base':/proficien|applications?/i.test(s)?'Proficient':/exemplar|transfer/i.test(s)?'Exemplary':'';
 const htmlText=(str:string)=>str.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
@@ -142,6 +142,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   const a=answer.exec(raw);
   if(a&&q){
    q.sourceEnd=line.number;const value=a[1].trim();
+   if(!value){q.reviewFlags?.push('Empty answer line in source');continue;}
    if(q.choices.length){
     const letters=/^[A-H](?:\s*[,;&+]\s*[A-H])*$/i.test(value)
       ?value.match(/[A-H]/gi)??[]:[];
@@ -163,6 +164,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    continue;
   }
   if(q){
+   if(q.choices.length && /^(?:draw|graph|explain|calculate|describe|justify|compare)\b/i.test(raw))q.reviewFlags?.push('Possible unnumbered additional question: '+raw.slice(0,90));
    if(/^[-*]\s+/.test(raw)||/^<li\b/i.test(line.html)){
     const rendered=line.html.startsWith('<li')?line.html:'<li>'+line.html.replace(/^[-*]\s+/,'')+'</li>';
     q.stem=q.stem.endsWith('</ul>')?q.stem.slice(0,-5)+rendered+'</ul>':q.stem+'<ul>'+rendered+'</ul>';
@@ -205,6 +207,12 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   classify(item);
  }
  if(!seenQuestions)warnings.push('No numbered questions detected. Review the source and add questions manually.');
+ for(const section of sections){
+   if(/\\b(?:Answer|Key)\\s*:/i.test(section.instructions))warnings.push('Possible student-facing answer-key text in '+section.title+' instructions');
+   for(const question of section.questions){
+    if(/\\b(?:Answer|Key)\\s*:/i.test(question.stem))question.reviewFlags?.push('Possible answer-key text embedded in student prompt');
+   }
+ }
  return {title,instructions,source:lines.map(x=>x.text).join('\n'),lines,sections,warnings,format};
 }
 export function parseText(source:string,title='Imported assessment'):ImportDraft{return parseLines(textLines(source),title,'plain');}
@@ -248,6 +256,7 @@ export function toTalusSections(draft:ImportDraft):Section[]{
 export function mergeIntoMaster(base:MasterTest,draft:ImportDraft,mode:'replace'|'append'):MasterTest{
  const sections=toTalusSections(draft);
  if(!sections.length)throw Error('No sections or questions to import.');
- if(mode==='append')return {...base,sections:[...base.sections,...sections],lastGeneration:undefined,updatedAt:new Date().toISOString()};
- return {...base,title:draft.title,instructions:draft.instructions??'',sections,lastGeneration:undefined,updatedAt:new Date().toISOString()};
+ const critical=draft.warnings.filter(w=>/unmapped|answer-key|numbered questions detected|ambiguous|student-facing/i.test(w));
+ if(mode==='append')return {...base,sections:[...base.sections,...sections],importWarnings:[...(base.importWarnings??[]),...critical],lastGeneration:undefined,updatedAt:new Date().toISOString()};
+ return {...base,title:draft.title,instructions:draft.instructions??'',sections,importWarnings:critical,lastGeneration:undefined,updatedAt:new Date().toISOString()};
 }
