@@ -5,7 +5,7 @@ export interface Choice { id: string; html: string }
 export interface Variant {
   id: string; type: QuestionType; stem: string; choices: Choice[];
   correctChoiceIds: string[]; referenceAnswer: string;
-  points: number; shuffleChoices: boolean; responseLines?: number;
+  points: number; shuffleChoices: boolean; responseLines?: number; importWarnings?: string[];
 }
 export interface Slot { kind: 'slot'; id: string; shufflePosition: boolean; variants: Variant[] }
 export interface Group { kind: 'group'; id: string; sharedHtml: string; shuffleWithinGroup: boolean; items: Slot[] }
@@ -28,7 +28,7 @@ const choiceSchema = z.object({ id: z.string().min(1), html: z.string() });
 const variantSchema = z.object({
   id: z.string().min(1), type: z.enum(['singleChoice','multipleSelect','shortAnswer','writtenResponse']),
   stem: z.string(), choices: z.array(choiceSchema), correctChoiceIds: z.array(z.string()),
-  referenceAnswer: z.string(), points: z.number().nonnegative().finite(), shuffleChoices: z.boolean(), responseLines:z.number().int().min(1).max(30).optional()
+  referenceAnswer: z.string(), points: z.number().nonnegative().finite(), shuffleChoices: z.boolean(), responseLines:z.number().int().min(1).max(30).optional(), importWarnings:z.array(z.string()).optional()
 });
 const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shufflePosition:z.boolean(),variants:z.array(variantSchema)});
 const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema)});
@@ -71,6 +71,7 @@ export function validateMaster(master:MasterTest):string[] {
         const loc=label+', question '+(slotsOf(section).indexOf(slot)+1)+', variant '+(vi+1);
         if(!cleanText(v.stem)) errors.push(loc+': prompt is empty.');
         if(v.points!==points) errors.push(loc+': points differ between alternatives.');
+        if(v.importWarnings?.length) errors.push(loc+': unresolved import review: '+v.importWarnings.join('; '));
         if(isChoiceType(v.type)){
           if(v.choices.length<2) errors.push(loc+': needs at least two choices.');
           const choiceIds=new Set<string>();
