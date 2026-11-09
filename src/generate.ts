@@ -1,7 +1,7 @@
 import type { MasterTest, TestItem, Slot, Choice, Variant } from './model';
 import { validateMaster } from './model';
 
-export interface RenderedQuestion { slotId:string; variantId:string; number:number; sectionId:string; groupHtml?:string; stem:string; type:Variant['type'];points:number; choices:Choice[]; correctChoiceIds:string[]; referenceAnswer:string }
+export interface RenderedQuestion { slotId:string; variantId:string; number:number; sectionId:string; groupHtml?:string; stem:string; type:Variant['type'];points:number; choices:Choice[]; correctChoiceIds:string[]; referenceAnswer:string;responseLines?:number }
 export interface RenderedSection { id:string;title:string;proficiency:string;instructions:string;questions:RenderedQuestion[] }
 export interface GeneratedVersion { label:string;seed:string;sections:RenderedSection[];manifest:{slotId:string;variantId:string;choiceOrder:string[];number:number}[] }
 export function hashSeed(input:string):number {let h=2166136261;for(let i=0;i<input.length;i++){h^=input.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
@@ -30,7 +30,7 @@ export function generateVersions(master:MasterTest,count:number,seed:string):Gen
         const variant=slot.variants[(offset+versionIndex)%slot.variants.length];
         const choices=variant.shuffleChoices?shuffled(variant.choices,random):[...variant.choices];
         number++;
-        questions.push({slotId:slot.id,variantId:variant.id,number,sectionId:section.id,groupHtml,stem:variant.stem,type:variant.type,points:variant.points,choices,correctChoiceIds:[...variant.correctChoiceIds],referenceAnswer:variant.referenceAnswer});
+        questions.push({slotId:slot.id,variantId:variant.id,number,sectionId:section.id,groupHtml,stem:variant.stem,type:variant.type,points:variant.points,choices,correctChoiceIds:[...variant.correctChoiceIds],referenceAnswer:variant.referenceAnswer,responseLines:variant.responseLines});
         manifest.push({slotId:slot.id,variantId:variant.id,choiceOrder:choices.map(c=>c.id),number});
       }
       for(const item of items){
@@ -44,4 +44,19 @@ export function generateVersions(master:MasterTest,count:number,seed:string):Gen
     });
     return {label,seed,sections,manifest};
   });
+}
+
+export function generationRunId(master:MasterTest,count:number,seed:string):string {
+  return hashSeed(JSON.stringify({id:master.id,updatedAt:master.updatedAt,count,seed,sections:master.sections})).toString(36).padStart(7,'0');
+}
+export function generationRecord(master:MasterTest, versions:GeneratedVersion[], count:number, seed:string) {
+  return {count,seed,runId:generationRunId(master,count,seed),sourceUpdatedAt:master.updatedAt,
+    manifests:versions.map(v=>({label:v.label,entries:v.manifest}))};
+}
+export function restoreGenerated(master:MasterTest):GeneratedVersion[] {
+  const record=master.lastGeneration;
+  if(!record||record.sourceUpdatedAt!==master.updatedAt || record.runId!==generationRunId(master,record.count,record.seed)) return [];
+  const versions=generateVersions(master,record.count,record.seed);
+  if(JSON.stringify(versions.map(v=>({label:v.label,entries:v.manifest})))!==JSON.stringify(record.manifests)) return [];
+  return versions;
 }
