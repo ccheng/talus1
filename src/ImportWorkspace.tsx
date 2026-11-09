@@ -65,7 +65,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
   modify(d=>{for(const s of d.sections){
     const index=s.questions.findIndex(q=>q.id===id);if(index<0)continue;
     const q=s.questions[index];
-    const raw=q.stem.replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
+    const raw=q.stem.replace(/<\/?p(?:\s+[^>]*)?>/gi,'\n').replace(/<[^>]+>/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
     if(raw.length<2)return;
     q.stem=asHtml(raw.slice(0,-1).join(' '));
     const next:ImportQuestion={...structuredClone(q),id:uid(),stem:asHtml(raw[raw.length-1]),choices:[],correct:[],answer:'',type:'shortAnswer',warnings:['Review split question and provide its answer']};
