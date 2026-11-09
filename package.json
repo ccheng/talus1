@@ -1,7 +1,7 @@
 {
   "name": "talus-test-versioner",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,7 +19,8 @@
     "dexie": "^4.2.0",
     "dompurify": "^3.2.6",
     "turndown": "^7.2.0",
-    "zod": "^4.1.0"
+    "zod": "^4.1.0",
+    "fflate": "^0.8.2"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",
