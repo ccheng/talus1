@@ -5,7 +5,7 @@ export interface Choice { id: string; html: string }
 export interface Variant {
   id: string; type: QuestionType; stem: string; choices: Choice[];
   correctChoiceIds: string[]; referenceAnswer: string;
-  points: number; shuffleChoices: boolean;
+  points: number; shuffleChoices: boolean; responseLines?: number;
 }
 export interface Slot { kind: 'slot'; id: string; shufflePosition: boolean; variants: Variant[] }
 export interface Group { kind: 'group'; id: string; sharedHtml: string; shuffleWithinGroup: boolean; items: Slot[] }
@@ -14,7 +14,13 @@ export interface Section {
   id: string; title: string; proficiency: string; instructions: string;
   shuffleQuestions: boolean; items: TestItem[];
 }
-export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string }
+export interface GenerationRecord {
+  count:number; seed:string; runId:string; sourceUpdatedAt:string;
+  manifests: {label:string;entries:{slotId:string;variantId:string;choiceOrder:string[];number:number}[]}[];
+}
+export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string;
+  generationSettings?:{count:number;seed:string}; lastGeneration?:GenerationRecord;
+}
 export type RichText = string;
 export const uid = (): string => crypto.randomUUID();
 
@@ -22,21 +28,25 @@ const choiceSchema = z.object({ id: z.string().min(1), html: z.string() });
 const variantSchema = z.object({
   id: z.string().min(1), type: z.enum(['singleChoice','multipleSelect','shortAnswer','writtenResponse']),
   stem: z.string(), choices: z.array(choiceSchema), correctChoiceIds: z.array(z.string()),
-  referenceAnswer: z.string(), points: z.number().nonnegative().finite(), shuffleChoices: z.boolean()
+  referenceAnswer: z.string(), points: z.number().nonnegative().finite(), shuffleChoices: z.boolean(), responseLines:z.number().int().min(1).max(30).optional()
 });
 const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shufflePosition:z.boolean(),variants:z.array(variantSchema)});
 const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema)});
 const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficiency:z.string(),instructions:z.string(),shuffleQuestions:z.boolean(),items:z.array(z.union([slotSchema,groupSchema]))});
-export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:z.array(sectionSchema),updatedAt:z.string()});
+export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:z.array(sectionSchema),updatedAt:z.string(),
+ generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(),
+ lastGeneration:z.object({count:z.number().int().min(1).max(30),seed:z.string(),runId:z.string(),sourceUpdatedAt:z.string(),
+  manifests:z.array(z.object({label:z.string(),entries:z.array(z.object({slotId:z.string(),variantId:z.string(),choiceOrder:z.array(z.string()),number:z.number().int()}))}))}).optional()
+});
 
 export function createVariant(type: QuestionType = 'singleChoice'): Variant {
   const choices = type === 'singleChoice' || type === 'multipleSelect'
     ? Array.from({length:4},()=>({id:uid(),html:''})) : [];
-  return {id:uid(),type,stem:'',choices,correctChoiceIds:[],referenceAnswer:'',points:1,shuffleChoices:true};
+  return {id:uid(),type,stem:'',choices,correctChoiceIds:[],referenceAnswer:'',points:1,shuffleChoices:true,responseLines:type==='writtenResponse'?8:2};
 }
 export function createSlot():Slot {return {kind:'slot',id:uid(),shufflePosition:true,variants:[createVariant()]};}
 export function createSection():Section {return {id:uid(),title:'New section',proficiency:'',instructions:'',shuffleQuestions:true,items:[createSlot()]};}
-export function createMaster():MasterTest {return {schemaVersion:1,id:uid(),title:'Untitled assessment',instructions:'',updatedAt:new Date().toISOString(),sections:[{...createSection(),title:'Section 1'}]};}
+export function createMaster():MasterTest {return {schemaVersion:1,id:uid(),title:'Untitled assessment',instructions:'',updatedAt:new Date().toISOString(),generationSettings:{count:3,seed:'talus-2026'},sections:[{...createSection(),title:'Section 1'}]};}
 export const slotsOf = (s:Section):Slot[] => s.items.flatMap(item=>item.kind==='slot'?[item]:item.items);
 export const isChoiceType = (type:QuestionType):boolean => type==='singleChoice'||type==='multipleSelect';
 export function cleanText(html:string):string {return html.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();}
@@ -74,3 +84,6 @@ export function validateMaster(master:MasterTest):string[] {
   }
   return errors;
 }
+
+export function markLabel(points:number):string{return points+' '+(points===1?'mark':'marks');}
+export function responseLineCount(type:QuestionType, lines?:number):number {return lines??(type==='writtenResponse'?8:2);}
