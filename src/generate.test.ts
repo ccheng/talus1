@@ -1,6 +1,6 @@
 import { describe,expect,it } from 'vitest';
 import { createMaster,createSlot,createVariant,validateMaster } from './model';
-import { generateVersions } from './generate';
+import { generateVersions,generationRecord,restoreGenerated } from './generate';
 
 function fixture(){
   const master=createMaster();master.title='Sample';
@@ -13,6 +13,18 @@ function fixture(){
   }return master;
 }
 describe('generator',()=>{
+ it('preserves generation settings and manifests in version 1 backups',()=>{
+   const m=fixture(), versions=generateVersions(m,6,'science10-qa-2026');
+   m.generationSettings={count:6,seed:'science10-qa-2026'};
+   m.lastGeneration=generationRecord(m,versions,6,'science10-qa-2026');
+   const restored=JSON.parse(JSON.stringify(m));
+   expect(restoreGenerated(restored)).toEqual(versions);
+   expect(restored.lastGeneration.manifests).toHaveLength(6);
+   restored.title='Edited';
+   restored.updatedAt='2030-01-01T00:00:00.000Z';
+   expect(restoreGenerated(restored)).toEqual([]);
+ });
+
   it('generates deterministic, valid versions without missing slots',()=>{
     const m=fixture();expect(validateMaster(m)).toEqual([]);
     const a=generateVersions(m,4,'seed42'),b=generateVersions(m,4,'seed42');
