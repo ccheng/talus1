@@ -36,10 +36,10 @@ test('paste → parse → edit review → accept → generate → save and refre
  await page.getByLabel('Imported assessment title').fill('Science 10 Imported and Reviewed');
  await page.getByRole('button',{name:/Question 1 Which formula is water/}).click();
  await expect(page.getByLabel('Question 1 prompt in section 1')).toContainText('Which formula is water?');
- await page.getByRole('button',{name:'Accept reviewed import'}).click();
  page.once('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Science 10 Imported and Reviewed');
- await expect(page.locator('.sidebar .side-item')).toHaveCount(6); // two sections and four questions only in current section? sidebar shows two current questions
+ await expect(page.locator('.sidebar .side-item')).toHaveCount(4); // two sections and the two questions in the selected section
 });
 
 test('incomplete import warns and does not invent an answer; review can repair',async ({page})=>{
@@ -64,7 +64,6 @@ test('review allows splitting, merging, moving questions and appending sections'
  await page.locator('.import-question-toggle').nth(1).click();
  await page.getByRole('button',{name:'Merge into previous'}).click();
  await expect(page.locator('.import-question-toggle')).toHaveCount(2);
- await page.getByRole('button',{name:'Append sections to open assessment'}).count().catch(()=>{});
  await page.getByLabel('Import mode').selectOption('append');
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
