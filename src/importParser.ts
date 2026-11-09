@@ -48,8 +48,8 @@ export function htmlLines(html:string):SourceLine[]{
  walk(document.body);return output;
 }
 const sectionHeader=/^(?:#{1,4}\s*)?(?:(?:section|part|topic|level)\s+[\w\d]+\s*[:.\-–)]\s*.+|(?:base|proficient|proficiency|exemplary|foundations|applications|transfer|knowledge|application|understanding)(?:\s+(?:section|questions|level))?\s*:?|(?:#{1,4}\s+.+))$/i;
-const numbered=/^\s*(?:question\s+)?(\d{1,3})\s*[.)]\s+(.+)$/i;
-const choice=/^\s*(?:\(?([A-Ha-h])\)|([A-Ha-h])[.)])\s+(.+)$/;
+const numbered=/^\s*(?:(?:question|Q)\s*)?(\d{1,3})\s*[.)]\s*(.+)$/i;
+const choice=/^\s*(?:\(?([A-Ha-h])\)|([A-Ha-h])[.)])\s*(.*)$/;
 const answer=/^\s*(?:answer|correct(?:\s+answer)?|key|solution)\s*[:\-]\s*(.+)$/i;
 const marks=/\s*\((\d+(?:\.\d+)?)\s*(?:marks?|pts?|points?)\)\s*$/i;
 const sectionLevel=(s:string)=>/base/i.test(s)?'Base':/proficien|applications?/i.test(s)?'Proficient':/exemplar|transfer/i.test(s)?'Exemplary':'';
