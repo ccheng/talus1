@@ -275,6 +275,9 @@ export function wordConversionWarnings(
  const titleMapped=first.length>0&&first===parsed.title.trim();
  return messages.filter(item=>{
   if(!titleMapped)return true;
-  return !/^Unrecognised paragraph style:\s*['"]?Title['"]?\s*\(Style ID:\s*Title\)\s*$/i.test(item.message.trim());
+  const message=item.message.trim();
+  const titleStyleUnmapped=/^Unrecognised paragraph style:\s*(?:'[^']*'|"[^"]*"|null)\s*\(Style ID:\s*Title\)\s*$/i.test(message);
+  const titleStyleUndefined=/^Paragraph style with ID Title was referenced but not defined in the document\.?$/i.test(message);
+  return !(titleStyleUnmapped||titleStyleUndefined);
  }).map(item=>'Word conversion: '+item.message);
 }
