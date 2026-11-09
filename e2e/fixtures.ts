@@ -48,7 +48,7 @@ export function fixture(title='Science 10 E2E Assessment',updatedAt='2026-01-01T
 }
 export async function importAssessment(page:Page,assessment:Assessment):Promise<void>{
  page.once('dialog',dialog=>dialog.accept());
- await page.locator('input[type="file"]').setInputFiles({
+ await page.locator('.header-actions input[type="file"]').setInputFiles({
   name:'fixture.talus.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(assessment)),
  });
  await page.getByText('Imported backup.').waitFor();
