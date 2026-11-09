@@ -38,17 +38,28 @@ test('paste → parse → edit review → accept → generate → save and refre
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Science 10 Imported and Reviewed');
- await expect(page.locator('.sidebar .side-item')).toHaveCount(4); // two sections and the two questions in the selected section
+ await expect(page.locator('.sidebar .side-item')).toHaveCount(4);
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ await expect(page.getByRole('option',{name:'Version C'})).toHaveCount(1);
+ await expect(page.locator('.print-page > section')).toHaveCount(2);
+ await expect(page.locator('.print-question')).toHaveCount(4);
+ await page.getByLabel('Answer key',{exact:true}).check();
+ await expect(page.locator('.key')).toHaveCount(4);
+ await page.reload();
+ await page.getByRole('button',{name:'2. Versions & answer keys'}).click();
+ await expect(page.locator('.print-question')).toHaveCount(4);
+ await page.getByRole('button',{name:'1. Author'}).click();
+ await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Science 10 Imported and Reviewed');
 });
 
 test('incomplete import warns and does not invent an answer; review can repair',async ({page})=>{
  await page.getByLabel('Assessment source').fill('1. Which is correct?\nA. Yes\nB. No');
  await page.getByRole('button',{name:'Detect sections and questions'}).click();
- console.log('IMPORT INCOMPLETE FLAGS',await page.locator('.import-question-warnings').allTextContents());
  await expect(page.locator('.import-review .panel-heading span')).toContainText('1 questions');
  await expect(page.locator('.import-question-warnings')).toContainText('Correct answer not identified');
  await page.getByLabel('Correct A').check();
- await expect(page.locator('.import-review .panel-heading span')).toContainText('1 questions');
+ await expect(page.locator('.import-review .panel-heading span')).toContainText('0 warnings');
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByText('Validation: Ready')).toBeVisible();
