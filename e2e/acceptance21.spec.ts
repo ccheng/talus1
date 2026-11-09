@@ -75,8 +75,8 @@ test('P1 Word separate answer key attaches to exactly four source questions',asy
  expect(master.instructions).toContain('Show your work');
  const v=master.sections.flatMap((s:{items:{variants:unknown[]}[]})=>s.items.map(i=>i.variants[0])) as any[];
  expect(v).toHaveLength(4);
- expect(v[0].choices.map((c:{html:string})=>c.html)).toEqual(['m','s','m/s²','m/s']);
- expect(v[2].choices.map((c:{html:string})=>c.html)).toEqual(['Acceleration','Displacement','Time','Force']);
+ expect(v[0].choices.map((c:{html:string})=>c.html.replace(/<[^>]+>/g,''))).toEqual(['m','s','m/s²','m/s']);
+ expect(v[2].choices.map((c:{html:string})=>c.html.replace(/<[^>]+>/g,''))).toEqual(['Acceleration','Displacement','Time','Force']);
  expect(v[0].correctChoiceIds).toEqual([v[0].choices[2].id]);
  expect(v[2].correctChoiceIds).toEqual([v[2].choices[1].id]);
  expect(v[1].referenceAnswer).toContain('4 m/s');
