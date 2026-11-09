@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {parseText,parseLines,toTalusSections,reviewWarnings,mergeIntoMaster} from './importParser';
+import {parseText,parseLines,toTalusSections,reviewWarnings,mergeIntoMaster,wordConversionWarnings} from './importParser';
 import {createMaster,validateMaster} from './model';
 const sample=`Title: Science 10
 Section 1: Foundations
@@ -152,5 +152,30 @@ describe('Milestone 2.1 acceptance evidence regressions',()=>{
   const draft=parseText('Section 1: A\n1. First question\n2. Other question\n1. Repeated number\nAnswer Key\n1. B');
   expect(draft.warnings.join(' ')).toContain('could not be matched uniquely');
   expect(validateMaster(mergeIntoMaster(createMaster(),draft,'replace')).join(' ')).toContain('Unresolved imported source warnings');
+ });
+});
+
+describe('Word Title-style diagnostic regression',()=>{
+ const draft=()=>parseLines([
+  {text:'Science 10 Unit Test',html:'Science 10 Unit Test',number:1},
+  {text:'Section 1: Foundations',html:'Section 1: Foundations',number:2},
+  {text:'1. Name the compound.',html:'1. Name the compound.',number:3},
+  {text:'Answer: H2O',html:'Answer: H2O',number:4}
+ ],'science10','docx');
+ it('suppresses only a Title-style warning when the first paragraph became the assessment title',()=>{
+  const parsed=draft();
+  expect(parsed.title).toBe('Science 10 Unit Test');
+  expect(wordConversionWarnings([
+   {message:"Unrecognised paragraph style: 'Title' (Style ID: Title)"},
+   {message:"Unrecognised paragraph style: 'Custom Note' (Style ID: MyNote)"},
+   {message:"An image could not be converted"}
+  ],parsed)).toEqual([
+   "Word conversion: Unrecognised paragraph style: 'Custom Note' (Style ID: MyNote)",
+   "Word conversion: An image could not be converted"
+  ]);
+ });
+ it('retains Title warning if title recognition did not succeed',()=>{
+  const parsed=draft();parsed.title='science10';
+  expect(wordConversionWarnings([{message:"Unrecognised paragraph style: 'Title' (Style ID: Title)"}],parsed)).toHaveLength(1);
  });
 });
