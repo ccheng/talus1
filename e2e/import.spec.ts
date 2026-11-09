@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
 import {strToU8,zipSync} from 'fflate';
 
 const source=`Title: Science 10 Import QA
@@ -76,6 +77,20 @@ test('review allows splitting, merging, moving questions and appending sections'
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Untitled assessment');
+});
+
+test('review can reassign a question to a different proficiency section without losing slots',async ({page})=>{
+ await page.getByLabel('Assessment source').fill(source);
+ await page.getByRole('button',{name:'Detect sections and questions'}).click();
+ await page.getByLabel('Move question 1 to section').selectOption({label:'Section 2: Applications'});
+ await expect(page.locator('.import-section').nth(0).locator('.import-question-toggle')).toHaveCount(1);
+ await expect(page.locator('.import-section').nth(1).locator('.import-question-toggle')).toHaveCount(3);
+ page.once('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ const downloaded=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Backup JSON'}).click();
+ const contents=JSON.parse(await readFile(await (await downloaded).path()!,'utf8'));
+ expect(contents.sections.map((s:{items:unknown[]})=>s.items.length)).toEqual([1,3]);
 });
 
 test('Markdown paste preserves inline emphasis, headings, and numbered questions',async ({page})=>{
