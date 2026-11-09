@@ -33,8 +33,8 @@ function docx(paras:{text:string;style?:string;italic?:boolean}[]):Uint8Array{
 test('P0 malformed MC retains blank choice, unmatched D, and blocks invalid key generation',async ({page})=>{
  await parsePlain(page,'Section 1: Applications\n1. Which object has the highest speed?\nA. A cart moving at 2 m/s\nB.\nAnswer: D');
  await expect(page.locator('.import-question-toggle')).toHaveCount(1);
- await expect(page.getByLabel('Choice A')).toHaveValue('A cart moving at 2 m/s');
- await expect(page.getByLabel('Choice B')).toHaveValue('');
+ await expect(page.getByLabel('Choice A',{exact:true})).toHaveValue('A cart moving at 2 m/s');
+ await expect(page.getByLabel('Choice B',{exact:true})).toHaveValue('');
  await expect(page.getByLabel('Question 1 type in section 1')).toHaveValue('singleChoice');
  await expect(page.locator('.import-question-warnings')).toContainText('Blank answer choice');
  await expect(page.locator('.import-question-warnings')).toContainText('does not match');
@@ -203,7 +203,7 @@ for(const viewport of [{width:768,height:1024},{width:1024,height:768}]){
   await page.setViewportSize(viewport);
   await parsePlain(page,'Section 1: Science\n1. How many?\nA. One\nB. Two\nAnswer: A');
   await expect(page.getByLabel('Assessment source')).toBeVisible();
-  await expect(page.getByLabel('Choice A')).toBeVisible();
+  await expect(page.getByLabel('Choice A',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Accept reviewed import'})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
  });
