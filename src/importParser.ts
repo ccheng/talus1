@@ -83,16 +83,16 @@ function newQuestion(index:number,stem:string,html:string):ImportQuestion {
 function newSection(title:string):ImportSection {return {id:uid(),title,proficiency:sectionLevel(title),instructions:'',questions:[]};}
 function classify(q:ImportQuestion){
  if(q.choices.length>0)q.type=q.correct.length>1?'multipleSelect':'singleChoice';
- else q.type=/\\b(explain|justify|discuss|describe|compare|evaluate)\\b/i.test(htmlText(q.stem))?'writtenResponse':'shortAnswer';
+ else q.type=/\b(explain|justify|discuss|describe|compare|evaluate)\b/i.test(htmlText(q.stem))?'writtenResponse':'shortAnswer';
  q.responseLines=q.type==='writtenResponse'?8:2;
  q.warnings=[];
 }
-const numberedKey=/^\\s*(?:question\\s+|Q\\s*)?(\\d{1,3})\\s*[.)]\\s*(.+)$/i;
-const keyHeading=/^(?:#{1,6}\\s*)?(?:answer\\s*key|solutions?|marking\\s*key|answer\\s*sheet)\\s*:?$/i;
-const numberedPrefix=/^\\s*(?:(?:question|Q)\\s*)?\\d{1,3}\\s*[.)]\\s*/i;
-const choicePrefix=/^\\s*(?:\\(?[A-Ha-h]\\)|[A-Ha-h][.)])\\s*/;
+const numberedKey=/^\s*(?:question\s+|Q\s*)?(\d{1,3})\s*[.)]\s*(.+)$/i;
+const keyHeading=/^(?:#{1,6}\s*)?(?:answer\s*key|solutions?|marking\s*key|answer\s*sheet)\s*:?$/i;
+const numberedPrefix=/^\s*(?:(?:question|Q)\s*)?\d{1,3}\s*[.)]\s*/i;
+const choicePrefix=/^\s*(?:\(?[A-Ha-h]\)|[A-Ha-h][.)])\s*/;
 function paragraph(html:string):string {
- if(/^\\s*<(?:p|ul|ol|li|h[1-6]|blockquote)\\b/i.test(html))return html;
+ if(/^\s*<(?:p|ul|ol|li|h[1-6]|blockquote)\b/i.test(html))return html;
  return '<p>'+html+'</p>';
 }
 export function parseLines(lines:SourceLine[],title='Imported assessment',format:ImportDraft['format']='plain'):ImportDraft {
@@ -114,22 +114,22 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    else if(raw)warnings.push('Unmapped answer-key content: '+raw);
    continue;
   }
-  if(!seenQuestions&&!q&&/^title\\s*:/i.test(raw)){
-   title=raw.replace(/^title\\s*:/i,'').trim()||title;sourceTitle=true;continue;
+  if(!seenQuestions&&!q&&/^title\s*:/i.test(raw)){
+   title=raw.replace(/^title\s*:/i,'').trim()||title;sourceTitle=true;continue;
   }
-  if(!seenQuestions&&!q&&/^#\\s+/.test(raw)&&!/(?:section|part|topic|level)\\s+\\w+/i.test(raw)){
-   title=raw.replace(/^#\\s+/,'').trim();sourceTitle=true;continue;
+  if(!seenQuestions&&!q&&/^#\s+/.test(raw)&&!/(?:section|part|topic|level)\s+\w+/i.test(raw)){
+   title=raw.replace(/^#\s+/,'').trim();sourceTitle=true;continue;
   }
   if(isHeader(raw,next)){
    flush();
    if(current.questions.length||current.instructions.trim())sections.push(current);
-   current=newSection(raw.replace(/^#{1,4}\\s*/, '').trim());continue;
+   current=newSection(raw.replace(/^#{1,4}\s*/, '').trim());continue;
   }
   // DOCX Title is often its first plain paragraph, followed by instructions and a section.
   if(!seenQuestions&&!q&&!sourceTitle&&!sections.length&&current.title==='Section 1'&&i===0&&
-     !numbered.test(raw)&&!choice.test(raw)&&!/^[-*]\\s/.test(raw)&&
-     (format==='docx'||format==='html') && meaningful.some(l=>/^(?:section|part)\\s+\\d+/i.test(l.text.trim()))){
-    title=raw.replace(/^#{1,6}\\s*/,'');sourceTitle=true;continue;
+     !numbered.test(raw)&&!choice.test(raw)&&!/^[-*]\s/.test(raw)&&
+     (format==='docx'||format==='html') && meaningful.some(l=>/^(?:section|part)\s+\d+/i.test(l.text.trim()))){
+    title=raw.replace(/^#{1,6}\s*/,'');sourceTitle=true;continue;
   }
   const n=numbered.exec(raw);
   if(n){
@@ -143,7 +143,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   if(a&&q){
    q.sourceEnd=line.number;const value=a[1].trim();
    if(q.choices.length){
-    const letters=/^[A-H](?:\\s*[,;&+]\\s*[A-H])*$/i.test(value)
+    const letters=/^[A-H](?:\s*[,;&+]\s*[A-H])*$/i.test(value)
       ?value.match(/[A-H]/gi)??[]:[];
     if(letters.length&&letters.every(l=>l.toUpperCase().charCodeAt(0)-65<q!.choices.length)){
      q.correct=[...new Set(letters.map(l=>l.toUpperCase().charCodeAt(0)-65))];
@@ -163,21 +163,21 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    continue;
   }
   if(q){
-   if(/^[-*]\\s+/.test(raw)||/^<li\\b/i.test(line.html)){
-    const rendered=line.html.startsWith('<li')?line.html:'<li>'+line.html.replace(/^[-*]\\s+/,'')+'</li>';
+   if(/^[-*]\s+/.test(raw)||/^<li\b/i.test(line.html)){
+    const rendered=line.html.startsWith('<li')?line.html:'<li>'+line.html.replace(/^[-*]\s+/,'')+'</li>';
     q.stem=q.stem.endsWith('</ul>')?q.stem.slice(0,-5)+rendered+'</ul>':q.stem+'<ul>'+rendered+'</ul>';
    }else q.stem+=paragraph(line.html);
    q.sourceEnd=line.number;
   }else if(!seenQuestions&&sections.length===0&&current.title==='Section 1'){
    preamble.push(line.html);
-  }else current.instructions+=(current.instructions?'\\n':'')+paragraph(line.html);
+  }else current.instructions+=(current.instructions?'\n':'')+paragraph(line.html);
  }
  flush();
  if(!keyMode && (current.questions.length||current.instructions.trim()))sections.push(current);
  if(!sections.length)sections.push(current);
  if(preamble.length){
   // A leading H1/Title and instructions belong to the master, not a placeholder section.
-  instructions=preamble.map(paragraph).join('\\n');
+  instructions=preamble.map(paragraph).join('\n');
  }
  if(detachedKeys.length){
   const all=sections.flatMap(s=>s.questions);
@@ -193,7 +193,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    }
    const target=matches[0];
    if(target.choices.length){
-    const chars=/^[A-H](?:\\s*[,;&+]\\s*[A-H])*$/i.test(key.value)?key.value.match(/[A-H]/gi)??[]:[];
+    const chars=/^[A-H](?:\s*[,;&+]\s*[A-H])*$/i.test(key.value)?key.value.match(/[A-H]/gi)??[]:[];
     const choices=chars.map(l=>l.toUpperCase().charCodeAt(0)-65);
     if(!choices.length||choices.some(i=>i>=target.choices.length)){
      target.reviewFlags?.push('Answer-key entry '+key.number+' is not a valid choice: '+key.value);
@@ -205,7 +205,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   classify(item);
  }
  if(!seenQuestions)warnings.push('No numbered questions detected. Review the source and add questions manually.');
- return {title,instructions,source:lines.map(x=>x.text).join('\\n'),lines,sections,warnings,format};
+ return {title,instructions,source:lines.map(x=>x.text).join('\n'),lines,sections,warnings,format};
 }
 export function parseText(source:string,title='Imported assessment'):ImportDraft{return parseLines(textLines(source),title,'plain');}
 export function parseHtml(html:string,title='Imported assessment',format:ImportDraft['format']='html'):ImportDraft{return parseLines(htmlLines(html),title,format);}
