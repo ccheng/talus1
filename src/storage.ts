@@ -6,7 +6,20 @@ class TalusDB extends Dexie {
 }
 export const db=new TalusDB();
 export async function saveMaster(master:MasterTest){await db.masters.put(master);}
-export async function loadLatest():Promise<MasterTest|undefined>{return db.masters.orderBy('updatedAt').last();}
+export function saveDraftSync(master:MasterTest):boolean{
+  try{localStorage.setItem('talus-draft-v1',JSON.stringify(master));return true;}
+  catch{return false;}
+}
+export function loadDraftSync():MasterTest|undefined{
+  try{const raw=localStorage.getItem('talus-draft-v1');return raw?JSON.parse(raw) as MasterTest:undefined;}
+  catch{return undefined;}
+}
+export async function loadLatest():Promise<MasterTest|undefined>{
+ const draft=loadDraftSync();let stored:MasterTest|undefined;
+ try{stored=await db.masters.orderBy('updatedAt').last();}catch{if(!draft)throw Error('Local storage unavailable');}
+ if(!draft)return stored;
+ return !stored||draft.updatedAt>=stored.updatedAt?draft:stored;
+}
 export function exportBackup(master:MasterTest):void{
   download(JSON.stringify(master,null,2),fileBase(master)+'.talus.json','application/json');
 }
