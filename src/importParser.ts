@@ -58,7 +58,7 @@ function stripPrefix(html:string,pattern:RegExp,plain:string):string{
  const direct=html.replace(pattern,'');
  if(direct!==html)return direct;
  // Text with a whole bold/italic wrapper: remove numbering inside the wrapper.
- const wrapped=/^(<(?:strong|b|em|i)(?:\\s[^>]*)?>)([\\s\\S]*)(<\\/(?:strong|b|em|i)>)$/i.exec(html.trim());
+ const wrapped=/^(<(?:strong|b|em|i)(?:\s[^>]*)?>)([\s\S]*)(<\/(?:strong|b|em|i)>)$/i.exec(html.trim());
  if(wrapped){
   const modified=wrapped[2].replace(pattern,'');
   if(modified!==wrapped[2])return wrapped[1]+modified+wrapped[3];
@@ -165,7 +165,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   if(q){
    if(/^[-*]\\s+/.test(raw)||/^<li\\b/i.test(line.html)){
     const rendered=line.html.startsWith('<li')?line.html:'<li>'+line.html.replace(/^[-*]\\s+/,'')+'</li>';
-    q.stem+='<ul>'+rendered+'</ul>';
+    q.stem=q.stem.endsWith('</ul>')?q.stem.slice(0,-5)+rendered+'</ul>':q.stem+'<ul>'+rendered+'</ul>';
    }else q.stem+=paragraph(line.html);
    q.sourceEnd=line.number;
   }else if(!seenQuestions&&sections.length===0&&current.title==='Section 1'){
