@@ -260,3 +260,21 @@ export function mergeIntoMaster(base:MasterTest,draft:ImportDraft,mode:'replace'
  if(mode==='append')return {...base,sections:[...base.sections,...sections],importWarnings:[...(base.importWarnings??[]),...critical],lastGeneration:undefined,updatedAt:new Date().toISOString()};
  return {...base,title:draft.title,instructions:draft.instructions??'',sections,importWarnings:critical,lastGeneration:undefined,updatedAt:new Date().toISOString()};
 }
+
+/**
+ * Mammoth may report the built-in Word Title paragraph style as unmapped even
+ * when its text was successfully recognized as the assessment title.
+ * Suppress only that cosmetic diagnostic. All other conversion diagnostics
+ * remain visible to the teacher.
+ */
+export function wordConversionWarnings(
+ messages:ReadonlyArray<{message:string}>,
+ parsed:ImportDraft
+):string[]{
+ const first=parsed.lines.find(line=>line.text.trim())?.text.trim().replace(/^#{1,6}\s*/, '')??'';
+ const titleMapped=first.length>0&&first===parsed.title.trim();
+ return messages.filter(item=>{
+  if(!titleMapped)return true;
+  return !/^Unrecognised paragraph style:\s*['"]?Title['"]?\s*\(Style ID:\s*Title\)\s*$/i.test(item.message.trim());
+ }).map(item=>'Word conversion: '+item.message);
+}
