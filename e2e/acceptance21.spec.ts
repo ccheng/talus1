@@ -229,7 +229,7 @@ test('tablet Chromium touch emulation: source, review and accept are usable',asy
  const context=await browser.newContext({viewport:{width:768,height:1024},hasTouch:true,isMobile:true,deviceScaleFactor:2});
  try{
   const page=await context.newPage();
-  await parsePlain(page,'Section 1: Motion\\n1. What is speed?\\nA. Distance per time\\nB. Force per mass\\nAnswer: A');
+  await parsePlain(page,'Section 1: Motion\n1. What is speed?\nA. Distance per time\nB. Force per mass\nAnswer: A');
   await expect(page.locator('.import-source')).toBeVisible();
   await expect(page.locator('.import-review')).toBeVisible();
   await page.getByLabel('Imported assessment title').tap();
