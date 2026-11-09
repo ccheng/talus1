@@ -167,6 +167,8 @@ describe('Word Title-style diagnostic regression',()=>{
   expect(parsed.title).toBe('Science 10 Unit Test');
   expect(wordConversionWarnings([
    {message:"Unrecognised paragraph style: 'Title' (Style ID: Title)"},
+   {message:"Unrecognised paragraph style: 'null' (Style ID: Title)"},
+   {message:"Paragraph style with ID Title was referenced but not defined in the document"},
    {message:"Unrecognised paragraph style: 'Custom Note' (Style ID: MyNote)"},
    {message:"An image could not be converted"}
   ],parsed)).toEqual([
