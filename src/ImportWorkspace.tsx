@@ -2,7 +2,7 @@ import {useState,type ChangeEvent} from 'react';
 import DOMPurify from 'dompurify';
 import * as mammoth from 'mammoth';
 import {marked} from 'marked';
-import {parseText,parseHtml,reviewWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
+import {parseText,parseHtml,parseLines,textLines,reviewWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
 import type {MasterTest,QuestionType} from './model';
 
 const uid=()=>crypto.randomUUID();
@@ -19,7 +19,9 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  const [expanded,setExpanded]=useState<string|null>(null);
  function makeDraft(raw:string,kind:'plain'|'markdown',name='Pasted assessment'){
   try{
-   const parsed=kind==='markdown'?parseHtml(DOMPurify.sanitize(marked.parse(raw,{async:false}) as string),name,'markdown'):parseText(raw,name);
+   const parsed=kind==='markdown'?parseLines(textLines(raw).map(line=>({
+    ...line,html:DOMPurify.sanitize(marked.parseInline(line.text.replace(/^#{1,6}\\s+/,''),{async:false}) as string)
+  })),name,'markdown'):parseText(raw,name);
    setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
    setMessage(parsed.sections.reduce((n,s)=>n+s.questions.length,0)+' question(s) detected. Review before importing.');
   }catch(error){setMessage('Unable to parse: '+String(error));}
@@ -85,8 +87,11 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     const previous=s.questions[index-1],current=s.questions[index];
     previous.stem+='\n'+current.stem;previous.sourceEnd=Math.max(previous.sourceEnd,current.sourceEnd);
     if(current.choices.length)previous.choices.push(...current.choices);
-    if(current.answer)previous.answer+=(previous.answer?'\n':'')+current.answer;
-    previous.correct=[];previous.warnings.push('Merged content: recheck answer choices and correct answers');
+    if(current.answer){
+      if(previous.answer)previous.reviewFlags=[...(previous.reviewFlags??[]),'Merged two keyed questions: verify and acknowledge the combined reference answer'];
+      previous.answer+=(previous.answer?'\n':'')+current.answer;
+    }
+    previous.correct=[];if(previous.choices.length)previous.reviewFlags=[...(previous.reviewFlags??[]),'Merged answer choices: verify the correct selection'];
     s.questions.splice(index,1);setExpanded(previous.id);return;
    }});
  }
@@ -117,7 +122,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
      <textarea aria-label="Assessment source" rows={17} value={source} onChange={e=>setSource(e.target.value)} placeholder={'Section 1: Foundations\n1. Which formula is water?\nA. H2O\nB. CO2\nAnswer: A\n2. Explain your reasoning.\nAnswer: ...'}/>
     </label>
     <button className="primary" onClick={()=>makeDraft(source,format,'Pasted assessment')} disabled={!source.trim()}>Detect sections and questions</button>
-    <p className="help">No external AI service or server is used. The importer never invents missing correct answers. Import is staged until you accept it.</p>
+    <p className="help">Parsing is entirely in your browser. The original assessment stays unchanged until you accept. Your in-progress review remains available if you switch to Author and back.</p>
     {draft&&<div className="import-original"><h3>Original source (read-only reference)</h3><pre>{draft.source}</pre></div>}
    </section>
    <section className="panel import-review"><div className="panel-heading"><h2>2. Review proposed structure</h2><span>{count} questions · {warnings.length} warnings</span></div>
@@ -132,7 +137,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
      {draft.sections.map((s,si)=><div className="import-section" key={s.id}>
       <div className="import-section-head"><strong>Section {si+1}</strong><label>Name<input aria-label={'Section '+(si+1)+' name'} value={s.title} onChange={e=>updateSection(s.id,'title',e.target.value)}/></label>
        <label>Proficiency<input aria-label={'Section '+(si+1)+' proficiency'} value={s.proficiency} onChange={e=>updateSection(s.id,'proficiency',e.target.value)}/></label>
-       <button className="danger" disabled={draft.sections.length===1} onClick={()=>modify(d=>{const at=d.sections.findIndex(x=>x.id===s.id);const dest=d.sections[at===0?1:at-1];dest.questions.push(...d.sections[at].questions);d.sections.splice(at,1);})}>Remove section</button>
+       <button className="danger" disabled={draft.sections.length===1} onClick={()=>{const at=draft.sections.findIndex(x=>x.id===s.id);const dest=draft.sections[at===0?1:at-1];if(!window.confirm('Remove '+s.title+'? Its '+s.questions.length+' question(s) will move to '+dest.title+'.'))return;modify(d=>{const index=d.sections.findIndex(x=>x.id===s.id);const target=d.sections[index===0?1:index-1];target.questions.push(...d.sections[index].questions);d.sections.splice(index,1);});}}>Remove section (move questions)</button>
       </div>
       <label>Section instructions<textarea rows={2} aria-label={'Section '+(si+1)+' instructions'} value={s.instructions} onChange={e=>updateSection(s.id,'instructions',e.target.value)}/></label>
       {s.questions.map((q,qi)=>{
@@ -156,20 +161,21 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
           <label title="Correct answer"><input aria-label={'Correct '+String.fromCharCode(65+i)} type={q.type==='singleChoice'?'radio':'checkbox'} name={'correct-'+q.id} checked={q.correct.includes(i)} onChange={e=>updateQuestion(q.id,q=>{q.correct=q.type==='singleChoice'?[i]:e.target.checked?[...q.correct,i]:q.correct.filter(j=>j!==i);})}/></label>
           <span>{String.fromCharCode(65+i)}.</span>
           <input aria-label={'Choice '+String.fromCharCode(65+i)} value={choice} onChange={e=>updateQuestion(q.id,q=>{q.choices[i]=e.target.value;})}/>
-          <button className="danger" onClick={()=>updateQuestion(q.id,q=>{q.choices.splice(i,1);q.correct=q.correct.filter(x=>x!==i).map(x=>x>i?x-1:x);})}>×</button>
+          <button className="danger" aria-label={'Remove choice '+String.fromCharCode(65+i)} onClick={()=>updateQuestion(q.id,q=>{q.choices.splice(i,1);q.correct=q.correct.filter(x=>x!==i).map(x=>x>i?x-1:x);})}>×</button>
          </div>)}
          <button className="secondary" onClick={()=>updateQuestion(q.id,q=>{q.choices.push('');})}>+ Choice</button>
         </div>:<><label>Reference answer<textarea aria-label={'Question '+(qi+1)+' reference answer in section '+(si+1)} rows={3} value={q.answer} onChange={e=>updateQuestion(q.id,q=>{q.answer=e.target.value;})}/></label>
         <label>Response lines<input aria-label={'Question '+(qi+1)+' response lines in section '+(si+1)} type="number" min="1" max="30" value={q.responseLines} onChange={e=>updateQuestion(q.id,q=>{q.responseLines=Number(e.target.value);})}/></label></>}
         <label>Move to section<select aria-label={'Move question '+(qi+1)+' to section'} value={s.id} onChange={e=>moveQuestion(q.id,e.target.value)}>{draft.sections.map(section=><option key={section.id} value={section.id}>{section.title}</option>)}</select></label>
         {flags.length>0&&<ul className="import-question-warnings">{flags.map((w,i)=><li key={i}>{w}</li>)}</ul>}
+        {!!q.reviewFlags?.length&&<button className="secondary" onClick={()=>updateQuestion(q.id,item=>{item.reviewFlags=[];})}>I have verified and resolved the source-mapping warnings</button>}
        </div>}</div>;
       })}
      </div>)}
      <div className="import-accept">
       <label>Import mode <select aria-label="Import mode" value={mode} onChange={e=>setMode(e.target.value as typeof mode)}><option value="replace">Replace open assessment</option><option value="append">Append sections to open assessment</option></select></label>
       <p className="help">{warnings.length} unresolved warning(s). Incomplete answers will remain incomplete and block version generation until corrected.</p>
-      <button className="primary" onClick={accept}>Accept reviewed import</button>
+      <button className="primary" disabled={count===0} onClick={accept}>Accept reviewed import</button>
      </div>
     </>}
    </section>
