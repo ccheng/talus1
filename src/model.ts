@@ -19,7 +19,7 @@ export interface GenerationRecord {
   manifests: {label:string;entries:{slotId:string;variantId:string;choiceOrder:string[];number:number}[]}[];
 }
 export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string;
-  generationSettings?:{count:number;seed:string}; lastGeneration?:GenerationRecord;
+  generationSettings?:{count:number;seed:string}; lastGeneration?:GenerationRecord; importWarnings?:string[];
 }
 export type RichText = string;
 export const uid = (): string => crypto.randomUUID();
@@ -34,7 +34,7 @@ const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shuffle
 const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema)});
 const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficiency:z.string(),instructions:z.string(),shuffleQuestions:z.boolean(),items:z.array(z.union([slotSchema,groupSchema]))});
 export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:z.array(sectionSchema),updatedAt:z.string(),
- generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(),
+ generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(), importWarnings:z.array(z.string()).optional(),
  lastGeneration:z.object({count:z.number().int().min(1).max(30),seed:z.string(),runId:z.string(),sourceUpdatedAt:z.string(),
   manifests:z.array(z.object({label:z.string(),entries:z.array(z.object({slotId:z.string(),variantId:z.string(),choiceOrder:z.array(z.string()),number:z.number().int()}))}))}).optional()
 });
@@ -57,6 +57,7 @@ export function validateMaster(master:MasterTest):string[] {
   function unique(id:string,where:string){if(ids.has(id)) errors.push('Duplicate ID in '+where); ids.add(id);}
   unique(master.id,'test');
   if(!master.title.trim()) errors.push('Test title is required.');
+  if(master.importWarnings?.length)errors.push('Unresolved imported source warnings: '+master.importWarnings.join('; '));
   if(!master.sections.length) errors.push('At least one section is required.');
   for(const [si,section] of master.sections.entries()){
     const label='Section '+(si+1);unique(section.id,label);
