@@ -18,11 +18,18 @@ export function htmlLines(html:string):SourceLine[]{
  const document=new DOMParser().parseFromString(html,'text/html');
  const output:SourceLine[]=[];
  function append(html:string,text:string){
-  if(text.trim())output.push({text:text.trim(),html:html.trim(),number:output.length+1});
+  // Word drawings can have no textContent. Keep the HTML as source content.
+  if(text.trim()||/<(?:img|table)\b/i.test(html))output.push({text:text.trim(),html:html.trim(),number:output.length+1});
  }
  function walk(root:Element){
   for(const child of Array.from(root.children)){
    const tag=child.tagName.toLowerCase();
+   if(tag==='table'){
+    append(child.outerHTML,child.textContent??'');continue;
+   }
+   if(tag==='img'){
+    append(child.outerHTML,child.getAttribute('alt')??'');continue;
+   }
    if(tag==='ol'){
     let index=Number(child.getAttribute('start')||'1');
     for(const li of Array.from(child.children)){
@@ -220,7 +227,7 @@ export function parseHtml(html:string,title='Imported assessment',format:ImportD
 export function reviewWarnings(draft:ImportDraft):string[]{
  const warnings=draft.sections.flatMap(s=>s.questions.flatMap(q=>{
   const errors=[...(q.reviewFlags??[])];
-  if(!htmlText(q.stem).trim())errors.push('Question prompt is empty');
+  if(!htmlText(q.stem).trim()&&!/<(?:img|table)\b/i.test(q.stem))errors.push('Question prompt is empty');
   if(!Number.isFinite(q.marks)||q.marks<0)errors.push('Marks must be nonnegative');
   if(q.type==='singleChoice'||q.type==='multipleSelect'){
    if(q.choices.length<2)errors.push('At least two answer choices required');
