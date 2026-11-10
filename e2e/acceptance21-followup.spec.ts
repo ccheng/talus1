@@ -9,7 +9,7 @@ import {readFile} from 'node:fs/promises';
  * A-physics.docx (3-inch drawings, proficiency labels).
  * Original binaries and fingerprints remain in the independent evidence ZIP.
  */
-const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/OZkAAAAASUVORK5CYII=';
+const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
 const img=Uint8Array.from(Buffer.from(png,'base64'));
 const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const p=(s:string)=>'<w:p><w:r><w:t>'+esc(s)+'</w:t></w:r></w:p>';
