@@ -263,7 +263,7 @@ export function toTalusSections(draft:ImportDraft):Section[]{
 export function mergeIntoMaster(base:MasterTest,draft:ImportDraft,mode:'replace'|'append'):MasterTest{
  const sections=toTalusSections(draft);
  if(!sections.length)throw Error('No sections or questions to import.');
- const critical=draft.warnings.filter(w=>/unmapped|answer-key|numbered questions detected|ambiguous|student-facing|embedded image|image format|image reference|image exceeds|images exceed|table contains no cells|unsupported media/i.test(w));
+ const critical=draft.warnings.filter(w=>/unmapped|answer-key|numbered questions detected|ambiguous|student-facing|embedded image|image format|image reference|image exceeds|images exceed|table contains no cells|unsupported media|rich-content source media loss/i.test(w)||/Word conversion:.*(?:image|drawing|graphic|picture|media|relationship|linked)/i.test(w));
  if(mode==='append')return {...base,sections:[...base.sections,...sections],importWarnings:[...(base.importWarnings??[]),...critical],lastGeneration:undefined,updatedAt:new Date().toISOString()};
  return {...base,title:draft.title,instructions:draft.instructions??'',sections,importWarnings:critical,lastGeneration:undefined,updatedAt:new Date().toISOString()};
 }
