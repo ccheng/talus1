@@ -45,4 +45,19 @@ describe('immediate autosave regression',()=>{
   expect(saveDraftSync(createMaster())).toBe(false);
   expect(loadDraftSync()).toBeUndefined();
  });
+ it('drops stale synchronous recovery draft if a media-rich backup exceeds localStorage quota',()=>{
+  const data=new Map<string,string>();
+  let allowed=true;
+  vi.stubGlobal('localStorage',{
+   setItem:(key:string,value:string)=>{if(!allowed)throw Error('QuotaExceededError');data.set(key,value);},
+   getItem:(key:string)=>data.get(key)??null,
+   removeItem:(key:string)=>{data.delete(key);}
+  });
+  const old=createMaster();old.title='Previous smaller assessment';
+  expect(saveDraftSync(old)).toBe(true);
+  allowed=false;
+  const newer=createMaster();newer.title='New large picture assessment';
+  expect(saveDraftSync(newer)).toBe(false);
+  expect(loadDraftSync()).toBeUndefined();
+ });
 });
