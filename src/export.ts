@@ -1,5 +1,5 @@
 import TurndownService from 'turndown';
-import { markLabel,responseLineCount,type MasterTest } from './model';
+import { markLabel,responseLineCount,sectionHeading,type MasterTest } from './model';
 import type { GeneratedVersion, RenderedQuestion } from './generate';
 import { fileBase } from './storage';
 import { zipSync,strToU8 } from 'fflate';
@@ -20,7 +20,7 @@ export function versionMarkdown(master:MasterTest,v:GeneratedVersion,answers=fal
   if(master.lastGeneration)out+='Run ID: '+master.lastGeneration.runId+'\n\n';
   if(md(master.instructions))out+=md(master.instructions)+'\n\n';
   for(const s of v.sections){
-    out+='## '+s.title+(s.proficiency?' ('+s.proficiency+')':'')+'\n\n';
+    out+='## '+sectionHeading(s.title,s.proficiency,'markdown')+'\n\n';
     if(md(s.instructions))out+=md(s.instructions)+'\n\n';
     for(const q of s.questions){
       if(q.groupHtml)out+=md(q.groupHtml)+'\n\n';

@@ -92,5 +92,13 @@ export function validateMaster(master:MasterTest):string[] {
   return errors;
 }
 
+/** Avoid displaying an imported proficiency twice in a section heading. */
+export function sectionHeading(title:string,proficiency:string,format:'preview'|'markdown'='preview'):string{
+ const level=proficiency.trim();
+ if(!level)return title;
+ const lower=title.trim().toLowerCase(),name=level.toLowerCase();
+ if(lower.endsWith('('+name+')')||lower.endsWith(' — '+name)||lower===name)return title;
+ return title+(format==='preview'?' — '+level:' ('+level+')');
+}
 export function markLabel(points:number):string{return points+' '+(points===1?'mark':'marks');}
 export function responseLineCount(type:QuestionType, lines?:number):number {return lines??(type==='writtenResponse'?8:2);}

@@ -1,3 +1,17 @@
+## Milestone 2C.1 corrective release — independent acceptance fixes (2026-11-10)
+
+This release uses a documented **red → green** regression workflow against the Work-mode 2C.1 acceptance findings. The five new Chromium tests first failed on the existing app, then passed after the corrections; unit regressions check persistence and proficiency formatting.
+
+- **2C1-01 (P0):** Pressing Detect again on an unchanged Word/HTML import now keeps the same rich reviewed draft, source title, embedded images, tables, and prior review edits. If a teacher edits the text-only source of a rich import, re-detection explicitly warns that it will drop the rich media and requires confirmation. That intentional downgrade retains a blocking media-loss warning in the accepted JSON.
+- **2C1-02 (P1):** Mammoth conversion warnings about missing external images, links, and other graphical media are carried through acceptance into persistent `importWarnings`. Version generation remains disabled after refresh and JSON restore until a teacher repairs/explicitly resolves the problem.
+- **2C1-03 (P1):** Raster files must actually decode (using the browser image decoder) in addition to passing the format, base64, and size checks. Corrupt PNGs become visible placeholders and produce blocking, persisted warnings. Earlier demonstration fixtures had an invalid PNG CRC; their regression media were corrected rather than weakening this validation.
+- **2C1-04 (P2):** Original Word `wp:extent` image sizes are converted from English Metric Units to CSS pixels (96 px/inch) when the embedded images can be mapped unambiguously. Responsive CSS still scales down to the available column width.
+- **2C1-05 (P3):** A proficiency suffix already present in the section heading is not duplicated in the browser preview or exported Markdown.
+
+**Verification:** `e2e/acceptance21-followup.spec.ts` contains reproductions of the original A/D/K/L Word OOXML structures, including linked and corrupt media, five drawings, tables and original display geometry; `src/acceptance21-followup.test.ts` covers persistence and headings. The original Word binaries are retained separately in the independent Work-mode evidence ZIP. The tests intentionally use compact reproducible documents rather than claiming to contain byte-for-byte copies of all original fixtures.
+
+**Residual limitations:** Linked Word images cannot be fetched; embed them in the DOCX instead. Image dimensions are mapped only where image/drawing ordering is unambiguous. An independent post-deployment Work-mode retest using the exact original fixtures remains recommended before closing acceptance.
+
 ## Milestone 2C.1 — Embedded images and structured tables (November 2026)
 
 Talus now preserves common Word illustrations and tables in the existing client-side assessment workflow:

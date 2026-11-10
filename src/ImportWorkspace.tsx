@@ -4,7 +4,7 @@ import * as mammoth from 'mammoth';
 import {marked} from 'marked';
 import {parseText,parseHtml,parseLines,textLines,reviewWarnings,wordConversionWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
 import type {MasterTest,QuestionType} from './model';
-import {inspectImportedMedia} from './media';
+import {inspectImportedMedia,applyWordImageDimensions} from './media';
 
 const uid=()=>crypto.randomUUID();
 const asHtml=(value:string)=>value.includes('<')?value:'<p>'+value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p>';
@@ -15,48 +15,64 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  const [draft,setDraft]=useState<ImportDraft|null>(null);
  const [fileName,setFileName]=useState('');
  const [sourcePreviewHtml,setSourcePreviewHtml]=useState('');
+ const [richSource,setRichSource]=useState<{originalText:string;hasMedia:boolean;format:'docx'|'html'}|null>(null);
  const [message,setMessage]=useState('');
  const [mode,setMode]=useState<'replace'|'append'>('replace');
  const [filter,setFilter]=useState<'all'|'warnings'>('all');
  const [expanded,setExpanded]=useState<string|null>(null);
  function makeDraft(raw:string,kind:'plain'|'markdown',name='Pasted assessment'){
+  // A Word/HTML import is rich source, not a plain-text clipboard paste.
+  // Re-running detection without changing the source must never strip its media.
+  if(richSource&&draft&&(draft.format==='docx'||draft.format==='html')){
+   if(raw===richSource.originalText){
+    setMessage('Source unchanged. The reviewed Word/HTML questions, images and tables were preserved.');
+    return;
+   }
+   if(richSource.hasMedia&&!window.confirm('The edited source is plain text. Re-detecting from it will remove embedded images and table structure. Continue and mark this media loss as unresolved?'))return;
+  }
+  const lostMedia=!!richSource?.hasMedia;
+  setRichSource(null);
   setSourcePreviewHtml('');
   try{
    const parsed=kind==='markdown'?parseLines(textLines(raw).map(line=>({
     ...line,html:DOMPurify.sanitize(marked.parseInline(line.text.replace(/^#{1,6}\\s+/,''),{async:false}) as string)
   })),name,'markdown'):parseText(raw,name);
+   if(lostMedia)parsed.warnings.push('Rich-content source media loss: embedded images and tables were discarded by intentional plain-text re-detection. Re-upload the original Word/HTML file before generating, or explicitly review and resolve the loss in Author.');
    setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
    setMessage(parsed.sections.reduce((n,s)=>n+s.questions.length,0)+' question(s) detected. Review before importing.');
   }catch(error){setMessage('Unable to parse: '+String(error));}
  }
  async function readFile(event:ChangeEvent<HTMLInputElement>){
   const file=event.target.files?.[0];if(!file)return;
-  setFileName(file.name);
+  setRichSource(null);setSourcePreviewHtml('');setFileName(file.name);
   const title=file.name.replace(/\.(docx|md|markdown|txt|html)$/i,'');
   try{
    if(/\.docx$/i.test(file.name)){
+    const wordBytes=await file.arrayBuffer();
     const doc=await mammoth.convertToHtml(
-      {arrayBuffer:await file.arrayBuffer()},
+      {arrayBuffer:wordBytes},
       {convertImage:mammoth.images.imgElement(async image=>({
         src:'data:'+image.contentType+';base64,'+await image.read('base64')
       }))}
     );
-    const media=inspectImportedMedia(doc.value);
+    const media=await inspectImportedMedia(applyWordImageDimensions(doc.value,wordBytes));
     const checkedHtml=DOMPurify.sanitize(media.html);
     setSourcePreviewHtml(checkedHtml);
     const parsed=parseHtml(checkedHtml,title,'docx');
     parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings);
+    setRichSource({originalText:parsed.source,hasMedia:media.imageCount>0||media.tableCount>0,format:'docx'});
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
    }else if(/\.(md|markdown)$/i.test(file.name)){
     const raw=await file.text();setSource(raw);setFormat('markdown');makeDraft(raw,'markdown',title);
    }else if(/\.html?$/i.test(file.name)){
     const raw=await file.text();setSource(raw);
-    const media=inspectImportedMedia(raw);
+    const media=await inspectImportedMedia(raw);
     const checkedHtml=DOMPurify.sanitize(media.html);
     setSourcePreviewHtml(checkedHtml);
     const parsed=parseHtml(checkedHtml,title,'html');
     parsed.warnings.push(...media.warnings);
+    setRichSource({originalText:parsed.source,hasMedia:media.imageCount>0||media.tableCount>0,format:'html'});
     setDraft(parsed);
     setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setMessage('HTML imported: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Review all questions.');
