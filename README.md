@@ -1,3 +1,18 @@
+## Milestone 2C.1 — Embedded images and structured tables (November 2026)
+
+Talus now preserves common Word illustrations and tables in the existing client-side assessment workflow:
+
+- **Import:** Word `.docx` images are converted to self-contained raster data URIs, including pictures in otherwise textless paragraphs. Word tables retain their rows, cells and supported HTML structure. HTML uploads with embedded images and tables also work.
+- **Side-by-side review:** Word/HTML source illustrations and tables are visible on the left, with the proposed question content on the right. The review preview preserves image sources, alt text and table contents.
+- **Editing safety:** Authoring text containing images or tables uses a preview plus an HTML source editor instead of Tiptap, because the current rich-text extension set would otherwise strip those unsupported structures. Full visual editing of diagrams and tables is reserved for Milestone 2C.3.
+- **Generation and portability:** Versioned print previews, JSON backups, browser refresh/restore, Markdown exports, and the complete ZIP batch retain supported embedded images and tables. Markdown tables are retained as raw HTML; illustrations use data-URI references so they do not require a server or temporary browser URL.
+- **Fail closed:** Unsupported/remote image formats, images larger than **1 MiB each**, and more than **2 MiB of unique embedded image data** are flagged instead of silently dropped. The complete JSON backup is capped at **3.5 MB**, to leave headroom for synchronous browser recovery storage. Unresolved media-loss warnings persist and block generation until the source is corrected and explicitly reviewed. Malformed table content also produces a warning.
+- **Formats:** PNG, JPEG, GIF, and WebP raster images. Vector-only Word drawings, embedded Office shapes/charts, complex equation objects, and full table editing fidelity are not yet supported.
+
+**Compatibility:** Some Markdown readers block or fail to display `data:` image URLs and raw HTML tables. Talus's browser print preview remains the most reliable visual check; editable Word export is planned for Milestone 3. Always compare student forms with the original Word document before classroom distribution.
+
+**Regression coverage:** A generated realistic Word OOXML fixture containing a PNG and a three-row table is imported, reviewed, generated into six versions, backed up/restored, and checked in the single Markdown and ZIP exports. HTML image/table import, source-preview fidelity, rejected remote/oversized images, and JSON asset-validation checks are also covered. GitHub Actions runs these tests before deploying.
+
 ## Milestone 2.1 — Import correctness and review reliability (November 2026)
 
 The 2A/2B independent Work-mode acceptance report identified three release blockers and additional review issues. Corrective release 2.1 addresses them:
