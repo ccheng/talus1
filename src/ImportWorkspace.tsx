@@ -33,12 +33,12 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
   const title=file.name.replace(/\.(docx|md|markdown|txt|html)$/i,'');
   try{
    if(/\.docx$/i.test(file.name)){
-    const doc=await mammoth.convertToHtml({
-      arrayBuffer:await file.arrayBuffer(),
-      convertImage:mammoth.images.imgElement(async image=>({
+    const doc=await mammoth.convertToHtml(
+      {arrayBuffer:await file.arrayBuffer()},
+      {convertImage:mammoth.images.imgElement(async image=>({
         src:'data:'+image.contentType+';base64,'+await image.read('base64')
-      }))
-    });
+      }))}
+    );
     const media=inspectImportedMedia(doc.value);
     const parsed=parseHtml(DOMPurify.sanitize(media.html),title,'docx');
     parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings);
