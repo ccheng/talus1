@@ -6,6 +6,8 @@ import { zipSync,strToU8 } from 'fflate';
 const td=new TurndownService({headingStyle:'atx',bulletListMarker:'-'});
 td.addRule('subscript',{filter:'sub',replacement:(content)=>'~'+content+'~'});
 td.addRule('superscript',{filter:'sup',replacement:(content)=>'^'+content+'^'});
+// Keep imported table geometry in standard Markdown's raw-HTML extension.
+td.addRule('embeddedTable',{filter:'table',replacement:(_content,node)=>'\n\n'+(node as HTMLElement).outerHTML+'\n\n'});
 function md(html:string):string{return td.turndown(html||'').trim();}
 function answerFor(q:RenderedQuestion):string {
   if(q.type==='singleChoice'||q.type==='multipleSelect') {
