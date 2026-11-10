@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { embeddedAssetWarnings } from './media';
 
 export type QuestionType = 'singleChoice' | 'multipleSelect' | 'shortAnswer' | 'writtenResponse';
 export interface Choice { id: string; html: string }
@@ -50,6 +51,7 @@ export function createMaster():MasterTest {return {schemaVersion:1,id:uid(),titl
 export const slotsOf = (s:Section):Slot[] => s.items.flatMap(item=>item.kind==='slot'?[item]:item.items);
 export const isChoiceType = (type:QuestionType):boolean => type==='singleChoice'||type==='multipleSelect';
 export function cleanText(html:string):string {return html.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();}
+export function hasQuestionContent(html:string):boolean{return !!cleanText(html)||/<(?:img|table)\b/i.test(html);}
 export function validateMaster(master:MasterTest):string[] {
   const parsed=masterSchema.safeParse(master);
   if(!parsed.success) return ['Invalid master test structure: '+parsed.error.issues[0]?.message];
@@ -59,9 +61,11 @@ export function validateMaster(master:MasterTest):string[] {
   if(!master.title.trim()) errors.push('Test title is required.');
   if(master.importWarnings?.length)errors.push('Unresolved imported source warnings: '+master.importWarnings.join('; '));
   if(!master.sections.length) errors.push('At least one section is required.');
+  for(const warning of embeddedAssetWarnings(master.instructions))errors.push('General instructions: '+warning);
   for(const [si,section] of master.sections.entries()){
     const label='Section '+(si+1);unique(section.id,label);
     if(!section.title.trim()) errors.push(label+' needs a title.');
+    for(const warning of embeddedAssetWarnings(section.instructions))errors.push(label+': '+warning);
     if(!section.items.length) errors.push(label+' needs at least one question.');
     for(const slot of slotsOf(section)){
       unique(slot.id,label+' question');
@@ -70,17 +74,18 @@ export function validateMaster(master:MasterTest):string[] {
       for(const [vi,v] of slot.variants.entries()){
         unique(v.id,label+' variant');
         const loc=label+', question '+(slotsOf(section).indexOf(slot)+1)+', variant '+(vi+1);
-        if(!cleanText(v.stem)) errors.push(loc+': prompt is empty.');
+        if(!hasQuestionContent(v.stem)) errors.push(loc+': prompt is empty.');
         if(v.points!==points) errors.push(loc+': points differ between alternatives.');
         if(v.importWarnings?.length) errors.push(loc+': unresolved import review: '+v.importWarnings.join('; '));
+        for(const html of [v.stem,v.referenceAnswer,...v.choices.map(choice=>choice.html)])for(const warning of embeddedAssetWarnings(html))errors.push(loc+': '+warning);
         if(isChoiceType(v.type)){
           if(v.choices.length<2) errors.push(loc+': needs at least two choices.');
           const choiceIds=new Set<string>();
-          for(const c of v.choices){unique(c.id,loc+' choice');choiceIds.add(c.id);if(!cleanText(c.html)) errors.push(loc+': choice is blank.');}
+          for(const c of v.choices){unique(c.id,loc+' choice');choiceIds.add(c.id);if(!hasQuestionContent(c.html)) errors.push(loc+': choice is blank.');}
           if(v.correctChoiceIds.length!==(v.type==='singleChoice'?1:v.correctChoiceIds.length) || !v.correctChoiceIds.length) errors.push(loc+': select the correct answer(s).');
           for(const correct of v.correctChoiceIds)if(!choiceIds.has(correct))errors.push(loc+': answer points to a missing choice.');
           if(new Set(v.correctChoiceIds).size!==v.correctChoiceIds.length) errors.push(loc+': duplicate correct answers.');
-        } else if(!cleanText(v.referenceAnswer)) errors.push(loc+': reference answer is empty.');
+        } else if(!hasQuestionContent(v.referenceAnswer)) errors.push(loc+': reference answer is empty.');
       }
     }
   }
