@@ -72,7 +72,6 @@ test('2C.1 Word embedded PNG and multi-row table survive import, review, generat
  await expect(page.locator('.print-page img')).toHaveAttribute('src',B64);
  await expect(page.locator('.print-page tr')).toHaveCount(3);
  // A true portable backup restore is distinct from loading browser-local data.
- page.on('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'New test'}).click();
  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Untitled assessment');
  await page.locator('.header-actions input[type="file"]').setInputFiles({
