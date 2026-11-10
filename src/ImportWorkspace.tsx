@@ -14,11 +14,13 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  const [format,setFormat]=useState<'plain'|'markdown'>('plain');
  const [draft,setDraft]=useState<ImportDraft|null>(null);
  const [fileName,setFileName]=useState('');
+ const [sourcePreviewHtml,setSourcePreviewHtml]=useState('');
  const [message,setMessage]=useState('');
  const [mode,setMode]=useState<'replace'|'append'>('replace');
  const [filter,setFilter]=useState<'all'|'warnings'>('all');
  const [expanded,setExpanded]=useState<string|null>(null);
  function makeDraft(raw:string,kind:'plain'|'markdown',name='Pasted assessment'){
+  setSourcePreviewHtml('');
   try{
    const parsed=kind==='markdown'?parseLines(textLines(raw).map(line=>({
     ...line,html:DOMPurify.sanitize(marked.parseInline(line.text.replace(/^#{1,6}\\s+/,''),{async:false}) as string)
@@ -40,7 +42,9 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
       }))}
     );
     const media=inspectImportedMedia(doc.value);
-    const parsed=parseHtml(DOMPurify.sanitize(media.html),title,'docx');
+    const checkedHtml=DOMPurify.sanitize(media.html);
+    setSourcePreviewHtml(checkedHtml);
+    const parsed=parseHtml(checkedHtml,title,'docx');
     parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings);
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
@@ -49,7 +53,9 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
    }else if(/\.html?$/i.test(file.name)){
     const raw=await file.text();setSource(raw);
     const media=inspectImportedMedia(raw);
-    const parsed=parseHtml(DOMPurify.sanitize(media.html),title,'html');
+    const checkedHtml=DOMPurify.sanitize(media.html);
+    setSourcePreviewHtml(checkedHtml);
+    const parsed=parseHtml(checkedHtml,title,'html');
     parsed.warnings.push(...media.warnings);
     setDraft(parsed);
     setMessage('HTML imported: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Review all questions.');
@@ -140,7 +146,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     </label>
     <button className="primary" onClick={()=>makeDraft(source,format,'Pasted assessment')} disabled={!source.trim()}>Detect sections and questions</button>
     <p className="help">Parsing is entirely in your browser. Supported Word raster images (PNG, JPEG, GIF, WebP) are embedded; tables remain structured. Limit: 1 MiB per image, 3.5 MB per assessment backup. Original content stays unchanged until acceptance.</p>
-    {draft&&<div className="import-original"><h3>Original source (read-only reference)</h3><pre>{draft.source}</pre></div>}
+    {draft&&<div className="import-original"><h3>Original source (read-only reference)</h3>{sourcePreviewHtml&&<div className="import-source-rich" aria-label="Original rich document preview" dangerouslySetInnerHTML={{__html:sourcePreviewHtml}}/>}<details><summary>Source text</summary><pre>{draft.source}</pre></details></div>}
    </section>
    <section className="panel import-review"><div className="panel-heading"><h2>2. Review proposed structure</h2><span>{count} questions · {warnings.length} warnings</span></div>
     {!draft?<div className="empty-panel"><h3>No parsed assessment yet</h3><p>Paste or upload an assessment to preview its sections and questions.</p></div>:<>
