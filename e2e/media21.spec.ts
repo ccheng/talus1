@@ -70,3 +70,45 @@ test('2C.1 Word embedded PNG and multi-row table survive import, review, generat
  await expect(page.locator('.print-page img')).toHaveAttribute('src',B64);
  await expect(page.locator('.print-page tr')).toHaveCount(3);
 });
+
+test('2C.1 HTML import preserves source preview, standalone illustration and table geometry',async ({page})=>{
+ const source='<h1>Data Lab</h1><h2>Section 1: Applications</h2><p>1. Interpret the picture and table.</p>'+
+  '<p><img src="'+B64+'" alt="Imported motion illustration"></p>'+
+  '<table><thead><tr><th>Time</th><th>Distance</th></tr></thead><tbody><tr><td>1</td><td>3</td></tr><tr><td>2</td><td>6</td></tr></tbody></table>'+
+  '<p>Answer: Constant speed</p>';
+ await page.goto('./');
+ await page.getByRole('button',{name:'Import assessment'}).click();
+ await page.getByLabel('Upload assessment').setInputFiles({name:'data-lab.html',mimeType:'text/html',buffer:Buffer.from(source)});
+ await expect(page.locator('.import-source-rich img')).toHaveAttribute('src',B64);
+ await expect(page.locator('.import-source-rich tr')).toHaveCount(3);
+ await expect(page.locator('.import-rendered img')).toHaveCount(1);
+ await expect(page.locator('.import-rendered tr')).toHaveCount(3);
+ await expect(page.locator('.import-review .panel-heading span')).toContainText('0 warnings');
+});
+
+test('2C.1 unsupported external picture is explicitly flagged and blocks generation until source correction',async ({page})=>{
+ const source='<h1>Media Review</h1><h2>Section 1: Applications</h2><p>1. Interpret the image.</p>'+
+  '<p><img src="https://example.com/no-remote-assets.png" alt="External graph"></p><p>Answer: 2</p>';
+ await page.goto('./');
+ await page.getByRole('button',{name:'Import assessment'}).click();
+ await page.getByLabel('Upload assessment').setInputFiles({name:'external.html',mimeType:'text/html',buffer:Buffer.from(source)});
+ await expect(page.locator('.import-warnings')).toContainText('Unsupported image format or external image reference');
+ await expect(page.locator('.import-rendered')).toContainText('Embedded image 1 unavailable');
+ await expect(page.locator('.import-rendered img')).toHaveCount(0);
+ page.on('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
+ await expect(page.getByText('Unresolved source-level import warnings')).toBeVisible();
+});
+
+test('2C.1 oversized embedded picture is replaced by visible warning instead of silent omission',async ({page})=>{
+ const hugeImage='data:image/png;base64,'+'A'.repeat(1_500_000);
+ const source='<h1>Large Media</h1><h2>Section 1: Applications</h2><p>1. Interpret the graph.</p>'+
+  '<p><img src="'+hugeImage+'" alt="Too large"></p><p>Answer: 2</p>';
+ await page.goto('./');
+ await page.getByRole('button',{name:'Import assessment'}).click();
+ await page.getByLabel('Upload assessment').setInputFiles({name:'large.html',mimeType:'text/html',buffer:Buffer.from(source)});
+ await expect(page.locator('.import-warnings')).toContainText('exceeds the 1 MiB per-image limit');
+ await expect(page.locator('.import-rendered')).toContainText('Embedded image 1 unavailable');
+ await expect(page.locator('.import-rendered img')).toHaveCount(0);
+});
