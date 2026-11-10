@@ -107,7 +107,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
  let q:ImportQuestion|undefined;let seenQuestions=false;let keyMode=false;
  let preamble:string[]=[];let instructions='';let sourceTitle=false;
  const warnings:string[]=[];const detachedKeys:{number:number;value:string}[]=[];
- const meaningful=lines.filter(line=>line.text.trim());
+ const meaningful=lines.filter(line=>line.text.trim()||/<(?:img|table)\b/i.test(line.html));
  const flush=()=>{if(q){classify(q);current.questions.push(q);q=undefined;seenQuestions=true;}};
  for(let i=0;i<meaningful.length;i++){
   const line=meaningful[i],raw=line.text.trim(),next=meaningful[i+1];
