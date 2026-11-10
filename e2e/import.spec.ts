@@ -56,7 +56,7 @@ test('paste → parse → edit review → accept → generate → save and refre
 });
 
 test('import confirmation reflects unresolved validation issues rather than always claiming warnings',async ({page})=>{
- await page.getByLabel('Assessment source').fill('Section 1: Science\\n1. Which is right?\\nA. Yes\\nB. No');
+ await page.getByLabel('Assessment source').fill('Section 1: Science\n1. Which is right?\nA. Yes\nB. No');
  await page.getByRole('button',{name:'Detect sections and questions'}).click();
  page.on('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
