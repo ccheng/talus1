@@ -125,3 +125,19 @@ test('2C1-05 P3: a proficiency label embedded in section title is displayed only
  expect(md).toContain('## Section 1: Foundations (Base)\n');
  expect(md).not.toContain('(Base) (Base)');
 });
+
+test('2C1-01 follow-up: editing a rich Word source never silently downgrades it to plain text',async({page})=>{
+ await upload(page,'D-complex.docx',D);
+ await expect(page.locator('.import-source-rich img')).toHaveCount(5);
+ const source=page.getByLabel('Assessment source');
+ await source.fill((await source.inputValue())+'\nTeacher-added comment.');
+ page.once('dialog',dialog=>{expect(dialog.message()).toContain('remove embedded images and table structure');void dialog.dismiss();});
+ await page.getByRole('button',{name:'Detect sections and questions'}).click();
+ await expect(page.locator('.import-source-rich img')).toHaveCount(5);
+ page.once('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Detect sections and questions'}).click();
+ await expect(page.locator('.import-warnings')).toContainText('Rich-content source media loss');
+ await accept(page);
+ await expect(page.getByText('Unresolved source-level import warnings')).toBeVisible();
+ await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
+});
