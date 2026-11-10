@@ -97,12 +97,7 @@ export function sectionHeading(title:string,proficiency:string,format:'preview'|
  const level=proficiency.trim();
  if(!level)return title;
  const lower=title.trim().toLowerCase(),name=level.toLowerCase();
- // Heading already contains a terminal parenthetical or dash label.
  if(lower.endsWith('('+name+')')||lower.endsWith(' — '+name)||lower===name)return title;
- return title+(format==='preview'?' — '+level:' ('+level+')');
-}
-export function markLabel(points:number):string');
- if(new RegExp('\\\\b'+normalized+'\\\\b','i').test(title))return title;
  return title+(format==='preview'?' — '+level:' ('+level+')');
 }
 export function markLabel(points:number):string{return points+' '+(points===1?'mark':'marks');}
