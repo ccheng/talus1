@@ -92,11 +92,16 @@ export function validateMaster(master:MasterTest):string[] {
   return errors;
 }
 
-/** Avoid duplicating proficiency that already appears in the section heading. */
+/** Avoid displaying an imported proficiency twice in a section heading. */
 export function sectionHeading(title:string,proficiency:string,format:'preview'|'markdown'='preview'):string{
  const level=proficiency.trim();
  if(!level)return title;
- const normalized=level.replace(/[.*+?^${}()|[\]\\]/g,'\\export function markLabel(points:number):string');
+ const lower=title.trim().toLowerCase(),name=level.toLowerCase();
+ // Heading already contains a terminal parenthetical or dash label.
+ if(lower.endsWith('('+name+')')||lower.endsWith(' — '+name)||lower===name)return title;
+ return title+(format==='preview'?' — '+level:' ('+level+')');
+}
+export function markLabel(points:number):string');
  if(new RegExp('\\\\b'+normalized+'\\\\b','i').test(title))return title;
  return title+(format==='preview'?' — '+level:' ('+level+')');
 }
