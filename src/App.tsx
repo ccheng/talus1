@@ -46,7 +46,7 @@ export default function App(){
  }
  function acceptImported(m:MasterTest){
    commitMaster(m);setImportEpoch(e=>e+1);setSectionIndex(0);setSelectedId(m.sections[0]?.items[0]?.id??'');setAltIndex(0);
-   setVersions([]);setTab('author');setNotice('Reviewed assessment imported. Resolve remaining validation warnings before generating.');
+   setVersions([]);setTab('author');setNotice(validateMaster(m).length===0?'Reviewed assessment imported. Ready to generate versions.':'Reviewed assessment imported. Resolve the validation issues shown below before generating.');
  }
  const section=master?.sections[sectionIndex],slots=section?.items.flatMap(i=>i.kind==='slot'?[i]:i.items)??[];
  const slot=slots.find(s=>s.id===selectedId)??slots[0],variant=slot?.variants[altIndex]??slot?.variants[0];
