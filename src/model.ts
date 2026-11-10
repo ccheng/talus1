@@ -92,5 +92,13 @@ export function validateMaster(master:MasterTest):string[] {
   return errors;
 }
 
+/** Avoid duplicating proficiency that already appears in the section heading. */
+export function sectionHeading(title:string,proficiency:string,format:'preview'|'markdown'='preview'):string{
+ const level=proficiency.trim();
+ if(!level)return title;
+ const normalized=level.replace(/[.*+?^${}()|[\]\\]/g,'\\export function markLabel(points:number):string');
+ if(new RegExp('\\\\b'+normalized+'\\\\b','i').test(title))return title;
+ return title+(format==='preview'?' — '+level:' ('+level+')');
+}
 export function markLabel(points:number):string{return points+' '+(points===1?'mark':'marks');}
 export function responseLineCount(type:QuestionType, lines?:number):number {return lines??(type==='writtenResponse'?8:2);}
