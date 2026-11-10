@@ -39,6 +39,7 @@ test('paste → parse → edit review → accept → generate → save and refre
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Science 10 Imported and Reviewed');
+ await expect(page.getByText('Reviewed assessment imported. Ready to generate versions.')).toBeVisible();
  await expect(page.locator('.sidebar .side-item')).toHaveCount(4);
  await expect(page.getByText('Validation: Ready')).toBeVisible();
  await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
@@ -52,6 +53,15 @@ test('paste → parse → edit review → accept → generate → save and refre
  await expect(page.locator('.print-question')).toHaveCount(4);
  await page.getByRole('button',{name:'1. Author'}).click();
  await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Science 10 Imported and Reviewed');
+});
+
+test('import confirmation reflects unresolved validation issues rather than always claiming warnings',async ({page})=>{
+ await page.getByLabel('Assessment source').fill('Section 1: Science\\n1. Which is right?\\nA. Yes\\nB. No');
+ await page.getByRole('button',{name:'Detect sections and questions'}).click();
+ page.on('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ await expect(page.getByText('Reviewed assessment imported. Resolve the validation issues shown below before generating.')).toBeVisible();
+ await expect(page.getByText('Validation: Ready')).toHaveCount(0);
 });
 
 test('incomplete import warns and does not invent an answer; review can repair',async ({page})=>{
