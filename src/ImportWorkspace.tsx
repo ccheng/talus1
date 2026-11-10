@@ -4,6 +4,7 @@ import * as mammoth from 'mammoth';
 import {marked} from 'marked';
 import {parseText,parseHtml,parseLines,textLines,reviewWarnings,wordConversionWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
 import type {MasterTest,QuestionType} from './model';
+import {inspectImportedMedia} from './media';
 
 const uid=()=>crypto.randomUUID();
 const asHtml=(value:string)=>value.includes('<')?value:'<p>'+value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p>';
@@ -32,17 +33,26 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
   const title=file.name.replace(/\.(docx|md|markdown|txt|html)$/i,'');
   try{
    if(/\.docx$/i.test(file.name)){
-    const doc=await mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});
-    const parsed=parseHtml(DOMPurify.sanitize(doc.value),title,'docx');
-    parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed));
+    const doc=await mammoth.convertToHtml({
+      arrayBuffer:await file.arrayBuffer(),
+      convertImage:mammoth.images.imgElement(async image=>({
+        src:'data:'+image.contentType+';base64,'+await image.read('base64')
+      }))
+    });
+    const media=inspectImportedMedia(doc.value);
+    const parsed=parseHtml(DOMPurify.sanitize(media.html),title,'docx');
+    parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings);
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
-    setSource(parsed.source);setMessage('Word file parsed. Verify section headings and question boundaries.');
+    setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
    }else if(/\.(md|markdown)$/i.test(file.name)){
     const raw=await file.text();setSource(raw);setFormat('markdown');makeDraft(raw,'markdown',title);
    }else if(/\.html?$/i.test(file.name)){
     const raw=await file.text();setSource(raw);
-    setDraft(parseHtml(DOMPurify.sanitize(raw),title,'html'));
-    setMessage('HTML imported. Review all questions.');
+    const media=inspectImportedMedia(raw);
+    const parsed=parseHtml(DOMPurify.sanitize(media.html),title,'html');
+    parsed.warnings.push(...media.warnings);
+    setDraft(parsed);
+    setMessage('HTML imported: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Review all questions.');
    }else{
     const raw=await file.text();setSource(raw);setFormat('plain');makeDraft(raw,'plain',title);
    }
@@ -98,12 +108,19 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  function accept(){
   if(!draft)return;
   const warnings=reviewWarnings(draft);
-  const empty=draft.sections.flatMap(s=>s.questions).filter(q=>!text(q.stem).trim());
+  const empty=draft.sections.flatMap(s=>s.questions).filter(q=>!text(q.stem).trim()&&!/<(?:img|table)\b/i.test(q.stem));
   if(empty.length){setMessage('Cannot import empty question prompts. Edit or remove them first.');return;}
   if(!draft.sections.some(s=>s.questions.length)){setMessage('No questions detected. Add a question before accepting.');return;}
   if(warnings.length&&!window.confirm(warnings.length+' unresolved warning(s), including missing answer keys. Import anyway? You can finish those questions in the authoring workspace.'))return;
   if(mode==='replace'&&!window.confirm('Replace the current assessment with the reviewed import? Export a JSON backup first if you need the existing assessment.'))return;
-  try{onAccept(mergeIntoMaster(master,draft,mode));}catch(error){setMessage(String(error));}
+  try{
+   const accepted=mergeIntoMaster(master,draft,mode);
+   if(new Blob([JSON.stringify(accepted)]).size>3_500_000){
+     setMessage('Assessment exceeds the 3.5 MB browser recovery limit. Reduce embedded image sizes before accepting.');
+     return;
+   }
+   onAccept(accepted);
+  }catch(error){setMessage(String(error));}
  }
  const warnings=draft?reviewWarnings(draft):[];
  const count=draft?.sections.reduce((n,s)=>n+s.questions.length,0)??0;
@@ -122,7 +139,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
      <textarea aria-label="Assessment source" rows={17} value={source} onChange={e=>setSource(e.target.value)} placeholder={'Section 1: Foundations\n1. Which formula is water?\nA. H2O\nB. CO2\nAnswer: A\n2. Explain your reasoning.\nAnswer: ...'}/>
     </label>
     <button className="primary" onClick={()=>makeDraft(source,format,'Pasted assessment')} disabled={!source.trim()}>Detect sections and questions</button>
-    <p className="help">Parsing is entirely in your browser. The original assessment stays unchanged until you accept. Your in-progress review remains available if you switch to Author and back.</p>
+    <p className="help">Parsing is entirely in your browser. Supported Word raster images (PNG, JPEG, GIF, WebP) are embedded; tables remain structured. Limit: 1 MiB per image, 3.5 MB per assessment backup. Original content stays unchanged until acceptance.</p>
     {draft&&<div className="import-original"><h3>Original source (read-only reference)</h3><pre>{draft.source}</pre></div>}
    </section>
    <section className="panel import-review"><div className="panel-heading"><h2>2. Review proposed structure</h2><span>{count} questions · {warnings.length} warnings</span></div>
@@ -154,7 +171,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
          <button className="danger" onClick={()=>modify(d=>{const sec=d.sections.find(x=>x.id===s.id);if(sec)sec.questions=sec.questions.filter(x=>x.id!==q.id);})}>Remove question</button>
         </div>
         <label>Question prompt (HTML or plain text)<textarea aria-label={'Question '+(qi+1)+' prompt in section '+(si+1)} rows={3} value={q.stem} onChange={e=>updateQuestion(q.id,q=>{q.stem=e.target.value;})}/></label>
-        <div className="import-rendered" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(asHtml(q.stem))}}/>
+        <div className="import-rendered" aria-label="Question rich-content preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(asHtml(q.stem))}}/>
         <div className="columns"><label>Question type<select aria-label={'Question '+(qi+1)+' type in section '+(si+1)} value={q.type} onChange={e=>updateQuestion(q.id,q=>{q.type=e.target.value as QuestionType;})}>
          <option value="singleChoice">Multiple choice</option><option value="multipleSelect">Select all that apply</option><option value="shortAnswer">Short answer</option><option value="writtenResponse">Written response</option>
         </select></label><label>Marks<input aria-label={'Question '+(qi+1)+' marks in section '+(si+1)} type="number" min="0" value={q.marks} onChange={e=>updateQuestion(q.id,q=>{q.marks=Number(e.target.value);})}/></label></div>
