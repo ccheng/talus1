@@ -58,6 +58,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     const parsed=parseHtml(checkedHtml,title,'html');
     parsed.warnings.push(...media.warnings);
     setDraft(parsed);
+    setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setMessage('HTML imported: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Review all questions.');
    }else{
     const raw=await file.text();setSource(raw);setFormat('plain');makeDraft(raw,'plain',title);
