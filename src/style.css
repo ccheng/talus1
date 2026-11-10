@@ -14,3 +14,5 @@
 .rich-media-editor textarea{display:block;width:100%;font-family:monospace;font-size:12px;line-height:1.5;padding:10px;border:1px solid #cdd8e5;border-radius:5px}
 .rich-media-preview{margin-top:12px;padding:13px;background:#fff;border:1px solid #e1e7ef;border-radius:6px}
 @media print{.print-page img{max-height:8in;break-inside:avoid}.print-page tr{break-inside:avoid}}
+
+.import-source-rich{padding:12px;border:1px solid #d7e1ec;border-radius:6px;background:white;overflow-x:auto;max-height:550px;overflow-y:auto}.import-source-rich img{max-width:100%;height:auto}.import-source-rich table{border-collapse:collapse;max-width:100%}.import-source-rich td,.import-source-rich th{border:1px solid #77899e;padding:6px 9px}.import-original details summary{font-size:12px;cursor:pointer;margin-top:12px}
