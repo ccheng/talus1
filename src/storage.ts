@@ -8,7 +8,12 @@ export const db=new TalusDB();
 export async function saveMaster(master:MasterTest){await db.masters.put(master);}
 export function saveDraftSync(master:MasterTest):boolean{
   try{localStorage.setItem('talus-draft-v1',JSON.stringify(master));return true;}
-  catch{return false;}
+  catch{
+    // A failed large-media write must not leave an older synchronous draft
+    // masking the new IndexedDB record on the next page load.
+    try{localStorage.removeItem('talus-draft-v1');}catch{/* storage unavailable */}
+    return false;
+  }
 }
 export function loadDraftSync():MasterTest|undefined{
   try{const raw=localStorage.getItem('talus-draft-v1');return raw?JSON.parse(raw) as MasterTest:undefined;}
