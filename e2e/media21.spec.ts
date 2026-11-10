@@ -37,7 +37,9 @@ test('2C.1 Word embedded PNG and multi-row table survive import, review, generat
  await expect(page.locator('.rich-media-preview table')).toHaveCount(1);
  const backupEvent=page.waitForEvent('download');
  await page.getByRole('button',{name:'Backup JSON'}).click();
- const json=JSON.parse(await readFile(await (await backupEvent).path()!,'utf8'));
+ const backupFile=await backupEvent;
+ const backupBytes=await readFile(await backupFile.path()!);
+ const json=JSON.parse(backupBytes.toString('utf8'));
  const stem=json.sections[0].items[0].variants[0].stem as string;
  expect(stem).toContain(B64);
  expect(stem).toMatch(/<table/);
@@ -69,6 +71,17 @@ test('2C.1 Word embedded PNG and multi-row table survive import, review, generat
  await page.getByRole('button',{name:'2. Versions & answer keys'}).click();
  await expect(page.locator('.print-page img')).toHaveAttribute('src',B64);
  await expect(page.locator('.print-page tr')).toHaveCount(3);
+ // A true portable backup restore is distinct from loading browser-local data.
+ page.on('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'New test'}).click();
+ await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Untitled assessment');
+ await page.locator('.header-actions input[type="file"]').setInputFiles({
+  name:'restored-media.talus.json',mimeType:'application/json',buffer:backupBytes
+ });
+ await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Motion and Diagrams Assessment');
+ await expect(page.locator('.rich-media-preview img')).toHaveAttribute('src',B64);
+ await expect(page.locator('.rich-media-preview tr')).toHaveCount(3);
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
 });
 
 test('2C.1 HTML import preserves source preview, standalone illustration and table geometry',async ({page})=>{
