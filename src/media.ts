@@ -5,7 +5,7 @@
  * writes a synchronous recovery draft in addition to IndexedDB.
  */
 export const MAX_IMAGE_BYTES = 1024 * 1024; // 1 MiB per image
-export const MAX_TOTAL_IMAGE_BYTES = 3 * 1024 * 1024; // 3 MiB across unique images
+export const MAX_TOTAL_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MiB across unique images
 export const ACCEPTED_IMAGE_TYPES = ['image/png','image/jpeg','image/gif','image/webp'] as const;
 
 export interface MediaInspection { html:string; warnings:string[]; imageCount:number; tableCount:number; imageBytes:number }
@@ -32,7 +32,7 @@ export function inspectImportedMedia(html:string):MediaInspection {
    if(bytes>MAX_IMAGE_BYTES)reason='Embedded image exceeds the 1 MiB per-image limit';
    else if(!seen.has(src)){
     seen.add(src);imageBytes+=bytes;
-    if(imageBytes>MAX_TOTAL_IMAGE_BYTES)reason='Embedded images exceed the 3 MiB assessment limit';
+    if(imageBytes>MAX_TOTAL_IMAGE_BYTES)reason='Embedded images exceed the 2 MiB assessment limit';
    }
   }
   if(reason){
