@@ -53,7 +53,7 @@ function TableView({node,updateAttributes}:NodeViewProps){
    <div className="help">Edit individual table cells. Merged cells and geometry are preserved.</div>
    <div className="rich-table-input-grid">{rows.map((row,ri)=><div className="rich-table-input-row" key={ri}>
     {Array.from(row.querySelectorAll('td,th')).map((cell,ci)=><label key={ci}>
-     <span className="sr-only">{'Table row '+(ri+1)+' column '+(ci+1)}</span>
+     
      <input aria-label={'Table row '+(ri+1)+' column '+(ci+1)}
       value={cell.textContent||''} onChange={e=>editCell(ri,ci,e.target.value)}/>
     </label>)}
@@ -83,7 +83,7 @@ function MathView({node,updateAttributes}:NodeViewProps){
   <button type="button" className="secondary rich-node-control" aria-label="Edit equation 1" contentEditable={false}
     onClick={()=>{setSource(html);setError('');setOpen(x=>!x);}}>Edit equation</button>
   {open&&<span className="rich-node-panel" contentEditable={false}>
-   <label>Equation MathML source<textarea aria-label="Equation MathML source" value={source} rows={5}
+   <label>Advanced equation markup<textarea aria-label="Equation MathML source" value={source} rows={5}
     onChange={e=>{setSource(e.target.value);setError('');}}/></label>
    {error&&<span role="alert" className="import-flag">{error}</span>}
    <button className="secondary" type="button" onClick={apply}>Apply equation</button>
