@@ -15,7 +15,7 @@ function RichTextTiptap({value,onChange,placeholder,compact}:{value:string;onCha
     extensions:[StarterKit,Superscript,Subscript,TalusImage,TalusTable,TalusMath],
     content:DOMPurify.sanitize(value),
     onUpdate:({editor})=>onChange(DOMPurify.sanitize(editor.getHTML())),
-    editorProps:{attributes:{class:'tiptap-content','aria-label':placeholder}}
+    editorProps:{attributes:{class:'tiptap-content',role:'textbox','aria-multiline':'true','aria-label':placeholder}}
   });
   useEffect(()=>{if(editor&&!editor.isDestroyed&&editor.getHTML()!==value)editor.commands.setContent(DOMPurify.sanitize(value),false);},[editor,value]);
   if(!editor)return <div>Loading editor…</div>;
