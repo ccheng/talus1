@@ -89,3 +89,40 @@ test('2C.3: review pane visual editing preserves media before accepting import',
  await expect(page.getByRole('textbox',{name:'Question stem',exact:true})).toContainText('Explain in detail.');
  await expect(page.getByRole('textbox',{name:'Question stem',exact:true}).locator('img')).toHaveCount(1);
 });
+
+
+test('2C.3: review table-cell edit is retained after acceptance and generated student export',async({page})=>{
+ await page.goto('./');await page.getByRole('button',{name:'Import assessment'}).click();
+ await page.getByLabel('Upload assessment').setInputFiles({name:'review-table.html',mimeType:'text/html',buffer:Buffer.from(source)});
+ await page.getByRole('button',{name:'Edit table 1'}).click();
+ await page.getByLabel('Table row 2 column 2').fill('3.75');
+ await page.getByRole('button',{name:'Done editing table',exact:true}).click();
+ await expect(page.getByRole('textbox',{name:'Review question prompt visually',exact:true}).locator('table')).toContainText('3.75');
+ page.on('dialog',d=>d.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ await expect(page.locator('.print-page table')).toContainText('3.75');
+ await expect(page.locator('.print-page math mfrac')).toHaveCount(1);
+});
+
+test('2C.3: scientific answer choice remains visually editable through review, authoring and export',async({page})=>{
+ const choiceDoc='<h1>Choice Equation Lab</h1><h2>Section 1: Applications</h2>'+
+ '<p>Instructions: Choose the mathematically equivalent expression 10².</p>'+
+ '<p>1. Which formula gives the squared term?</p>'+
+ '<p>A. '+maths+'</p><p>B. 9</p><p>Answer: A</p>';
+ await page.goto('./');await page.getByRole('button',{name:'Import assessment'}).click();
+ await page.getByLabel('Upload assessment').setInputFiles({name:'choice-equation.html',mimeType:'text/html',buffer:Buffer.from(choiceDoc)});
+ const choiceEditor=page.getByRole('textbox',{name:'Review choice A visually',exact:true});
+ await expect(choiceEditor.locator('math mfrac')).toHaveCount(1);
+ await choiceEditor.locator('math').click();
+ await expect(page.locator('.import-review .panel-heading')).toContainText('0 warnings');
+ page.on('dialog',d=>d.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ await expect(page.locator('.print-page math mfrac')).toHaveCount(1);
+ const dl=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Student Markdown'}).click();
+ const md=await readFile(await (await dl).path()!,'utf8');
+ expect(md).toContain('<mfrac>');
+});
