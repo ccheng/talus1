@@ -72,7 +72,7 @@ test('2C3-05: switching between written and short responses preserves rich refer
  const raw=await backup(page);const v=raw.sections[0].items[0].variants[0];
  v.type='writtenResponse';v.referenceAnswer='<p><math><mn>5</mn></math> m/s</p>';
  await page.locator('.header-actions input[type=file]').setInputFiles({name:'written.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(raw))});
- const type=page.getByLabel('Type',{exact:true});
+ const type=page.locator('.editor-area select').first();
  await type.selectOption('shortAnswer');
  expect((await backup(page)).sections[0].items[0].variants[0].referenceAnswer).toContain('<math>');
  await type.selectOption('writtenResponse');
