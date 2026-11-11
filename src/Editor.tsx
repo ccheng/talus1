@@ -4,17 +4,18 @@ import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
 import { useEffect } from 'react';
 import DOMPurify from 'dompurify';
+import {TalusImage,TalusTable,TalusMath} from './richNodes';
 
 export function RichEditor({value,onChange,placeholder='Write here…',compact=false}:{value:string;onChange:(html:string)=>void;placeholder?:string;compact?:boolean}){
- if(/<(?:img|table|math)\b/i.test(value))return <div className="rich-media-editor"><p className="help">This content contains an illustration, table, or equation. Review the live preview below. Editing its HTML directly preserves the embedded asset; visual editing is planned for 2C.3.</p><textarea aria-label={placeholder+' HTML source'} rows={5} value={value} onChange={e=>onChange(e.target.value)}/><div className="rich-media-preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(value)}}/></div>;
+ if(/<(?:img|table|math)\b/i.test(value))return <div className="rich-media-editor"><p className="help">Edit surrounding text directly. Use the controls beside each illustration, table or equation. Equations are protected from ordinary typing; advanced HTML editing remains available below.</p><RichTextTiptap value={value} onChange={onChange} placeholder={placeholder} compact={compact}/><label>Advanced HTML source<textarea aria-label={placeholder+' HTML source'} rows={4} value={value} onChange={e=>onChange(e.target.value)}/></label><div className="rich-media-preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(value)}}/></div>;
  return <RichTextTiptap value={value} onChange={onChange} placeholder={placeholder} compact={compact}/>;
 }
 function RichTextTiptap({value,onChange,placeholder,compact}:{value:string;onChange:(html:string)=>void;placeholder:string;compact:boolean}){
   const editor=useEditor({
-    extensions:[StarterKit,Superscript,Subscript],
+    extensions:[StarterKit,Superscript,Subscript,TalusImage,TalusTable,TalusMath],
     content:DOMPurify.sanitize(value),
     onUpdate:({editor})=>onChange(DOMPurify.sanitize(editor.getHTML())),
-    editorProps:{attributes:{class:'tiptap-content','aria-label':placeholder}}
+    editorProps:{attributes:{class:'tiptap-content',role:'textbox','aria-multiline':'true','aria-label':placeholder}}
   });
   useEffect(()=>{if(editor&&!editor.isDestroyed&&editor.getHTML()!==value)editor.commands.setContent(DOMPurify.sanitize(value),false);},[editor,value]);
   if(!editor)return <div>Loading editor…</div>;
