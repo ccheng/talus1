@@ -11,7 +11,8 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4173/talus1/',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // System Chrome does not require the Playwright ffmpeg bundle; preserve trace and screenshots.
+    video: process.env.TALUS_USE_CHROME ? 'off' : 'retain-on-failure',
     acceptDownloads: true,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], ...(process.env.TALUS_USE_CHROME ? {channel:'chrome' as const} : {}), viewport: { width: 1365, height: 900 } } }],
