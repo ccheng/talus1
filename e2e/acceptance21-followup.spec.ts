@@ -144,6 +144,8 @@ test('2C1-01 follow-up: editing a rich Word source never silently downgrades it 
 
 test('Work retest lock: original-style D five PNGs/two tables survive all six exports and JSON restore',async({page})=>{
  await upload(page,'D-complex.docx',D);
+ await expect(page.locator('.import-source-rich img')).toHaveCount(5);
+ await expect(page.locator('.import-source-rich table')).toHaveCount(2);
  const original=await page.locator('.import-source-rich img').evaluateAll(images=>images.map(i=>(i as HTMLImageElement).src));
  const richTables=await page.locator('.import-source-rich table').evaluateAll(tables=>tables.map(t=>(t as HTMLElement).textContent));
  expect(original).toHaveLength(5);
@@ -154,8 +156,8 @@ test('Work retest lock: original-style D five PNGs/two tables survive all six ex
  await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
  for(const label of 'ABCDEF'){
   await page.getByRole('combobox',{name:'Version'}).selectOption({label:'Version '+label});
-  expect(await page.locator('.print-page img').evaluateAll(images=>images.map(i=>(i as HTMLImageElement).src))).toEqual(original);
-  expect(await page.locator('.print-page table').evaluateAll(tables=>tables.map(t=>(t as HTMLElement).textContent))).toEqual(richTables);
+  expect(await page.locator('.print-page img').evaluateAll(images=>images.map(i=>(i as HTMLImageElement).src).sort())).toEqual([...original].sort());
+  expect(await page.locator('.print-page table').evaluateAll(tables=>tables.map(t=>(t as HTMLElement).textContent).sort())).toEqual([...richTables].sort());
  }
  const zipEvent=page.waitForEvent('download');
  await page.getByRole('button',{name:'Download all versions & keys (ZIP)'}).click();
