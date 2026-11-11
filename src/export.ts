@@ -18,7 +18,7 @@ td.addRule('sizedEmbeddedImage',{
 });
 // Keep imported table geometry in standard Markdown's raw-HTML extension.
 td.addRule('embeddedTable',{filter:'table',replacement:(_content,node)=>'\n\n'+(node as HTMLElement).outerHTML+'\n\n'});
-function md(html:string):string{return td.turndown(DOMPurify.sanitize(stripExecutableHtml(html||''))).trim();}
+function md(html:string):string{const safe=stripExecutableHtml(html||'');return td.turndown(typeof DOMPurify.sanitize==='function'?DOMPurify.sanitize(safe):safe).trim();}
 function answerFor(q:RenderedQuestion):string {
   if(q.type==='singleChoice'||q.type==='multipleSelect') {
     const letters=q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):null).filter(Boolean);
