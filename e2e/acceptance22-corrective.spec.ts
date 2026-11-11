@@ -53,6 +53,37 @@ test('2C2-03 P0: incomplete OMML fraction blocks generation, neighboring fractio
  await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
  await expect(page.getByText('Unresolved source-level import warnings')).toBeVisible();
 });
+
+test('2C2-03 P0 follow-up: acknowledging document warning cannot release unresolved equation placeholder',async({page})=>{
+ await upload(page,'F-malformed.docx',F);
+ await expect(page.locator('.import-warnings')).toContainText(/missing den operand/i);
+ await accept(page);
+ const generate=page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true});
+ await expect(generate).toBeDisabled();
+ await page.getByRole('button',{name:'I verified these document-level source warnings'}).click();
+ await expect(generate).toBeDisabled();
+ await expect(page.getByText(/unresolved Word equation placeholder/i)).toBeVisible();
+ const download=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Backup JSON'}).click();
+ const {readFile}=await import('node:fs/promises');
+ const backup=await readFile(await (await download).path()!);
+ await page.reload();
+ await expect(generate).toBeDisabled();
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'acknowledged-F.json',mimeType:'application/json',buffer:backup});
+ await expect(generate).toBeDisabled();
+});
+
+test('2C2-03 P0 follow-up: importing warning-free JSON cannot bypass unrepaired placeholders in prompt, choices or keys',async({page})=>{
+ await upload(page,'F-malformed.docx',F);await accept(page);
+ await page.getByRole('button',{name:'I verified these document-level source warnings'}).click();
+ const ev=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Backup JSON'}).click();
+ const {readFile}=await import('node:fs/promises');
+ const backup=JSON.parse((await readFile(await (await ev).path()!)).toString('utf8'));
+ backup.importWarnings=[];
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'manually-acknowledged.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))});
+ await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
+});
 test('2C2-04 P1: inline OMML in a reference answer remains MathML beside unit text',async({page})=>{
  await upload(page,'D-mixed.docx',D);
  await expect(page.getByLabel('Question 1 reference answer')).toHaveValue(/<math/);
