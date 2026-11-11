@@ -78,7 +78,7 @@ test('2C.3: equation is protected from ordinary typing and MathML edit rejects m
 test('2C.3: review pane visual editing preserves media before accepting import',async({page})=>{
  await page.goto('./');await page.getByRole('button',{name:'Import assessment'}).click();
  await page.getByLabel('Upload assessment').setInputFiles({name:'rich-visual.html',mimeType:'text/html',buffer:Buffer.from(source)});
- const review=page.getByRole('textbox',{name:'Review question prompt visually'});
+ const review=page.getByRole('textbox',{name:'Review question prompt visually',exact:true});
  await expect(review).toBeVisible();
  await expect(review.locator('img')).toHaveCount(1);
  await expect(review.locator('table')).toHaveCount(1);
