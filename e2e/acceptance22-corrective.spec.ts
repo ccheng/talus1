@@ -65,3 +65,42 @@ test('2C2-06 P2: Unicode minus is MathML operator and block equations retain dis
  await accept(page);await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
  await expect(page.locator('.print-page math[display="block"]')).toHaveCount(1);
 });
+
+
+test('2C2 corrective integrated: six shuffled student/key exports preserve every math operand and reference answer',async({page})=>{
+ const clean=doc(
+ p('Science 10 Mixed Math Key Regression')+p('Section 1: Foundations')+
+ '<w:p><w:r><w:t>1. Evaluate absolute value </w:t></w:r>'+math('<m:d><m:dPr><m:begChr m:val="|"/><m:endChr m:val="|"/></m:dPr><m:e>'+mr('−')+mr('3')+'</m:e></m:d>')+'</w:p>'+p('Answer: 3')+
+ p('2. Write the particle count to three significant figures.')+
+ '<w:p><w:r><w:t>Answer: 6.02 × 10</w:t></w:r><w:r><w:rPr><w:vertAlign w:val="superscript"/></w:rPr><w:t>23</w:t></w:r></w:p>'+
+ p('Section 2: Applications')+
+ '<w:p><w:r><w:t>3. Divide the quantities </w:t></w:r>'+math('<m:f><m:num>'+mr('9')+'</m:num><m:den>'+mr('4')+'</m:den></m:f>')+'</w:p>'+p('Answer: 2.25')+
+ p('4. Calculate velocity.')+'<w:p><w:r><w:t>Answer: </w:t></w:r>'+math(mr('4'))+'<w:r><w:t> m/s.</w:t></w:r></w:p>'
+ );
+ await upload(page,'2c2-integrated.docx',clean);
+ await expect(page.locator('.import-review .panel-heading')).toContainText('4 questions · 0 warnings');
+ await accept(page);
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.locator('.rightbar').getByLabel('Number of versions').fill('6');
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ const dl=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Download all versions & keys (ZIP)'}).click();
+ const file=await dl;
+ const {unzipSync,strFromU8}=await import('fflate');
+ const {readFile}=await import('node:fs/promises');
+ const entries=unzipSync(new Uint8Array(await readFile(await file.path()!)));
+ const files=Object.entries(entries).filter(([name])=>name.endsWith('.md'));
+ expect(files).toHaveLength(12);
+ for(const [name,bytes] of files){
+  const md=strFromU8(bytes);
+  expect(md).toContain('<mo stretchy="true">|</mo>');
+  expect(md).toContain('<mfrac>');
+  if(name.includes('-key')){
+   expect(md).toMatch(/6\.02 × 10\^23\^/);
+   expect(md).toContain('<math');
+   expect(md).toContain('m/s.');
+  }else{
+   expect(md).not.toContain('**Answer:**');
+  }
+ }
+});
