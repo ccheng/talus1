@@ -29,7 +29,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     setMessage('Source unchanged. The reviewed Word/HTML questions, images and tables were preserved.');
     return;
    }
-   if(richSource.hasMedia&&!window.confirm('The edited source is plain text. Re-detecting from it will remove embedded images and table structure. Continue and mark this media loss as unresolved?'))return;
+   if(richSource.hasMedia&&!window.confirm('The edited source is plain text. Re-detecting from it will remove embedded images, table structure, and equations. Continue and mark this media loss as unresolved?'))return;
   }
   const lostMedia=!!richSource?.hasMedia;
   setRichSource(null);
@@ -62,7 +62,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     setSourcePreviewHtml(checkedHtml);
     const parsed=parseHtml(checkedHtml,title,'docx');
     parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings,...math.warnings);
-    setRichSource({originalText:parsed.source,hasMedia:media.imageCount>0||media.tableCount>0,format:'docx'});
+    setRichSource({originalText:parsed.source,hasMedia:media.imageCount>0||media.tableCount>0||Object.keys(math.equations).length>0,format:'docx'});
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
    }else if(/\.(md|markdown)$/i.test(file.name)){
