@@ -29,7 +29,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     setMessage('Source unchanged. The reviewed Word/HTML questions, images and tables were preserved.');
     return;
    }
-   if(richSource.hasMedia&&!window.confirm('The edited source is plain text. Re-detecting from it will remove embedded images, table structure, and equations. Continue and mark this media loss as unresolved?'))return;
+   if(richSource.hasMedia&&!window.confirm('The edited source is plain text. Re-detecting from it will remove embedded images and table structure, as well as equations. Continue and mark this media loss as unresolved?'))return;
   }
   const lostMedia=!!richSource?.hasMedia;
   setRichSource(null);
