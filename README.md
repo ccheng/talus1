@@ -1,3 +1,24 @@
+## Milestone 2C.3 independent-acceptance corrective release (November 2026)
+
+Independent Work-mode acceptance of 0.2.7 **failed** on eight issues (four P0, three P1, one P2). The original evidence package `Talus-2C3-Acceptance-Evidence.zip` contains Word fixtures, a reproducible audit script, original XML/OMML, browser snapshots and exported student/key files. Its audit script completed successfully and confirmed the reported discrepancies.
+
+This corrective release addresses:
+
+1. **Protected rich objects:** ProseMirror rejects ordinary typing/Backspace transactions that would remove imported images, tables or inline MathML atoms. For intentional structural deletion, use the explicit advanced HTML source.
+2. **Rich table cells:** Cell inputs can append text without replacing embedded fractions, chemistry scripts, styled spans or images. Arbitrary replacement of rich cell content is refused with a visible explanation; intentional restructuring requires the advanced HTML source.
+3. **Advanced mathematical validation:** Unrooted or unclosed MathML fragments, including `<mfrac>19/2</mfrac>` without a `<math>` root, produce non-dismissible generation errors, including after JSON restore.
+4. **Superscript boundary:** Typing whitespace after a superscript exits the script mark so subsequent unit words stay on the baseline. The formatting toolbar still permits deliberate script entry.
+5. **Question-type transitions:** Switching between written response and short answer preserves the same rich reference answer rather than clearing it.
+6. **Dimension-aware Markdown:** Resized standalone images with explicit display dimensions export as self-contained HTML image tags preserving width/height, rather than dimensionless Markdown image syntax.
+7. **Table integrity:** Reject malformed rowspans/colspans and incomplete table geometry before generation, independent of import warning flags.
+8. **Publish-safe markup:** Remove HTML script bodies and inline event handlers from edited HTML and sanitize Markdown exports, while informing the teacher of the removal.
+
+Permanent regressions live in `e2e/acceptance23-corrective.spec.ts` and `src/acceptance23-corrective.test.ts`. All existing 2C.1, 2C.2 and 2C.3 tests remain in the CI workflow. The GitHub CI browser workflow prefers the runner's installed Chrome when present, with Chromium fallback; traces and screenshots are retained for failures.
+
+**Important scope:** This remains a constrained rich-content editor, not a full Word table designer or GUI equation builder. Rich table cells deliberately do not permit arbitrary replacement through the plain text field, to prevent silent data loss. Exports should be reviewed in the desired Markdown renderer. Previously corrupted saved JSON cannot reconstruct removed source material; reimport the original document.
+
+**Final acceptance gate:** Independent retest with the supplied original classroom Word files after deployment. Automated tests are reproducible protections, not a substitute for the original-file visual and semantic audit.
+
 ## Milestone 2C.3 — Rich-content review and visual editing (November 2026)
 
 Talus now offers a visual editor for rich assessment content imported from Word or HTML. Instead of forcing teachers to rewrite an entire rich question as HTML, it uses TipTap/ProseMirror atomic nodes for embedded illustrations, table structures and MathML equations:

@@ -25,8 +25,14 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Select available Chromium browser
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            google-chrome --version
+            echo "TALUS_USE_CHROME=1" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
       - name: Run browser regression tests
         run: npm run test:e2e
       - name: Upload Playwright failure evidence

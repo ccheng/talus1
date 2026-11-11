@@ -3,14 +3,22 @@ import { markLabel,responseLineCount,sectionHeading,type MasterTest } from './mo
 import type { GeneratedVersion, RenderedQuestion } from './generate';
 import { fileBase } from './storage';
 import { zipSync,strToU8 } from 'fflate';
+import DOMPurify from 'dompurify';
+import {stripExecutableHtml} from './contentIntegrity';
 const td=new TurndownService({headingStyle:'atx',bulletListMarker:'-'});
 td.addRule('subscript',{filter:'sub',replacement:(content)=>'~'+content+'~'});
 td.addRule('superscript',{filter:'sup',replacement:(content)=>'^'+content+'^'});
 // MathML remains self-contained structured content. External Markdown renderers may vary.
 td.addRule('wordEquation',{filter:(node)=>node.nodeName.toLowerCase()==='math',replacement:(_content,node)=>' '+(node as HTMLElement).outerHTML+' '});
+// CommonMark image syntax has no width/height. Retain approved Word
+// display dimensions as sanitized raw HTML rather than discarding them.
+td.addRule('sizedEmbeddedImage',{
+ filter:(node)=>node.nodeName.toLowerCase()==='img' && (node as HTMLElement).hasAttribute('width'),
+ replacement:(_content,node)=>' '+(node as HTMLElement).outerHTML+' '
+});
 // Keep imported table geometry in standard Markdown's raw-HTML extension.
 td.addRule('embeddedTable',{filter:'table',replacement:(_content,node)=>'\n\n'+(node as HTMLElement).outerHTML+'\n\n'});
-function md(html:string):string{return td.turndown(html||'').trim();}
+function md(html:string):string{const safe=stripExecutableHtml(html||'');return td.turndown(typeof DOMPurify.sanitize==='function'?DOMPurify.sanitize(safe):safe).trim();}
 function answerFor(q:RenderedQuestion):string {
   if(q.type==='singleChoice'||q.type==='multipleSelect') {
     const letters=q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):null).filter(Boolean);

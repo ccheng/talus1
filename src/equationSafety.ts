@@ -9,6 +9,13 @@ export function equationIntegrityWarnings(html:string):string[]{
  const visible=html.replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/gi,' ').replace(/\s+/g,' ');
  if(/Word\s+equation\s+requires\s+manual\s+review/i.test(visible))
   warnings.push('unresolved Word equation placeholder; repair the equation before generating');
+ // MathML fragments without a <math> root are not ordinary text:
+ // browsers and Markdown converters may flatten e.g. 19/2 into 192.
+ const unrooted=html.replace(/<math\b[^>]*>[\s\S]*?<\/math>/gi,'');
+ if(/<\/?(?:mfrac|mrow|mn|mi|mo|msup|msub|msubsup|msqrt|mroot|munderover|munder|mover|mtable|mtr|mtd)\b/i.test(unrooted))
+  warnings.push('Unrooted MathML equation fragment: wrap it in a valid <math> element before generating');
+ if((html.match(/<math\b/gi)||[]).length!==(html.match(/<\/math>/gi)||[]).length)
+  warnings.push('Unclosed MathML equation: missing <math> or </math> root');
  const matches=html.matchAll(/<math\b[^>]*>([\s\S]*?)<\/math>/gi);
  for(const match of matches){
   interface MathNode {tag:string; text:string; children:MathNode[]}
