@@ -33,6 +33,7 @@ function ImageView({node,updateAttributes}:NodeViewProps){
 }
 function TableView({node,updateAttributes}:NodeViewProps){
  const [open,setOpen]=useState(false);
+ const [warning,setWarning]=useState('');
  const html=String(node.attrs.html||'');
  const table=dom(html);
  const rows=Array.from(table?.querySelectorAll('tr')||[]);
@@ -42,7 +43,21 @@ function TableView({node,updateAttributes}:NodeViewProps){
   const row=next.querySelectorAll('tr')[ri];
   const cell=row?.querySelectorAll('td,th')[ci];
   if(!cell)return;
-  cell.textContent=value;
+  const rich=!!cell.querySelector('img,math,table,strong,b,em,i,sub,sup,svg');
+  const prior=cell.textContent||'';
+  if(rich){
+   // A normal text-field replacement must never flatten a protected image,
+   // MathML, chemical script or formatting span.
+   if(!value.startsWith(prior)){
+    setWarning('Rich table cell content is protected. You can append plain text without affecting its media or formatting; use Advanced HTML source for intentional restructuring.');
+    return;
+   }
+   const suffix=value.slice(prior.length);
+   if(suffix)cell.appendChild(next.ownerDocument.createTextNode(suffix));
+   // Typing backspace in a rich-cell field is deliberately refused rather
+   // than silently deleting an equation or illustration.
+  }else cell.textContent=value;
+  setWarning('');
   updateAttributes({html:clean(next.outerHTML)});
  }
  return <NodeViewWrapper className="talus-rich-table" data-type="talus-table">
@@ -50,7 +65,8 @@ function TableView({node,updateAttributes}:NodeViewProps){
   <button type="button" className="secondary rich-node-control" contentEditable={false} onClick={()=>setOpen(x=>!x)}
    aria-label="Edit table 1">Edit table cells</button>
   {open&&<div contentEditable={false} className="rich-node-panel rich-table-grid">
-   <div className="help">Edit individual table cells. Merged cells and geometry are preserved.</div>
+   <div className="help">Edit ordinary cells directly. Rich cells allow safe text appended after existing images, equations and formatting. Structural replacement requires Advanced HTML source.</div>
+   {warning&&<div role="alert" className="import-flag">{warning}</div>}
    <div className="rich-table-input-grid">{rows.map((row,ri)=><div className="rich-table-input-row" key={ri}>
     {Array.from(row.querySelectorAll('td,th')).map((cell,ci)=><label key={ci}>
      
