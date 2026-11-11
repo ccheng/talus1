@@ -141,3 +141,63 @@ test('2C1-01 follow-up: editing a rich Word source never silently downgrades it 
  await expect(page.getByText('Unresolved source-level import warnings')).toBeVisible();
  await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
 });
+
+test('Work retest lock: original-style D five PNGs/two tables survive all six exports and JSON restore',async({page})=>{
+ await upload(page,'D-complex.docx',D);
+ const original=await page.locator('.import-source-rich img').evaluateAll(images=>images.map(i=>(i as HTMLImageElement).src));
+ const richTables=await page.locator('.import-source-rich table').evaluateAll(tables=>tables.map(t=>(t as HTMLElement).textContent));
+ expect(original).toHaveLength(5);
+ expect(richTables).toHaveLength(2);
+ await page.getByRole('button',{name:'Detect sections and questions'}).click();
+ await accept(page);
+ await page.locator('.rightbar').getByLabel('Number of versions').fill('6');
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ for(const label of 'ABCDEF'){
+  await page.getByRole('combobox',{name:'Version'}).selectOption({label:'Version '+label});
+  expect(await page.locator('.print-page img').evaluateAll(images=>images.map(i=>(i as HTMLImageElement).src))).toEqual(original);
+  expect(await page.locator('.print-page table').evaluateAll(tables=>tables.map(t=>(t as HTMLElement).textContent))).toEqual(richTables);
+ }
+ const zipEvent=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Download all versions & keys (ZIP)'}).click();
+ const zipPath=await (await zipEvent).path();
+ const archive=(await import('fflate')).unzipSync(new Uint8Array(await readFile(zipPath!)));
+ const files=Object.entries(archive).filter(([name])=>name.endsWith('.md'));
+ expect(files).toHaveLength(12);
+ for(const [,contents] of files){
+  const rendered=Buffer.from(contents).toString('utf8');
+  expect((rendered.match(/data:image\/png;base64,/g)??[])).toHaveLength(5);
+  expect((rendered.match(/<table>/g)??[])).toHaveLength(2);
+  expect(rendered).toContain('Station group G17');
+  expect(rendered).toContain('Final station');
+ }
+});
+
+test('Work retest lock: original Word dimensions scale responsively, never stretch on narrow viewport',async({page})=>{
+ await upload(page,'A-physics.docx',A);
+ await accept(page);
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ const image=page.locator('.print-page img').first();
+ await expect(image).toHaveAttribute('width','288');
+ const wide=await image.evaluate(node=>({width:(node as HTMLImageElement).getBoundingClientRect().width,ratio:(node as HTMLImageElement).getBoundingClientRect().width/(node as HTMLImageElement).getBoundingClientRect().height}));
+ expect(Math.abs(wide.width-288)).toBeLessThan(1);
+ await page.setViewportSize({width:340,height:740});
+ const narrow=await image.evaluate(node=>({width:(node as HTMLImageElement).getBoundingClientRect().width,ratio:(node as HTMLImageElement).getBoundingClientRect().width/(node as HTMLImageElement).getBoundingClientRect().height,parent:(node.parentElement as HTMLElement).getBoundingClientRect().width}));
+ expect(narrow.width).toBeLessThanOrEqual(288);
+ expect(narrow.width).toBeLessThanOrEqual(narrow.parent+1);
+ expect(Math.abs(narrow.ratio-wide.ratio)).toBeLessThan(0.05);
+});
+
+test('Work retest lock: undecodable Word raster warning and placeholder survive actual backup restore',async({page})=>{
+ await upload(page,'L-corrupt-image.docx',L);
+ await accept(page);
+ const event=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Backup JSON'}).click();
+ const bytes=await readFile(await (await event).path()!);
+ const parsed=JSON.parse(bytes.toString('utf8'));
+ expect(JSON.stringify(parsed)).not.toContain('data:image/png;base64,');
+ expect(parsed.importWarnings.join(' ')).toMatch(/could not be decoded/);
+ await page.reload();
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'L-restored.json',mimeType:'application/json',buffer:bytes});
+ await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
+ await expect(page.getByText('Unresolved source-level import warnings')).toBeVisible();
+});
