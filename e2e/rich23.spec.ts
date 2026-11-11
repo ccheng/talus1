@@ -43,10 +43,10 @@ test('2C.3: edit table cell visually, resize image without changing data and ret
  await upload(page);
  await page.getByRole('button',{name:'Edit table 1'}).click();
  await page.getByLabel('Table row 2 column 2').fill('3.5');
- await page.getByRole('button',{name:'Done editing table'}).click();
+ await page.getByRole('button',{name:'Done editing table',exact:true}).click();
  await page.getByRole('button',{name:'Edit image 1'}).click();
  await page.getByLabel('Image width in CSS pixels').fill('200');
- await page.getByRole('button',{name:'Apply image size'}).click();
+ await page.getByRole('button',{name:'Apply image size',exact:true}).click();
  await expect(page.getByRole('textbox',{name:'Question stem',exact:true}).locator('img')).toHaveAttribute('width','200');
  const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Backup JSON'}).click();
  const bytes=await readFile(await (await dl).path()!);
@@ -66,11 +66,11 @@ test('2C.3: equation is protected from ordinary typing and MathML edit rejects m
  const input=page.getByLabel('Equation MathML source');
  await expect(input).toHaveValue(/mfrac/);
  await input.fill('<math><mfrac><mn>9</mn><mrow></mrow></mfrac></math>');
- await page.getByRole('button',{name:'Apply equation'}).click();
+ await page.getByRole('button',{name:'Apply equation',exact:true}).click();
  await expect(page.getByRole('alert')).toContainText(/invalid fraction|empty denominator/i);
  await expect(page.getByRole('textbox',{name:'Question stem',exact:true}).locator('math mfrac')).toHaveCount(1);
  await input.fill(maths.replace('<mn>9</mn>','<mn>12</mn>'));
- await page.getByRole('button',{name:'Apply equation'}).click();
+ await page.getByRole('button',{name:'Apply equation',exact:true}).click();
  await expect(page.getByRole('textbox',{name:'Question stem',exact:true}).locator('math')).toContainText('12');
  await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
  await expect(page.locator('.print-page math')).toContainText('12');
