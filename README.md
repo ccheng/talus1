@@ -1,3 +1,18 @@
+## Milestone 2C.2 final integrity gate — independent retest correction (November 2026)
+
+The independent corrective Work-mode retest found that five of six 2C.2 findings had passed. The remaining release-blocking defect was the ability to generate an invalid student assessment after clicking **I verified these document-level source warnings** on a malformed Word fraction import. The question still contained `[Word equation requires manual review: ...]`.
+
+This release adds **non-dismissible, content-level equation validation** independently of `master.importWarnings`:
+
+- Detect unresolved Word-equation placeholders in stems, reference answers, answer choices, general/section instructions and grouped question content.
+- Inspect embedded MathML for missing or empty fraction operands, script operands and root arguments, including when a JSON backup has no source warnings.
+- Ensure clicking a document-level warning acknowledgement never overrides content integrity validation. Generation remains disabled through refresh and JSON restoration until the offending content is actually corrected.
+- Preserve the intact second (9/4) fraction while blocking the malformed (17 over a missing denominator) question.
+
+**Test-first evidence:** The seven new unit checks failed against the prior release, while 34 older unit checks passed. The corrective changes passed the full unit/browser suite including Playwright reproduction of warning acknowledgement and backup restore. The original `F-malformed.docx` is retained in the independent Work-mode evidence ZIP; the permanent Playwright regression uses a compact OOXML reproduction.
+
+A source-warning acknowledgement is not a substitute for repairing a question. Previously exported corrupt assessments and previously corrupted JSON backups do not repair themselves; users should re-import the original Word document or directly fix the content.
+
 ## Milestone 2C.2 corrective acceptance release (November 2026)
 
 **Test-first evidence:** Six new browser tests reproduced the six independent Work-mode 2C.2 findings and all failed on the original 2C.2 release (red phase). They passed after the corresponding fixes (green phase); the full existing regression suite remains required before GitHub Pages deployment. The automated tests use compact OOXML reproductions of the exact Word constructs identified in the supplied acceptance evidence. Independent final acceptance with the complete original Word documents is still recommended.

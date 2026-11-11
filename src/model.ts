@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { embeddedAssetWarnings } from './media';
+import { equationIntegrityWarnings } from './equationSafety';
 
 export type QuestionType = 'singleChoice' | 'multipleSelect' | 'shortAnswer' | 'writtenResponse';
 export interface Choice { id: string; html: string }
@@ -61,11 +62,12 @@ export function validateMaster(master:MasterTest):string[] {
   if(!master.title.trim()) errors.push('Test title is required.');
   if(master.importWarnings?.length)errors.push('Unresolved imported source warnings: '+master.importWarnings.join('; '));
   if(!master.sections.length) errors.push('At least one section is required.');
-  for(const warning of embeddedAssetWarnings(master.instructions))errors.push('General instructions: '+warning);
+  for(const warning of [...embeddedAssetWarnings(master.instructions),...equationIntegrityWarnings(master.instructions)])errors.push('General instructions: '+warning);
   for(const [si,section] of master.sections.entries()){
     const label='Section '+(si+1);unique(section.id,label);
     if(!section.title.trim()) errors.push(label+' needs a title.');
-    for(const warning of embeddedAssetWarnings(section.instructions))errors.push(label+': '+warning);
+    for(const warning of [...embeddedAssetWarnings(section.instructions),...equationIntegrityWarnings(section.instructions)])errors.push(label+': '+warning);
+    for(const item of section.items)if(item.kind==='group')for(const warning of equationIntegrityWarnings(item.sharedHtml))errors.push(label+' shared question: '+warning);
     if(!section.items.length) errors.push(label+' needs at least one question.');
     for(const slot of slotsOf(section)){
       unique(slot.id,label+' question');
@@ -77,7 +79,7 @@ export function validateMaster(master:MasterTest):string[] {
         if(!hasQuestionContent(v.stem)) errors.push(loc+': prompt is empty.');
         if(v.points!==points) errors.push(loc+': points differ between alternatives.');
         if(v.importWarnings?.length) errors.push(loc+': unresolved import review: '+v.importWarnings.join('; '));
-        for(const html of [v.stem,v.referenceAnswer,...v.choices.map(choice=>choice.html)])for(const warning of embeddedAssetWarnings(html))errors.push(loc+': '+warning);
+        for(const html of [v.stem,v.referenceAnswer,...v.choices.map(choice=>choice.html)])for(const warning of [...embeddedAssetWarnings(html),...equationIntegrityWarnings(html)])errors.push(loc+': '+warning);
         if(isChoiceType(v.type)){
           if(v.choices.length<2) errors.push(loc+': needs at least two choices.');
           const choiceIds=new Set<string>();
