@@ -1,3 +1,18 @@
+## Milestone 2C.2 corrective acceptance release (November 2026)
+
+**Test-first evidence:** Six new browser tests reproduced the six independent Work-mode 2C.2 findings and all failed on the original 2C.2 release (red phase). They passed after the corresponding fixes (green phase); the full existing regression suite remains required before GitHub Pages deployment. The automated tests use compact OOXML reproductions of the exact Word constructs identified in the supplied acceptance evidence. Independent final acceptance with the complete original Word documents is still recommended.
+
+- **2C2-01 (P0):** Preserve explicit OMML delimiter pairs, including absolute-value bars `|...|` and square brackets, rather than replacing all delimiters with parentheses. Grouping and meaning must remain intact.
+- **2C2-02 / 2C2-04 (P0/P1):** Reference-answer parsing now removes only the `Answer:` label while retaining the underlying rich Word HTML. Superscripted scientific exponents and inline MathML with adjacent units survive the review field, answer keys, exports, and backups.
+- **2C2-03 (P0):** Reject incomplete OMML fractions (missing or empty numerator/denominator) and script operands. The importer leaves an actionable placeholder, persists a blocking conversion warning in JSON, and disables generation after reload/restore. Intact neighboring equations continue to import normally.
+- **2C2-05 (P2):** Avoid scrollbars on compact MathML by keeping equation overflow visible; handle genuinely wide content at its parent container.
+- **2C2-06 (P2):** Preserve block/display MathML from Word's `oMathPara` and classify Unicode mathematical minus as an operator (`mo`), rather than an identifier (`mi`).
+- **Additional protection:** Re-detection from intentionally edited plain-text source now explicitly includes Word equations in its media-loss confirmation and blocking warning.
+
+**Coverage:** `e2e/acceptance22-corrective.spec.ts` includes individual Word-style reproductions for each defect, a six-version student/key ZIP integrity test, and persistence of malformed-math blocking warnings across JSON restore. All existing 2C.1 and 2C.2 browser tests still run before release.
+
+**Remaining limitations:** This converter still supports a deliberately constrained OMML subset. Unsupported complex objects require manual correction before generation. External Markdown viewers may render MathML differently, and Word-desktop fidelity remains subject to independent acceptance.
+
 ## Milestone 2C.2 — Scientific notation and Word equations (2026-11)
 
 This milestone adds deterministic preservation of common Word Office Math (OMML) expressions while keeping the whole application client-side:

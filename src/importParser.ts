@@ -74,6 +74,35 @@ function stripPrefix(html:string,pattern:RegExp,plain:string):string{
  if(raw.trim()===plain.trim())return escape(plain.replace(pattern,''));
  return html;
 }
+/**
+ * Remove only the Answer:/Solution: label from a Word rich paragraph.
+ * Taking the plain-text regexp capture silently erased superscripts and OMML
+ * from reference answers, sometimes changing their mathematical meaning.
+ */
+function stripAnswerLabel(html:string):string{
+ const label=/^\s*(?:answer|correct(?:\s+answer)?|key|solution)\s*[:\-]\s*/i;
+ const plain=htmlText(html);
+ const match=label.exec(plain);
+ if(!match)return html;
+ if(!/<[a-z][\s\S]*>/i.test(html)||typeof DOMParser==='undefined')
+  return html.replace(label,'');
+ const doc=new DOMParser().parseFromString('<div id="talus-answer">'+html+'</div>','text/html');
+ const root=doc.getElementById('talus-answer');
+ if(!root)return html;
+ const walker=doc.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+ const nodes:Text[]=[];
+ for(let node=walker.nextNode();node;node=walker.nextNode())nodes.push(node as Text);
+ let remaining=match[0].length;
+ for(const node of nodes){
+  if(remaining<=0)break;
+  const content=node.textContent??'';
+  const count=Math.min(remaining,content.length);
+  node.textContent=content.slice(count);
+  remaining-=count;
+ }
+ return remaining===0?root.innerHTML:html;
+}
+
 function isHeader(text:string,next?:SourceLine):boolean{
  const t=text.trim();
  if(!sectionHeader.test(t))return false;
@@ -156,7 +185,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
     if(letters.length&&letters.every(l=>l.toUpperCase().charCodeAt(0)-65<q!.choices.length)){
      q.correct=[...new Set(letters.map(l=>l.toUpperCase().charCodeAt(0)-65))];
     }else q.reviewFlags?.push('Answer '+value+' does not match the detected answer choices');
-   }else q.answer=escape(value);
+   }else q.answer=stripAnswerLabel(line.html);
    continue;
   }
   const choiceMatch=choice.exec(raw);
