@@ -88,3 +88,34 @@ test('2C.2 unsupported Word equation structure produces persistent blocking warn
  const saved=JSON.parse((await readFile(await (await event).path()!)).toString('utf8'));
  expect(saved.importWarnings.join(' ')).toMatch(/Unsupported Word equation structure/i);
 });
+
+test('2C.2 block Word OMML radical and combined sub/superscript survive author text edit and student output',async({page})=>{
+ const compound=docx(p('Advanced Math Review')+p('Section 1: Proficient')+
+  p('1. Evaluate the expression below.')+
+  '<m:oMathPara><m:oMath>'+
+  '<m:sSubSup><m:e>'+mr('a')+'</m:e><m:sub>'+mr('0')+'</m:sub><m:sup>'+mr('2')+'</m:sup></m:sSubSup>'+
+  '<m:rad><m:deg>'+mr('3')+'</m:deg><m:e>'+mr('x')+'</m:e></m:rad>'+
+  '</m:oMath></m:oMathPara>'+p('Answer: Depends on a and x.'));
+ await upload(page,'block-equations.docx',compound);
+ await expect(page.locator('.import-question-toggle')).toHaveCount(1);
+ await expect(page.locator('.import-rendered math')).toHaveCount(1);
+ await expect(page.locator('.import-rendered msubsup')).toHaveCount(1);
+ await expect(page.locator('.import-rendered mroot')).toHaveCount(1);
+ page.on('dialog',d=>d.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ const editor=page.locator('.rich-media-editor textarea').first();
+ await expect(editor).toContainText('<math');
+ const html=await editor.inputValue();
+ await editor.fill(html.replace('Evaluate the expression','Compute the expression'));
+ await expect(page.locator('.rich-media-preview math')).toHaveCount(1);
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ await expect(page.locator('.print-page mroot')).toHaveCount(1);
+ await expect(page.locator('.print-page msubsup')).toHaveCount(1);
+ const dl=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Student Markdown'}).click();
+ const md=await readFile(await (await dl).path()!,'utf8');
+ expect(md).toContain('<mroot>');
+ expect(md).toContain('<msubsup>');
+ expect(md).toContain('Compute the expression');
+});
