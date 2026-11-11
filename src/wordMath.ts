@@ -7,6 +7,15 @@ const children=(node:Element)=>Array.from(node.children).filter(x=>x.namespaceUR
 const child=(node:Element,name:string)=>children(node).find(x=>x.localName===name);
 const inner=(node?:Element):string=>node?children(node).map(render).join(''):'';
 const wrap=(s:string)=>'<mrow>'+s+'</mrow>';
+/** Reject missing or visually empty required OMML operands instead of synthesizing MathML blanks. */
+function required(node:Element,name:string):string{
+ const part=child(node,name);
+ if(!part)throw Error('Incomplete Word equation: missing '+name+' operand in '+node.localName);
+ const rendered=inner(part);
+ if(!rendered.replace(/<[^>]*>/g,'').trim())throw Error('Incomplete Word equation: empty '+name+' operand in '+node.localName);
+ return wrap(rendered);
+}
+
 
 function render(node:Element):string{
  const name=node.localName;
@@ -17,19 +26,34 @@ function render(node:Element):string{
   if(!content)return '';
   const t=esc(content);
   if(/^[0-9.,]+$/.test(content))return '<mn>'+t+'</mn>';
-  if(/^[+\-=×÷±∓<>≤≥∑∏∞(){}\[\],.]+$/.test(content))return '<mo>'+t+'</mo>';
+  if(/^[+\-=−×÷±∓<>≤≥≠≈∑∏∞(){}\[\],.|→⇒]+$/.test(content))return '<mo>'+t+'</mo>';
   return '<mi>'+t+'</mi>';
  }
  if(['num','den','e','sup','sub','deg','lim','fName','oMath','oMathPara'].includes(name))return inner(node);
- if(name==='f')return '<mfrac>'+wrap(inner(child(node,'num')))+wrap(inner(child(node,'den')))+'</mfrac>';
- if(name==='sSup')return '<msup>'+wrap(inner(child(node,'e')))+wrap(inner(child(node,'sup')))+'</msup>';
- if(name==='sSub')return '<msub>'+wrap(inner(child(node,'e')))+wrap(inner(child(node,'sub')))+'</msub>';
- if(name==='sSubSup')return '<msubsup>'+wrap(inner(child(node,'e')))+wrap(inner(child(node,'sub')))+wrap(inner(child(node,'sup')))+'</msubsup>';
+ if(name==='f')return '<mfrac>'+required(node,'num')+required(node,'den')+'</mfrac>';
+ if(name==='sSup')return '<msup>'+required(node,'e')+required(node,'sup')+'</msup>';
+ if(name==='sSub')return '<msub>'+required(node,'e')+required(node,'sub')+'</msub>';
+ if(name==='sSubSup')return '<msubsup>'+required(node,'e')+required(node,'sub')+required(node,'sup')+'</msubsup>';
  if(name==='rad'){
-  const value=wrap(inner(child(node,'e'))),deg=inner(child(node,'deg'));
+  const value=required(node,'e'),deg=inner(child(node,'deg'));
+  if(child(node,'deg')&&!deg.trim()&&child(child(node,'radPr')??node,'degHide')?.getAttributeNS(M,'val')!=='1')throw Error('Incomplete Word equation: empty root degree');
   return deg?'<mroot>'+value+wrap(deg)+'</mroot>':'<msqrt>'+value+'</msqrt>';
  }
- if(name==='d')return '<mrow><mo>(</mo>'+children(node).filter(x=>x.localName==='e').map(render).join('<mo>,</mo>')+'<mo>)</mo></mrow>';
+ if(name==='d'){
+  const props=child(node,'dPr');
+  // Word stores semantic delimiter choices under m:dPr, not as text.
+  const beginning=props?child(props,'begChr')?.getAttributeNS(M,'val'):null;
+  const ending=props?child(props,'endChr')?.getAttributeNS(M,'val'):null;
+  const separator=props?child(props,'sepChr')?.getAttributeNS(M,'val'):null;
+  const args=children(node).filter(x=>x.localName==='e');
+  if(!args.length)throw Error('Incomplete Word equation: delimiter has no operand');
+  const beg=beginning===null||beginning===undefined?'(':beginning;
+  const end=ending===null||ending===undefined?')':ending;
+  const sep=separator===null||separator===undefined?',':separator;
+  return '<mrow>'+(beg?'<mo stretchy="true">'+esc(beg)+'</mo>':'')+
+   args.map(e=>{const value=inner(e);if(!value.replace(/<[^>]*>/g,'').trim())throw Error('Incomplete Word equation: empty delimiter operand');return wrap(value);}).join(sep?'<mo>'+esc(sep)+'</mo>':'')+
+   (end?'<mo stretchy="true">'+esc(end)+'</mo>':'')+'</mrow>';
+ }
  if(name==='func')return '<mrow>'+inner(child(node,'fName'))+wrap(inner(child(node,'e')))+'</mrow>';
  if(name==='limLow')return '<munder>'+wrap(inner(child(node,'e')))+wrap(inner(child(node,'lim')))+'</munder>';
  if(name==='limUpp')return '<mover>'+wrap(inner(child(node,'e')))+wrap(inner(child(node,'lim')))+'</mover>';
@@ -69,7 +93,7 @@ export function prepareWordMath(buffer:ArrayBuffer):WordMathResult{
   try{
    const math=wrap(inner(node));
    if(!math.replace(/<[^>]+>/g,'').trim())throw Error('Empty Word equation content');
-   equations[marker]='<math xmlns="http://www.w3.org/1998/Math/MathML" aria-label="Imported Word equation">'+math+'</math>';
+   equations[marker]='<math xmlns="http://www.w3.org/1998/Math/MathML"'+(block?' display="block"':'')+' aria-label="Imported Word equation">'+math+'</math>';
   }catch(e){
    const issue=String(e instanceof Error?e.message:e);
    warnings.push(issue+' (equation '+index+'). Recreate or replace the equation before generating.');
