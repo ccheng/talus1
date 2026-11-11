@@ -39,7 +39,7 @@ test('2C.2 Word OMML fractions/powers and styled scientific symbols survive six 
  await expect(page.locator('.import-rendered msup')).toHaveCount(1);
  await page.locator('.import-question-toggle').last().click();
  await expect(page.locator('.import-rendered sub')).toContainText('2');
- await expect(page.locator('.import-rendered sup')).toContainText('2+');
+ await expect(page.locator('.import-rendered sup').first()).toHaveText('2+');
  await expect(page.locator('.import-rendered')).toContainText('ΔE');
  await expect(page.locator('.import-review .panel-heading span')).toContainText('0 warnings');
  page.on('dialog',d=>d.accept());
