@@ -7,7 +7,7 @@ const td=new TurndownService({headingStyle:'atx',bulletListMarker:'-'});
 td.addRule('subscript',{filter:'sub',replacement:(content)=>'~'+content+'~'});
 td.addRule('superscript',{filter:'sup',replacement:(content)=>'^'+content+'^'});
 // MathML remains self-contained structured content. External Markdown renderers may vary.
-td.addRule('wordEquation',{filter:'math',replacement:(_content,node)=>' '+(node as HTMLElement).outerHTML+' '});
+td.addRule('wordEquation',{filter:(node)=>node.nodeName.toLowerCase()==='math',replacement:(_content,node)=>' '+(node as HTMLElement).outerHTML+' '});
 // Keep imported table geometry in standard Markdown's raw-HTML extension.
 td.addRule('embeddedTable',{filter:'table',replacement:(_content,node)=>'\n\n'+(node as HTMLElement).outerHTML+'\n\n'});
 function md(html:string):string{return td.turndown(html||'').trim();}
