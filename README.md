@@ -1,3 +1,19 @@
+## Milestone 2C.3 — Rich-content review and visual editing (November 2026)
+
+Talus now offers a visual editor for rich assessment content imported from Word or HTML. Instead of forcing teachers to rewrite an entire rich question as HTML, it uses TipTap/ProseMirror atomic nodes for embedded illustrations, table structures and MathML equations:
+
+- **Question text:** Edit prose before, between and after images, tables or equations directly on the page, with familiar text-formatting commands. Atomic media nodes remain intact during nearby typing and question reordering.
+- **Images:** Embedded images display at their imported Word sizes, stay browser-local as original raster data URIs, and support a width-in-CSS-pixels control with aspect-ratio-preserving resizing. No external upload service is used.
+- **Tables:** Tables render visibly and expose a cell editor for adjusting individual cell text. Their existing rows, merged cell geometry and remaining HTML are preserved. This milestone does not add arbitrary row/column insertion or full Word table styling.
+- **Equations:** MathML renders visibly as a protected node. A controlled markup editor allows intentional changes with validation of malformed fractions, scripts and radicals. Invalid changes are rejected; typing around a formula cannot silently flatten or delete it.
+- **Import review:** Rich question prompts, reference answers, mathematical answer choices and rich section instructions support the same visual editing controls before acceptance. Original source and parser warnings remain accessible.
+- **Advanced source:** An explicit HTML source field and live preview remain available for complex corrections and backward compatibility.
+- **Persistence:** Rich edits participate in the existing save, refresh, JSON restore, six-version shuffling, Markdown, ZIP and answer-key workflows. MathML fidelity protection and the 2C.2 invalid-equation generation gate remain enforced.
+
+**Tests:** `e2e/rich23.spec.ts` verifies direct visual prose edits preserving original PNG bytes, tables and fraction structure, edited cells and dimensions across JSON restore, invalid equation edits rejected before generation, valid MathML changes in student output, and rich-content review before acceptance. Earlier 2C.1 and 2C.2 regressions still run.
+
+**Known limits:** Complex equation creation uses a guarded MathML field, not a graphical equation-builder palette. Advanced HTML edits require deliberate care; unsupported Word equation structures still block generation. There is no server-side Word DOCX export yet (Milestone 3). Independent Work-mode testing against varied real classroom DOCX layouts is recommended before formally accepting 2C.3.
+
 ## Milestone 2C.2 final integrity gate — independent retest correction (November 2026)
 
 The independent corrective Work-mode retest found that five of six 2C.2 findings had passed. The remaining release-blocking defect was the ability to generate an invalid student assessment after clicking **I verified these document-level source warnings** on a malformed Word fraction import. The question still contained `[Word equation requires manual review: ...]`.
