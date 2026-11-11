@@ -183,6 +183,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
        <button className="danger" disabled={draft.sections.length===1} onClick={()=>{const at=draft.sections.findIndex(x=>x.id===s.id);const dest=draft.sections[at===0?1:at-1];if(!window.confirm('Remove '+s.title+'? Its '+s.questions.length+' question(s) will move to '+dest.title+'.'+(s.instructions?' Section instructions will be discarded.':'')))return;modify(d=>{const index=d.sections.findIndex(x=>x.id===s.id);const target=d.sections[index===0?1:index-1];target.questions.push(...d.sections[index].questions);d.sections.splice(index,1);});}}>Remove section (move questions)</button>
       </div>
       <label>Section instructions<textarea rows={2} aria-label={'Section '+(si+1)+' instructions'} value={s.instructions} onChange={e=>updateSection(s.id,'instructions',e.target.value)}/></label>
+      {/<(?:img|table|math|sup|sub|strong|em)\b/i.test(s.instructions)&&<RichEditor placeholder="Review section instructions visually" value={s.instructions} onChange={html=>updateSection(s.id,'instructions',html)}/>}
       {s.questions.map((q,qi)=>{
        const flags=reviewWarnings({title:'',format:'plain',source:'',lines:[],sections:[{...s,questions:[q]}],warnings:[]});
        if(filter==='warnings'&&!flags.length)return null;
@@ -207,6 +208,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
           <label title="Correct answer"><input aria-label={'Correct '+String.fromCharCode(65+i)} type={q.type==='singleChoice'?'radio':'checkbox'} name={'correct-'+q.id} checked={q.correct.includes(i)} onChange={e=>updateQuestion(q.id,q=>{q.correct=q.type==='singleChoice'?[i]:e.target.checked?[...q.correct,i]:q.correct.filter(j=>j!==i);})}/></label>
           <span>{String.fromCharCode(65+i)}.</span>
           <input aria-label={'Choice '+String.fromCharCode(65+i)} value={choice} onChange={e=>updateQuestion(q.id,q=>{q.choices[i]=e.target.value;})}/>
+          {/<(?:img|table|math|sup|sub|strong|em)\b/i.test(choice)&&<RichEditor placeholder={'Review choice '+String.fromCharCode(65+i)+' visually'} value={choice} onChange={html=>updateQuestion(q.id,q=>{q.choices[i]=html;})}/>}
           <button className="danger" aria-label={'Remove choice '+String.fromCharCode(65+i)} onClick={()=>updateQuestion(q.id,q=>{q.choices.splice(i,1);q.correct=q.correct.filter(x=>x!==i).map(x=>x>i?x-1:x);})}>×</button>
          </div>)}
          <button className="secondary" onClick={()=>updateQuestion(q.id,q=>{q.choices.push('');})}>+ Choice</button>
