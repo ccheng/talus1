@@ -42,6 +42,16 @@ test('2C2-03 P0: incomplete OMML fraction blocks generation, neighboring fractio
  await expect(page.locator('.import-rendered')).toContainText('Word equation requires manual review');
  await accept(page);
  await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
+ const download=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Backup JSON'}).click();
+ const {readFile}=await import('node:fs/promises');
+ const backup=await readFile(await (await download).path()!);
+ const restored=JSON.parse(backup.toString('utf8'));
+ expect(restored.importWarnings.join(' ')).toMatch(/missing den operand/i);
+ await page.reload();
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'F-restored.json',mimeType:'application/json',buffer:backup});
+ await expect(page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true})).toBeDisabled();
+ await expect(page.getByText('Unresolved source-level import warnings')).toBeVisible();
 });
 test('2C2-04 P1: inline OMML in a reference answer remains MathML beside unit text',async({page})=>{
  await upload(page,'D-mixed.docx',D);
