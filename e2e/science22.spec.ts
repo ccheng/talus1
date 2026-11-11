@@ -105,7 +105,7 @@ test('2C.2 block Word OMML radical and combined sub/superscript survive author t
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByText('Validation: Ready')).toBeVisible();
  const editor=page.locator('.rich-media-editor textarea').first();
- await expect(editor).toContainText('<math');
+ await expect(editor).toHaveValue(/<math/);
  const html=await editor.inputValue();
  await editor.fill(html.replace('Evaluate the expression','Compute the expression'));
  await expect(page.locator('.rich-media-preview math')).toHaveCount(1);
