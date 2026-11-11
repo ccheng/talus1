@@ -1,3 +1,17 @@
+## Milestone 2C.2 — Scientific notation and Word equations (2026-11)
+
+This milestone adds deterministic preservation of common Word Office Math (OMML) expressions while keeping the whole application client-side:
+
+- **Scientific formatting:** Word superscripts, subscripts, chemical formulas, SI units, powers of ten, Greek letters and Unicode mathematics remain rich HTML through import, authoring, version generation and backup.
+- **Word equations:** The importer converts supported OMML structures to browser-native **MathML**, including fractions, ordinary and combined sub/superscripts, square and indexed roots, simple functions, delimiters, summation-style operators, limits, and equation arrays. Inline and standalone display equations are supported.
+- **Fail-closed handling:** Unsupported or empty equation structures are replaced by visible `[Word equation requires manual review]` placeholders, with actionable source warnings that persist in Talus JSON and prevent generation until explicitly corrected.
+- **Editor integrity:** MathML-bearing questions use the raw HTML editor with a live preview, preventing the existing text-only Tiptap extension set from silently stripping equations. Dedicated visual equation editing belongs to 2C.3.
+- **Exports:** MathML survives student/key browser previews, Markdown and six-version ZIP exports as raw embedded MathML, and JSON backup/restore. External Markdown readers vary in their support for MathML; the Talus print preview is the visual reference.
+
+**Important limitations:** This is a supported deterministic OMML subset, **not full Microsoft Word equation fidelity**. Complex matrices, stacked accents, boxes, advanced stretchy delimiters, specialized formatting, handwritten equations, and arbitrary embedded OLE equation objects may require manual correction. Unsupported structures should never disappear without a warning. Existing plain chemical formulas and mathematical Unicode remain supported.
+
+**Acceptance:** Browser tests upload actual OOXML Word files containing inline and block OMML, fractions, powers, combined subscripts and superscripts, radical expressions, chemical formula markup, Greek symbols and an unsupported equation construct. The tests verify review fidelity, author text edits, six versions, backup/restore, student Markdown and ZIP content, and generation blocking for unsupported elements. Independent Work-mode classroom-document acceptance remains the final release gate.
+
 ## Milestone 2C.1 corrective release — independent acceptance fixes (2026-11-10)
 
 This release uses a documented **red → green** regression workflow against the Work-mode 2C.1 acceptance findings. The five new Chromium tests first failed on the existing app, then passed after the corrections; unit regressions check persistence and proficiency formatting.
