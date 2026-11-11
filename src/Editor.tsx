@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import DOMPurify from 'dompurify';
 
 export function RichEditor({value,onChange,placeholder='Write here…',compact=false}:{value:string;onChange:(html:string)=>void;placeholder?:string;compact?:boolean}){
- if(/<(?:img|table)\b/i.test(value))return <div className="rich-media-editor"><p className="help">This content contains an illustration or table. Review the live preview below. Editing its HTML directly preserves the embedded asset; visual editing is planned for 2C.3.</p><textarea aria-label={placeholder+' HTML source'} rows={5} value={value} onChange={e=>onChange(e.target.value)}/><div className="rich-media-preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(value)}}/></div>;
+ if(/<(?:img|table|math)\b/i.test(value))return <div className="rich-media-editor"><p className="help">This content contains an illustration, table, or equation. Review the live preview below. Editing its HTML directly preserves the embedded asset; visual editing is planned for 2C.3.</p><textarea aria-label={placeholder+' HTML source'} rows={5} value={value} onChange={e=>onChange(e.target.value)}/><div className="rich-media-preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(value)}}/></div>;
  return <RichTextTiptap value={value} onChange={onChange} placeholder={placeholder} compact={compact}/>;
 }
 function RichTextTiptap({value,onChange,placeholder,compact}:{value:string;onChange:(html:string)=>void;placeholder:string;compact:boolean}){

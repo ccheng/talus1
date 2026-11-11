@@ -16,3 +16,8 @@
 @media print{.print-page img{max-height:8in;break-inside:avoid}.print-page tr{break-inside:avoid}}
 
 .import-source-rich{padding:12px;border:1px solid #d7e1ec;border-radius:6px;background:white;overflow-x:auto;max-height:550px;overflow-y:auto}.import-source-rich img{max-width:100%;height:auto}.import-source-rich table{border-collapse:collapse;max-width:100%}.import-source-rich td,.import-source-rich th{border:1px solid #77899e;padding:6px 9px}.import-original details summary{font-size:12px;cursor:pointer;margin-top:12px}
+
+/* 2C.2 portable MathML and scientific notation */
+.import-rendered math,.rich-media-preview math,.print-page math,.import-source-rich math{display:inline-block;max-width:100%;vertical-align:middle;font-size:1.08em;overflow-x:auto}
+.import-rendered sub,.rich-media-preview sub,.print-page sub,.import-rendered sup,.rich-media-preview sup,.print-page sup{line-height:0}
+@media print{.print-page math{break-inside:avoid}}

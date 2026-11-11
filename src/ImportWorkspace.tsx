@@ -5,6 +5,7 @@ import {marked} from 'marked';
 import {parseText,parseHtml,parseLines,textLines,reviewWarnings,wordConversionWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
 import type {MasterTest,QuestionType} from './model';
 import {inspectImportedMedia,applyWordImageDimensions} from './media';
+import {prepareWordMath,restoreWordMath} from './wordMath';
 
 const uid=()=>crypto.randomUUID();
 const asHtml=(value:string)=>value.includes('<')?value:'<p>'+value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p>';
@@ -49,17 +50,18 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
   try{
    if(/\.docx$/i.test(file.name)){
     const wordBytes=await file.arrayBuffer();
+    const math=prepareWordMath(wordBytes);
     const doc=await mammoth.convertToHtml(
-      {arrayBuffer:wordBytes},
+      {arrayBuffer:math.arrayBuffer},
       {convertImage:mammoth.images.imgElement(async image=>({
         src:'data:'+image.contentType+';base64,'+await image.read('base64')
       }))}
     );
-    const media=await inspectImportedMedia(applyWordImageDimensions(doc.value,wordBytes));
+    const media=await inspectImportedMedia(restoreWordMath(applyWordImageDimensions(doc.value,wordBytes),math.equations));
     const checkedHtml=DOMPurify.sanitize(media.html);
     setSourcePreviewHtml(checkedHtml);
     const parsed=parseHtml(checkedHtml,title,'docx');
-    parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings);
+    parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings,...math.warnings);
     setRichSource({originalText:parsed.source,hasMedia:media.imageCount>0||media.tableCount>0,format:'docx'});
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
