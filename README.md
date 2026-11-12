@@ -1,3 +1,19 @@
+## Milestone 3B.1 corrective release v0.3.3 — independent acceptance pagination fixes
+
+The independent 3B.1 Work-mode report (2026-11-12) failed the initial professional Word default layout on **four P1 pagination issues** and **one P2 alignment issue**. All 12 student/key exports retained their mathematics, images, editable tables, correct answers, and source data, and the 3A corrective fixes remained intact.
+
+The corrective implementation addresses:
+
+- **3B1-01 (P1):** Do not export empty imported section-instruction paragraphs (especially `<p></p>`) between section headings and their first question. The heading style's keep-with-next can then bind to substantive content.
+- **3B1-02 (P1):** Use direct `w:keepNext` on question stems and a bounded keep chain for compact (2–5 choice) multiple-choice groups, including the answer on key versions. Longer choice sets remain breakable.
+- **3B1-03 (P1):** Recognize first-row headers in source Word tables built from `<td>` as well as `<th>`, repeat the header when continuing on another page, and chain paragraphs across rows in small (at most five-row) tables to keep them together where space permits. Preserve original rowspan, colspan, media and equations.
+- **3B1-04 (P1):** Place response space in question-number-labelled chunks of up to four lines. Each chunk has a keep-with-next label and chained lines; long written responses can still paginate, but without pages of contextless underscored lines. Apply explicit keep-with-next to the question stem to attach at least its first subsequent content block.
+- **3B1-05 (P2):** Center isolated image elements and image-only paragraphs (including image nodes inside spans) consistently. Prose-only edits and alternative normalization no longer change equivalent figure alignment.
+
+**Regression coverage:** `e2e/acceptance3b1-corrective.spec.ts` checks all five findings across a six-version Word ZIP, retaining original and prose-edited Lab alternatives, compact merged tables, four-choice items, blank imported section instructions, response lines and embedded image bytes. The complete 2C through 3B.1 Vitest/Playwright suite remains the deployment gate.
+
+**Scope and final gate:** These are OOXML-level pagination controls; page breaks depend on the actual Word/Writer layout engine and installed fonts. Local LibreOffice render checks of representative 0.3.2 outputs patched with equivalent rules showed orphan headings and short table fragments moving onto the appropriate pages. Independent Work-mode retesting against the **original Science-Rich-Editing.docx** and all 12 new exports remains mandatory for accepting 3B.1. Previously downloaded bad documents must be regenerated. This release does not promise exact page-for-page source Word formatting.
+
 ## Milestone 3B.1 — Professional default editable Word layout (November 2026)
 
 Talus Word exports now use **consistent classroom-ready default formatting** without adding new per-teacher options:
