@@ -1,5 +1,6 @@
-import {test,expect} from '@playwright/test';
+import {test,expect,type Page} from '@playwright/test';
 import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
 import {unzipSync,strFromU8} from 'fflate';
 const PNG='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
 const img='data:image/png;base64,'+PNG;
@@ -13,11 +14,14 @@ const master={schemaVersion:1,id:'3a-original-acceptance-fixture',title:'Summati
 {id:'lab-wrapped',type:'shortAnswer',stem:wrapped,choices:[],correctChoiceIds:[],referenceAnswer:'12',points:2,shuffleChoices:true},
 {id:'lab-normalized',type:'shortAnswer',stem:topLevel,choices:[],correctChoiceIds:[],referenceAnswer:'12',points:2,shuffleChoices:true}
 ]}]}]};
-async function batch(page:import('@playwright/test').Page,input=master){
+async function batch(page:Page,input=master){
  await page.goto('./');page.on('dialog',d=>d.accept());
  await page.locator('.header-actions input[type=file]').setInputFiles({name:'independent-3a.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))});
  await expect(page.getByText('Validation: Ready')).toBeVisible();
  await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ return downloadWordBatch(page);
+}
+async function downloadWordBatch(page:Page){
  const download=page.waitForEvent('download');
  await page.getByRole('button',{name:/Word.*DOCX.*ZIP/i}).click();
  return unzipSync(new Uint8Array(await readFile(await(await download).path()!)));
@@ -49,30 +53,81 @@ test('3A-01 P0: native summation has exact nonempty k operand in all six student
   }
  }
 });
-test('3A-02 P0: paragraph wrapped and top-level tables retain native rows, columns and image cell association',async({page})=>{
- const pack=await batch(page);
- for(const label of 'ABCDEF')for(const suffix of ['.docx','-key.docx']){
-  const xml=doc(pack,'-V'+label+suffix);
-  const result=await page.evaluate(xml=>{
-   const tree=new DOMParser().parseFromString(xml,'application/xml');
-   const tables=Array.from(tree.getElementsByTagName('*')).filter(n=>n.localName==='tbl');
-   const t=tables.find(n=>n.textContent?.includes('Instrument'));
-   const rows=Array.from(t?.children||[]).filter(n=>n.localName==='tr');
-   const cellCounts=rows.map(r=>Array.from(r.children).filter(n=>n.localName==='tc').length);
-   const image=Array.from(t?.getElementsByTagName('*')||[]).find(n=>n.localName==='drawing');
-   return {tables:tables.length,rows:rows.length,cellCounts,inCell:image?.parentElement?.closest?.('w\\:tc')!==null,
-      imageWithinCell:!!image&&!!Array.from(t?.getElementsByTagName('*')||[]).find(n=>n.localName==='tc'&&Array.from(n.getElementsByTagName('*')).includes(image)),
-      content:t?.textContent||''};
-  },xml);
-  expect(result.tables).toBe(1);
-  expect(result.rows).toBe(3);
-  expect(result.cellCounts).toEqual([3,3,3]);
-  expect(result.imageWithinCell).toBe(true);
-  expect(result.content).toContain('Time (s)');
-  expect(result.content).toContain('Position (m)');
-  expect(result.content).toContain('Instrument');
+async function inspectLab(page:Page, parts:Record<string,Uint8Array>){
+ const documentXml=strFromU8(parts['word/document.xml']);
+ const relationshipsXml=strFromU8(parts['word/_rels/document.xml.rels']);
+ const result=await page.evaluate(({documentXml,relationshipsXml})=>{
+  const w='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const m='http://schemas.openxmlformats.org/officeDocument/2006/math';
+  const a='http://schemas.openxmlformats.org/drawingml/2006/main';
+  const r='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(documentXml,'application/xml');
+  const rels=parser.parseFromString(relationshipsXml,'application/xml');
+  const children=(e:Element|undefined,ns:string,name:string)=>
+   Array.from(e?.children??[]).filter(n=>n.namespaceURI===ns&&n.localName===name);
+  const tables=Array.from(doc.getElementsByTagNameNS(w,'tbl'));
+  const lab=tables.find(t=>t.textContent?.includes('Instrument'));
+  const rows=children(lab,w,'tr').map(row=>children(row,w,'tc'));
+  const cells=rows.map(row=>row.map(cell=>Array.from(cell.getElementsByTagNameNS(w,'t')).map(t=>t.textContent).join('')));
+  const drawings=rows.map(row=>row.map(cell=>cell.getElementsByTagNameNS(w,'drawing').length));
+  const embed=rows[1]?.[2]?.getElementsByTagNameNS(a,'blip')[0]?.getAttributeNS(r,'embed');
+  const target=Array.from(rels.getElementsByTagNameNS('*','Relationship')).find(rel=>rel.getAttribute('Id')===embed)?.getAttribute('Target');
+  const sums=Array.from(doc.getElementsByTagNameNS(m,'nary')).map(n=>({
+   operand:children(n,m,'e')[0]?.textContent,
+   lower:children(n,m,'sub')[0]?.textContent,
+   upper:children(n,m,'sup')[0]?.textContent,
+   detached:n.nextElementSibling?.namespaceURI===m&&n.nextElementSibling.localName==='r'&&n.nextElementSibling.textContent==='k',
+  }));
+  return {cells,drawings,target,sums,alternate:doc.documentElement.textContent?.includes('QA Lab alternate:')};
+ },{documentXml,relationshipsXml});
+ expect(result.cells).toEqual([
+  ['Time (s)','Position (m)','Instrument'],
+  ['2','8',''],
+  ['5','20','Laser'],
+ ]);
+ expect(result.drawings).toEqual([[0,0,0],[0,0,1],[0,0,0]]);
+ expect(result.sums).toEqual([{operand:'k',lower:'k=1',upper:'4',detached:false}]);
+ expect(result.target).toMatch(/^media\//);
+ const image=parts['word/'+result.target];
+ expect(image).toBeDefined();
+ return {image:Buffer.from(image),alternate:result.alternate};
+}
+
+test('3A original Word fixture: native sum and exact Lab cells and image survive in every version',async({page})=>{
+ const fixture=fileURLToPath(new URL('./fixtures/Science-Rich-Editing.docx',import.meta.url));
+ const source=await inspectLab(page,unzipSync(new Uint8Array(await readFile(fixture))));
+ await page.goto('./');
+ page.on('dialog',d=>d.accept());
+ await page.getByRole('button',{name:'Import assessment',exact:true}).click();
+ await page.getByLabel('Upload assessment',{exact:true}).setInputFiles(fixture);
+ await expect(page.getByRole('textbox',{name:'Imported assessment title'})).toHaveValue('Talus Rich Content Acceptance');
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ await page.getByRole('button',{name:/^Section 4: Lab Analysis/}).click();
+ await page.getByRole('button',{name:'+ Copy alternative',exact:true}).click();
+ const stem=page.getByRole('textbox',{name:'Question stem',exact:true});
+ await stem.press('Control+Home');
+ await stem.pressSequentially('QA Lab alternate: ');
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.getByRole('spinbutton',{name:'Number of versions',exact:true}).fill('6');
+ await page.getByRole('button',{name:'Generate',exact:true}).click();
+ const pack=await downloadWordBatch(page);
+ const editedVersions:string[]=[];
+ for(const label of 'ABCDEF'){
+  const pair=[];
+  for(const suffix of ['.docx','-key.docx']){
+   const name=Object.keys(pack).find(n=>n.endsWith('-V'+label+suffix));
+   expect(name).toBeDefined();
+   const actual=await inspectLab(page,unzipSync(pack[name!]));
+   expect(actual.image.equals(source.image),name).toBe(true);
+   pair.push(actual.alternate);
+  }
+  expect(pair[1]).toBe(pair[0]);
+  if(pair[0])editedVersions.push(label);
  }
+ expect(editedVersions).toHaveLength(3);
 });
+
 test('3A-01 safety: missing n-ary operand blocks export visibly instead of generating an empty box',async({page})=>{
  const source=JSON.parse(JSON.stringify(master));source.sections[0].items[0].variants[0].stem='<p><math><mrow><munderover><mo>∑</mo><mi>k</mi><mn>4</mn></munderover></mrow></math></p>';
  await page.goto('./');page.on('dialog',d=>d.accept());
