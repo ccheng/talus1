@@ -1,3 +1,27 @@
+## Milestone 3A — Editable Word/DOCX export (November 2026)
+
+The **Versions & answer keys** view now offers **Student Word (.docx)**, **Answer key Word (.docx)**, and **Word/DOCX (ZIP) — all versions & keys**. For a six-version run the ZIP includes **12 editable DOCX documents (student A–F and keyed A–F)** plus a run manifest. All conversion executes client-side through the existing `fflate` package; no server, Word installation, cloud upload, or hosted document service is needed.
+
+### Supported editable structures
+
+- Word-native paragraphs, headings, question numbers, response lines, multiple-choice letters, and per-version correct answers.
+- Imported bold, italic, superscript and subscript spans as editable Word runs. Chemical notation and scientific exponents retain their script positions.
+- Supported MathML to **Office Math (OMML)** conversion: fractions, sub/superscripts, combined scripts, square and indexed radicals, delimiters, and common under/over limits such as summations. These are Word equation objects, **not images of equations**.
+- PNG, JPEG and GIF image payloads embedded in the DOCX media directory, referenced by valid OOXML relationships. Repeated identical data URIs share one embedded media part. Imported or explicitly resized image dimensions are expressed in EMUs for Word.
+- Native Word tables with cell content, numeric measurements, headers, horizontal spans and vertical merges. Images and equations inside table cells use the same editable structures.
+- Independent deterministic version ordering and alternative choices from the existing generator; each key belongs to its own corresponding student form.
+- A single downloadable ZIP for all versions plus manifest and individual DOCX downloads. Markdown and existing ZIP exports remain unchanged.
+
+### Safety and limitations
+
+The exporter validates the master before emitting a DOCX. Unsupported mathematics **fails visibly** rather than flattening or silently dropping a formula. For complex unsupported Office Math and unusual Word structures, repair or simplify the equation first. The built-in `MathML → OMML` converter is intentionally constrained; it is not an exact inverse for every mathematical layout Word can represent.
+
+**3A prioritizes editable, semantically correct files over page-perfect reproduction.** Word and LibreOffice may paginate differently from the browser. Arbitrary cell insertion/deletion, detailed cell shading, complex custom CSS, exact Word themes, advanced typography, live hyperlinks, nested lists, and polished page headers/footers are outside 3A. Imported lists render as editable paragraphs with bullets/numbers. Preserve the original Word assessment when exact appearance matters.
+
+**Verification:** `e2e/docx3a.spec.ts` inspects the ZIP and all DOCX packages in Chromium. It checks six student/key pairs, complete package parts, valid XML, relationship targets, native OMML fractions, superscript/subscript runs, table spans, embedded media and dimensions, answer separation, response space, and fail-closed unsupported equations. The full 2C.1–2C.3 regression suite remains required for deployment.
+
+**Independent acceptance is still required** with actual classroom Word fixtures: render the downloaded DOCX files in Microsoft Word/LibreOffice; confirm equations are editable, measure image sizes, inspect merged-cell geometry, edit and resave a sample, verify all six student/key pairs, and compare the content against the source and Talus preview. Successful CI is not sufficient proof of all Word rendering/editing behaviours.
+
 ## Milestone 2C.3 independent-acceptance corrective release (November 2026)
 
 Independent Work-mode acceptance of 0.2.7 **failed** on eight issues (four P0, three P1, one P2). The original evidence package `Talus-2C3-Acceptance-Evidence.zip` contains Word fixtures, a reproducible audit script, original XML/OMML, browser snapshots and exported student/key files. Its audit script completed successfully and confirmed the reported discrepancies.
