@@ -37,7 +37,7 @@ test('3B.1 defaults: US Letter, consistent 1-inch margins, font/spacing, styled 
   expect(styles).toContain('<w:spacing w:line="276"');
   expect(document).toContain('<w:pStyle w:val="Question"/>');
   expect(document).toContain('<w:pStyle w:val="Choice"/>');
-  expect(document).toContain('<w:keepNext/>');
+  expect(styles).toContain('<w:keepNext/>');
   expect(document).toContain('<w:cantSplit/>');
   expect(document).toContain('<w:tbl>');
   expect(document).toContain('<m:f>');
@@ -55,7 +55,7 @@ test('3B.1 student identification and page-number footer are editable and correc
    expect(main).toContain('<w:footerReference w:type="default"');
    const header=content(z,'word/header1.xml'),footer=content(z,'word/footer1.xml');
    expect(header).toContain('Science 10');
-   expect(header).toContain('Version '+label);
+   expect(header).toContain(suffix==='-key.docx'?'Answer Key '+label:'Version '+label);
    expect(footer).toContain('PAGE');
    if(suffix==='-key.docx'){
     expect(main).not.toContain('Name: __________________');
