@@ -173,7 +173,7 @@ class WordWriter {
   const grid='<w:tblGrid>'+Array.from({length:max},()=>'<w:gridCol w:w="'+Math.floor(9000/Math.max(max,1))+'"/>').join('')+'</w:tblGrid>';
   return '<w:tbl><w:tblPr><w:tblW w:w="9000" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="80" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar><w:tblBorders>'+
    ['top','bottom','left','right','insideH','insideV'].map(x=>'<w:'+x+' w:val="single" w:sz="4" w:color="888888"/>').join('')+
-   '</w:tblBorders></w:tblPr>'+grid+emitted.map(row=>'<w:tr><w:trPr><w:cantSplit/></w:trPr>'+row.cells.map(cell=>{
+   '</w:tblBorders></w:tblPr>'+grid+emitted.map((row,i)=>'<w:tr><w:trPr><w:cantSplit/>'+(i===0&&row.cells.some(cell=>cell.el&&tag(cell.el)==='th')?'<w:tblHeader w:val="true"/>':'')+'</w:trPr>'+row.cells.map(cell=>{
     const props=(cell.span>1?'<w:gridSpan w:val="'+cell.span+'"/>':'')+(cell.merge?'<w:vMerge w:val="'+cell.merge+'"/>':'');
     const body=cell.el?this.blocksFromNodes(Array.from(cell.el.childNodes)):para('');
     const styled=(body||para('')).replace(/<w:p>(?!<w:pPr>)/g,'<w:p><w:pPr><w:pStyle w:val="TableCell"/></w:pPr>');
