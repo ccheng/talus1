@@ -1,3 +1,20 @@
+## Milestone 3B.1 — Professional default editable Word layout (November 2026)
+
+Talus Word exports now use **consistent classroom-ready default formatting** without adding new per-teacher options:
+
+- **Page:** US Letter (8.5 × 11 in), 1-inch top/bottom/left/right margins, header and footer zones, usable content width 6.5 inches.
+- **Typography:** Aptos 11 pt default, 1.15-line spacing, consistent paragraph spacing. Dedicated editable Word styles for title, section headings, question prompts, multiple-choice options, response lines, reference answers, and table cells.
+- **Student identification:** An editable Name / Class / Date line appears in student forms, but not answer keys.
+- **Page navigation:** Running header with title, version and key indicator; dynamic Word PAGE field in the footer. Teacher can edit these elements directly in Word.
+- **Questions and sections:** Consistent question spacing, indentation for choices, heading keep-with-next, question first-line keep-with-next, Word paragraph keep-lines controls, and response-space styles. Pagination is controlled by Word and remains editable.
+- **Tables:** Default borders, cell padding, fixed available width, rows set not to split across pages, and table headers set to repeat on subsequent pages when the source has header cells.
+- **Diagrams:** Standalone images and displayed math are centred. Oversize images are proportionally fitted to the printable page width without modifying or resampling the embedded original image bytes. Embedded images inside table cells remain attached to their editable Word cells.
+- **Safety and fidelity:** Native OMML mathematics, source image data, merged-cell geometry, question alternatives, answer-key correctness and all six DOCX student/key pairs continue through the existing 3A pipeline.
+
+**Limitations:** These are fixed defaults rather than configurable Word templates. Exact pagination, split prevention for arbitrarily large questions, sophisticated anchoring/wrapping, page-specific headers and print-perfect match to the source Word document are not guaranteed. Word and LibreOffice may paginate differently. Fine-grained teacher customization is reserved for Milestone 3B.2.
+
+**Automated checks:** `e2e/docx3b1.spec.ts` validates Word styles, letter pages, field relationships, header/footer contents, student fields, row-split rules, table fidelity, centred images, fit scaling and media byte integrity across student and key documents. The older 3A/2C suites remain mandatory. Independent acceptance must include rendering of Word documents to inspect actual page breaks, edit-save-reopen behaviour and verify nothing semantic was lost.
+
 ## Milestone 3A corrective release v0.3.1 — independent acceptance (November 2026)
 
 The independent Milestone 3A Work-mode acceptance report failed two release-blocking cases, both confirmed in the original Word export evidence.
