@@ -23,8 +23,6 @@ const mathRun=(s:string)=>'<m:r><m:t xml:space="preserve">'+esc(s)+'</m:t></m:r>
 const mathArg=(name:string,contents:string)=>'<m:'+name+'>'+contents+'</m:'+name+'>';
 const children=(e:Element)=>Array.from(e.children);
 const tag=(e:Element)=>e.localName.toLowerCase();
-const content=(e:Element)=>esc(e.textContent||'');
-function nonempty(e:Element){return e.textContent?.trim().length!==0;}
 function mathTree(e:Element):string{
  const t=tag(e), c=children(e), nested=()=>c.map(mathTree).join('');
  if(t==='math'||t==='mrow'||t==='mstyle'||t==='semantics')return nested();
