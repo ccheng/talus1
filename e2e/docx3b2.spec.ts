@@ -47,6 +47,7 @@ test('3B.2 customization affects all Word versions, not keys, question order or 
  await page.getByLabel('Word running header').uncheck();
  await page.getByLabel('Word page numbers').uncheck();
  await page.reload();
+ await page.getByRole('button',{name:/Versions & answer keys/}).click();
  await expect(page.getByLabel('Word paper size')).toHaveValue('a4');
  await expect(page.getByLabel('Word response group size')).toHaveValue('2');
  await expect(page.getByText('Run ID: 1pslge1',{exact:true})).toBeVisible();
