@@ -36,7 +36,7 @@ jobs:
       - name: Install Word pagination test tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libreoffice-writer-nogui poppler-utils fonts-noto-core
+          sudo apt-get install -y --no-install-recommends libreoffice-writer-nogui libreoffice-math-nogui poppler-utils fonts-noto-core
       - name: Run browser regression tests
         run: npm run test:e2e
       - name: Upload Playwright failure evidence
