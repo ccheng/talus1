@@ -87,3 +87,23 @@ test('3A unsupported but syntactically valid MathML is rejected with visible gui
  await page.getByRole('button',{name:/Word.*DOCX.*ZIP/i}).click();
  await expect(page.locator('.notice')).toContainText(/Word export blocked.*manual review/i);
 });
+
+
+test('3A Word tables retain vertical merged cells as editable w:vMerge grid cells',async({page})=>{
+ const sample=JSON.parse(JSON.stringify(base));
+ const v=sample.sections[0].items[0].variants[0];
+ v.stem=v.stem.replace(/<table>[\s\S]*?<\/table>/,
+  '<table><tr><th>Property</th><th>Value</th></tr>'+
+  '<tr><td rowspan="2"><strong>Velocity</strong></td><td>3.50 m/s</td></tr>'+
+  '<tr><td>5.25 m/s</td></tr></table>');
+ await page.goto('./');page.on('dialog',d=>d.accept());
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'merged-table.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(sample))});
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ const pack=await archive(page),name=Object.keys(pack).find(x=>x.endsWith('-VA.docx'))!;
+ const xml=s(unzipSync(pack[name]),'word/document.xml');
+ expect(xml).toContain('<w:vMerge w:val="restart"/>');
+ expect(xml).toContain('<w:vMerge w:val="continue"/>');
+ expect(xml).toContain('3.50 m/s');
+ expect(xml).toContain('5.25 m/s');
+});
