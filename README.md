@@ -1,3 +1,11 @@
+## Milestone 3B.2 — Customizable Word layout
+
+The **Versions & answer keys** screen now has editable, persistent Word layout settings. Defaults exactly match the validated 3B.1 professional layout. Teachers may choose US Letter/A4, 0.5–1.5 inch margins, body font size 9–14 pt, line spacing (1 / 1.15 / 1.5), optional new-page-per-section, 2/4/6 response lines per kept block, and show/hide running headers and page-number footers. **Restore professional defaults** resets every Word layout option.
+
+The options apply consistently to individual student DOCX, answer-key DOCX, and all twelve DOCX files in the generated ZIP. They persist in the normal JSON backup and browser autosave. Export-only layout changes preserve the assessment's original run ID, version shuffle, variants, reference answers, and already-generated versions; re-download Word to pick up changes. Other formats do not inherit these Word-specific options. The ZIP manifest includes the active Word layout to support reproducibility. Native Word elements remain editable.
+
+The original 3B.1 rendered LibreOffice pagination audit remains mandatory. 3B.2 does not promise identical line/page boundaries between Word and LibreOffice or guarantee that extremely tall content can fit on one page. Settings are validated against the allowed ranges, rather than silently clamped.
+
 ## Milestone 3B.1 corrective release v0.3.3 — independent acceptance pagination fixes
 
 The independent 3B.1 Work-mode report (2026-11-12) failed the initial professional Word default layout on **four P1 pagination issues** and **one P2 alignment issue**. All 12 student/key exports retained their mathematics, images, editable tables, correct answers, and source data, and the 3A corrective fixes remained intact.

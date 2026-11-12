@@ -4,8 +4,8 @@
  * Export generated (already validated) versions, never the raw master order.
  */
 import {zipSync,strToU8} from 'fflate';
-import type {MasterTest} from './model';
-import {markLabel,responseLineCount,sectionHeading,validateMaster} from './model';
+import type {MasterTest,WordLayoutSettings} from './model';
+import {markLabel,responseLineCount,sectionHeading,validateMaster,wordLayout} from './model';
 import type {GeneratedVersion,RenderedQuestion} from './generate';
 import {fileBase} from './storage';
 import {stripExecutableHtml} from './contentIntegrity';
@@ -91,6 +91,9 @@ function mathTree(e:Element):string{
 interface Media {path:string;rid:string;mime:string;bytes:Uint8Array}
 class WordWriter {
  media:Media[]=[];private nextDrawing=1;
+ constructor(private readonly layout:WordLayoutSettings){}
+ private get pageWidthInches(){return this.layout.paper==='letter'?8.5:210/25.4;}
+ private get printableWidthPx(){return (this.pageWidthInches-2*this.layout.marginInches)*96;}
  private mediaBySource=new Map<string,Media>();
  private run(body:string,format:{bold?:boolean;italic?:boolean;sub?:boolean;sup?:boolean}={}):string {
   const props=[format.bold?'<w:b/>':'',format.italic?'<w:i/>':'',format.sub?'<w:vertAlign w:val="subscript"/>':'',format.sup?'<w:vertAlign w:val="superscript"/>':''].join('');
@@ -113,7 +116,7 @@ class WordWriter {
   const originalHeight=Math.max(1,Number(e.getAttribute('height')||120));
   // Printable US Letter width at 1-inch margins: 6.5 inches = 624 CSS px.
   // Scale oversize drawings proportionally; never crop or distort their bytes.
-  const scale=Math.min(1,624/originalWidth);
+  const scale=Math.min(1,this.printableWidthPx/originalWidth);
   const width=originalWidth*scale,height=originalHeight*scale;
   const cx=Math.round(width*9525),cy=Math.round(height*9525),id=this.nextDrawing++,alt=esc(e.getAttribute('alt')||'Imported image');
   return '<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
@@ -290,8 +293,9 @@ class WordWriter {
    const count=responseLineCount(q.type,q.responseLines);
    // Each four-line chunk has its own question-number context and is kept
    // together, but longer responses can still continue onto another page.
-   for(let start=0;start<count;start+=4){
-    const size=Math.min(4,count-start);
+   const groupSize=this.layout.responseLinesPerGroup;
+   for(let start=0;start<count;start+=groupSize){
+    const size=Math.min(groupSize,count-start);
     out+=this.plain('Question '+q.number+' — response space'+(start?' (continued)':''),'ResponseLabel')
       .replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
     for(let i=0;i<size;i++){
@@ -307,12 +311,19 @@ class WordWriter {
   if(master.lastGeneration)body+=this.plain('Run ID: '+master.lastGeneration.runId,'Metadata');
   if(!answerKey)body+=this.plain('Name: ______________________________    Class: ______________    Date: ______________','StudentDetails');
   body+=this.html(master.instructions);
-  for(const section of v.sections){
-   body+=this.plain(sectionHeading(section.title,section.proficiency),'Heading1');
+  for(const [index,section] of v.sections.entries()){
+   const heading=this.plain(sectionHeading(section.title,section.proficiency),'Heading1');
+   body+=index>0&&this.layout.sectionPageBreaks
+    ? heading.replace(/<w:pPr>/,'<w:pPr><w:pageBreakBefore/>') : heading;
    body+=this.html(section.instructions);
    for(const q of section.questions)body+=this.question(q,answerKey);
   }
-  body+='<w:sectPr><w:headerReference w:type="default" r:id="rIdHeader"/><w:footerReference w:type="default" r:id="rIdFooter"/><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720"/></w:sectPr>';
+  const paper=this.layout.paper==='letter'?{width:12240,height:15840}:{width:11906,height:16838};
+  const margin=Math.round(this.layout.marginInches*1440);
+  body+='<w:sectPr>'+
+   (this.layout.showHeader?'<w:headerReference w:type="default" r:id="rIdHeader"/>':'')+
+   (this.layout.showPageNumbers?'<w:footerReference w:type="default" r:id="rIdFooter"/>':'')+
+   '<w:pgSz w:w="'+paper.width+'" w:h="'+paper.height+'"/><w:pgMar w:top="'+margin+'" w:right="'+margin+'" w:bottom="'+margin+'" w:left="'+margin+'" w:header="720" w:footer="720"/></w:sectPr>';
   const document='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<w:document xmlns:w="'+NS_W+'" xmlns:r="'+NS_R+'" xmlns:m="'+NS_M+'" xmlns:a="'+NS_A+
    '" xmlns:pic="'+NS_PIC+'" xmlns:wp="'+NS_WP+'"><w:body>'+body+'</w:body></w:document>';
@@ -332,10 +343,12 @@ class WordWriter {
    [...new Set(this.media.map(m=>m.mime))].map(m=>'<Default Extension="'+(m==='image/jpeg'?'jpg':m.split('/')[1])+'" ContentType="'+m+'"/>').join('')+
    '</Types>';
   const style=(id:string,name:string,paragraph:string,run='')=>'<w:style w:type="paragraph" w:styleId="'+id+'"><w:name w:val="'+name+'"/><w:basedOn w:val="Normal"/><w:pPr>'+paragraph+'</w:pPr>'+(run?'<w:rPr>'+run+'</w:rPr>':'')+'</w:style>';
-  const space=(before:number,after:number)=>'<w:spacing w:before="'+before+'" w:after="'+after+'" w:line="276" w:lineRule="auto"/>';
+  const line=Math.round(this.layout.lineSpacing*240);
+  const size=Math.round(this.layout.fontSizePt*2);
+  const space=(before:number,after:number)=>'<w:spacing w:before="'+before+'" w:after="'+after+'" w:line="'+line+'" w:lineRule="auto"/>';
   const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="'+NS_W+'">'+
-   '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Aptos" w:hAnsi="Aptos" w:eastAsia="Aptos"/><w:sz w:val="22"/></w:rPr></w:rPrDefault>'+
-   '<w:pPrDefault><w:pPr><w:spacing w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
+   '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Aptos" w:hAnsi="Aptos" w:eastAsia="Aptos"/><w:sz w:val="'+size+'"/></w:rPr></w:rPrDefault>'+
+   '<w:pPrDefault><w:pPr><w:spacing w:line="'+line+'" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr>'+space(0,80)+'</w:pPr></w:style>'+
    style('Title','Title',space(0,180)+'<w:keepNext/>','<w:b/><w:sz w:val="32"/>')+
    style('Heading1','Section heading',space(220,100)+'<w:keepNext/><w:keepLines/>','<w:b/><w:sz w:val="26"/>')+
@@ -370,7 +383,7 @@ class WordWriter {
 }
 export function versionDocx(master:MasterTest,version:GeneratedVersion,answers=false):Uint8Array{
  const errors=validateMaster(master);if(errors.length)throw Error('DOCX export blocked by validation: '+errors.join('; '));
- return new WordWriter().build(master,version,answers);
+ return new WordWriter(wordLayout(master.wordLayout)).build(master,version,answers);
 }
 export function docxFilename(master:MasterTest,version:GeneratedVersion,answers=false):string{
  return fileBase(master)+'-V'+version.label+(answers?'-key':'')+'.docx';
@@ -378,6 +391,6 @@ export function docxFilename(master:MasterTest,version:GeneratedVersion,answers=
 export function bundleDocx(master:MasterTest,versions:GeneratedVersion[]):Uint8Array{
  const files:Record<string,Uint8Array>={};
  for(const v of versions)for(const key of [false,true])files[docxFilename(master,v,key)]=versionDocx(master,v,key);
- files['generation-manifest.json']=strToU8(JSON.stringify({testId:master.id,title:master.title,generation:master.lastGeneration,format:'editable-docx'},null,2));
+ files['generation-manifest.json']=strToU8(JSON.stringify({testId:master.id,title:master.title,generation:master.lastGeneration,format:'editable-docx',wordLayout:wordLayout(master.wordLayout)},null,2));
  return zipSync(files,{level:6});
 }
