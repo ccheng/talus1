@@ -107,3 +107,27 @@ test('3A Word tables retain vertical merged cells as editable w:vMerge grid cell
  expect(xml).toContain('3.50 m/s');
  expect(xml).toContain('5.25 m/s');
 });
+
+
+test('3A converts roots, combined scripts, absolute delimiters and summation to editable OMML',async({page})=>{
+ const sample=JSON.parse(JSON.stringify(base));
+ const v=sample.sections[0].items[0].variants[0];
+ v.stem+='<p><math><msqrt><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow></msqrt></math> '+
+ '<math><mroot><mn>27</mn><mn>3</mn></mroot></math> '+
+ '<math><msubsup><mi>v</mi><mn>0</mn><mn>2</mn></msubsup></math> '+
+ '<math><mfenced open="|" close="|"><mrow><mo>−</mo><mn>3</mn></mrow></mfenced></math> '+
+ '<math><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mn>4</mn></munderover><mi>i</mi></math></p>';
+ await page.goto('./');page.on('dialog',d=>d.accept());
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'maths3a.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(sample))});
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ const pack=await archive(page),name=Object.keys(pack).find(x=>x.endsWith('-VA.docx'))!;
+ const xml=s(unzipSync(pack[name]),'word/document.xml');
+ expect(xml).toContain('<m:rad>');
+ expect(xml).toContain('<m:degHide m:val="1"/>');
+ expect(xml).toContain('<m:sSubSup>');
+ expect(xml).toContain('<m:begChr m:val="|"/>');
+ expect(xml).toContain('<m:endChr m:val="|"/>');
+ expect(xml).toContain('<m:nary>');
+ expect(xml).toContain('<m:chr m:val="∑"/>');
+});
