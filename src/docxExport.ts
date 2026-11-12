@@ -46,10 +46,12 @@ function mathTree(e:Element):string{
    const lo=t!=='mover'?mathTree(c[1]):'',hi=t==='munderover'?mathTree(c[2]):t==='mover'?mathTree(c[1]):'';
    return '<m:nary><m:naryPr><m:chr m:val="'+esc(base)+'"/><m:limLoc m:val="undOvr"/></m:naryPr>'+mathArg('sub',lo)+mathArg('sup',hi)+mathArg('e','')+'</m:nary>';
   }
-  const form=t==='munder'?'limLow':t==='mover'?'limUpp':'sSubSup';
+  if(t==='munderover')
+   return '<m:sSubSup>'+mathArg('e',mathTree(c[0]))+
+    mathArg('sub',mathTree(c[1]))+mathArg('sup',mathTree(c[2]))+'</m:sSubSup>';
+  const form=t==='munder'?'limLow':'limUpp';
   return '<m:'+form+'>'+mathArg('e',mathTree(c[0]))+
-   (t!=='mover'?mathArg('lim',mathTree(c[1])):'')+
-   (t==='mover'?mathArg('lim',mathTree(c[1])):t==='munderover'?mathArg('sup',mathTree(c[2])):'')+'</m:'+form+'>';
+   mathArg('lim',mathTree(c[1]))+'</m:'+form+'>';
  }
  if(t==='mover'||t==='munder')throw Error('Unsupported mathematical limit structure: '+t);
  if(t==='mtable'||t==='mtr'||t==='mtd'||t==='menclose'||t==='mmultiscripts')throw Error('This equation needs manual review before editable Word export: '+t);
