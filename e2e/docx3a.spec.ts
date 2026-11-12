@@ -61,3 +61,29 @@ test('3A deterministic export preserves version-specific key letters and respons
   expect(b).toContain('________________');
  }
 });
+
+
+test('3A all OPC XML parts are well formed and image relationships resolve',async({page})=>{
+ await setup(page);const pack=await archive(page);
+ for(const [filename,bytes] of Object.entries(pack).filter(([name])=>name.endsWith('.docx'))){
+  const word=unzipSync(bytes);
+  for(const [name,content] of Object.entries(word).filter(([k])=>k.endsWith('.xml')||k.endsWith('.rels'))){
+   const xml=strFromU8(content);
+   const errors=await page.evaluate((raw)=>new DOMParser().parseFromString(raw,'application/xml').getElementsByTagName('parsererror').length,xml);
+   expect(errors,filename+': '+name).toBe(0);
+  }
+  const document=s(word,'word/document.xml'),rels=s(word,'word/_rels/document.xml.rels');
+  for(const match of document.matchAll(/r:embed="(rId\d+)"/g))expect(rels,filename).toContain('Id="'+match[1]+'"');
+  expect(s(word,'word/document.xml')).not.toContain('w:altChunk');
+ }
+});
+test('3A unsupported but syntactically valid MathML is rejected with visible guidance, not omitted',async({page})=>{
+ const sample=JSON.parse(JSON.stringify(base));
+ sample.sections[0].items[0].variants[0].stem='<p>Box this expression: <math><menclose notation="box"><mn>8</mn></menclose></math></p>';
+ await page.goto('./');page.on('dialog',d=>d.accept());
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'unsupported-math.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(sample))});
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ await page.getByRole('button',{name:/Word.*DOCX.*ZIP/i}).click();
+ await expect(page.locator('.notice')).toContainText(/Word export blocked.*manual review/i);
+});
