@@ -1,0 +1,971 @@
+{
+  "schemaVersion": 1,
+  "id": "2951390d-8676-4f48-910a-e63f75457ea8",
+  "title": "Talus Rich Content Acceptance",
+  "instructions": "",
+  "updatedAt": "2026-11-12T15:27:07.064Z",
+  "generationSettings": {
+    "count": 6,
+    "seed": "talus-2026"
+  },
+  "sections": [
+    {
+      "id": "df97eec2-3aeb-4d5f-8937-9e0e6f0af7ca",
+      "title": "Section 1: Chemistry (Base)",
+      "proficiency": "Base",
+      "instructions": "<p></p>",
+      "shuffleQuestions": true,
+      "items": [
+        {
+          "kind": "slot",
+          "id": "24de7c52-34db-4036-8d3c-f0f3e0301b64",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "bb55031a-aae9-41c8-8f54-b0cec88c1fc4",
+              "type": "singleChoice",
+              "stem": "Identify the coefficient of water in 2 H<sub>2</sub> + O<sub>2</sub> → 2 H<sub>2</sub>O(l). Compare CO<sub>2</sub>, H<sub>2</sub>SO<sub>4</sub>, Ca(OH)<sub>2</sub> and Unicode H₂O, CO₂, H₂SO₄, Ca(OH)₂.<p>Compare ions Mg<sup>2+</sup>, Fe<sup>3+</sup>, SO<sub>4</sub><sup>2−</sup>, NH<sub>4</sub><sup>+</sup> with Unicode Mg²⁺, Fe³⁺, SO₄²⁻, NH₄⁺.</p><p>Context ΔH, ΔE, α, β, γ, θ, λ. NaCl(s) → Na⁺(aq) + Cl⁻(aq). Units kJ/mol.</p>",
+              "choices": [
+                {
+                  "id": "1a7ec015-2e60-4a5b-9f82-eaef8fdec84a",
+                  "html": "<p>1</p>"
+                },
+                {
+                  "id": "34539e36-8872-4e71-a9aa-bfe18cc242ce",
+                  "html": "<p>2</p>"
+                },
+                {
+                  "id": "3d4ff55d-5a05-40f3-83d1-761baaedea75",
+                  "html": "<p>3</p>"
+                },
+                {
+                  "id": "9f2c6fa4-39b9-47bc-8736-9bcd2369c848",
+                  "html": "<p>4</p>"
+                }
+              ],
+              "correctChoiceIds": [
+                "34539e36-8872-4e71-a9aa-bfe18cc242ce"
+              ],
+              "referenceAnswer": "",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 2,
+              "importWarnings": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "5d38705f-3c09-425b-9c1c-c74c0d751826",
+      "title": "Section 2: Physics (Proficient)",
+      "proficiency": "Proficient",
+      "instructions": "<p>Use 9.81 m/s<sup>2</sup> and preserve three significant figures in 2.50 × 10<sup>3</sup> kg/m<sup>3</sup>.</p>",
+      "shuffleQuestions": true,
+      "items": [
+        {
+          "kind": "slot",
+          "id": "be922f96-f428-414b-b104-87f22f8cf4e0",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "26583d09-735c-49a5-a466-49aeb260d077",
+              "type": "singleChoice",
+              "stem": "Identify the given small measurement 3.5 × 10<sup>−4</sup>. Compare 6.02 × 10²³, v₀, v², Δt and Δx.",
+              "choices": [
+                {
+                  "id": "6f29a9b5-98bb-43ad-b2ef-81934eeebfef",
+                  "html": "3.5 × 10<sup>4</sup>"
+                },
+                {
+                  "id": "09da581a-56d2-4096-8c92-3a1a2aea18e1",
+                  "html": "3.5 × 10<sup>−4</sup>"
+                },
+                {
+                  "id": "91ae1584-797a-41d1-9f5d-56d2b1987e78",
+                  "html": "3.5 × 10<sup>−3</sup>"
+                },
+                {
+                  "id": "35d263e2-4016-48fe-8ec8-a5bfd384dea0",
+                  "html": "3.5 × 10<sup>−5</sup>"
+                }
+              ],
+              "correctChoiceIds": [
+                "09da581a-56d2-4096-8c92-3a1a2aea18e1"
+              ],
+              "referenceAnswer": "",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 2,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "0a1f6e96-69c4-4ab6-8ae4-b077ae813ff1",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "34853a90-415d-4a2a-bece-24abc6ecc5d0",
+              "type": "shortAnswer",
+              "stem": "<p>Write the stated particle count to three significant figures.</p>",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "6.02 × 10<sup>23</sup>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 2,
+              "importWarnings": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "57bb99bf-d87c-4f77-9643-0043ce9f33bc",
+      "title": "Section 3: Mathematical Models (Exemplary)",
+      "proficiency": "Exemplary",
+      "instructions": "<p></p>",
+      "shuffleQuestions": true,
+      "items": [
+        {
+          "kind": "slot",
+          "id": "d6b310ca-5f87-44e6-8369-a98f8c3faba3",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "a16ecdd1-8524-4ed5-9cf6-2d7799d816b0",
+              "type": "writtenResponse",
+              "stem": "At a=6, b=4, c=2. Compare E4A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mi>a</mi><mo>+</mo><mi>b</mi></mrow><mrow><mi>c</mi></mrow></mfrac></mrow></math> with E4B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mi>a</mi><mo>+</mo><mfrac><mrow><mi>b</mi></mrow><mrow><mi>c</mi></mrow></mfrac></mrow></math>. State whether their values agree.",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>5 versus 8.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "5aebfff9-79b1-48b6-97bb-fe7cde4a00a0",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "955ff029-8813-43ba-a6d3-31212437aec5",
+              "type": "writtenResponse",
+              "stem": "At x=2, n=3. Compare E5A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><msup><mrow><mi>x</mi></mrow><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msup></mrow></math> with E5B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><msup><mrow><mi>x</mi></mrow><mrow><mi>n</mi></mrow></msup><mo>+</mo><mn>1</mn></mrow></math>. State whether their values agree.",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>16 versus 9.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "d39dbc87-e5b3-4518-bf70-eb34aeed8f7d",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "d9fd21fa-5564-4346-84ba-04451a0717d2",
+              "type": "writtenResponse",
+              "stem": "At x=8. Compare E6A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><msqrt><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow></msqrt></mrow></math> with E6B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><msqrt><mrow><mi>x</mi></mrow></msqrt><mo>+</mo><mn>1</mn></mrow></math>. State whether their values agree.",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>3 versus approximately 3.828.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "9ac4570f-3bfb-4630-8843-7cbb6e5128f9",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "c5deae6a-0424-4a90-83cf-c91f4e781b32",
+              "type": "writtenResponse",
+              "stem": "For the sequence a_k=2k at i=2. Compare E7A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><msub><mrow><mi>a</mi></mrow><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow></math> with E7B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><msub><mrow><mi>a</mi></mrow><mrow><mi>i</mi></mrow></msub><mo>+</mo><mn>1</mn></mrow></math>. State whether their values agree.",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>6 versus 5.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "6db348e5-9110-4118-91dd-25d7deb29c4a",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "51c3f740-6532-481c-b352-bbc7ff2a56d5",
+              "type": "writtenResponse",
+              "stem": "Evaluate E8A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>9</mn></mrow><mrow><mn>2</mn><mo>+</mo><mfrac><mrow><mn>6</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></mfrac></mrow></math> and E8B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mroot><mrow><mn>27</mn></mrow><mrow><mn>3</mn></mrow></mroot></mrow></math>.",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>2.25 and 3.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "1e17736f-f2cb-4ea8-931c-faa538383cb3",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "2f33c317-4cba-4d48-b42b-19cae158d4b8",
+              "type": "writtenResponse",
+              "stem": "Identify the index and exponent in E9A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><msubsup><mrow><mi>v</mi></mrow><mrow><mn>0</mn></mrow><mrow><mn>2</mn></mrow></msubsup></mrow></math> and evaluate E9B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mrow><mo stretchy=\"true\">[</mo><mrow><mn>7</mn><mo>−</mo><mn>4</mn></mrow><mo stretchy=\"true\">]</mo></mrow><mo>×</mo><mn>5</mn></mrow></math>.",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>Index 0, exponent 2, and 15.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "091e950e-d0d3-43c8-8a1a-cde5d6428af5",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "2ae59139-2946-4929-aeca-3134c10ecb07",
+              "type": "writtenResponse",
+              "stem": "Evaluate E10A and E10B below.<p><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\" aria-label=\"Imported Word equation\"><mrow><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mrow><mn>4</mn></mrow></munderover><mrow><mi>k</mi></mrow></mrow></mrow></math></p><p><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\" aria-label=\"Imported Word equation\"><mrow><mrow><mi>cos</mi><mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>0</mn></mrow><mo stretchy=\"true\">)</mo></mrow></mrow></mrow></mrow></math></p>",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>10 and 1.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        },
+        {
+          "kind": "slot",
+          "id": "0f35915c-0aa0-409a-96ef-ded8c44ecfd9",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "9b06960b-e4b3-412f-9546-30f0f1720018",
+              "type": "singleChoice",
+              "stem": "<p>Which expression gives one half?</p>",
+              "choices": [
+                {
+                  "id": "41283547-0d42-4cd8-bd61-02b753700b07",
+                  "html": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></math>"
+                },
+                {
+                  "id": "e527eac6-f612-44b9-9e79-af48f826338f",
+                  "html": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac></mrow></math>"
+                },
+                {
+                  "id": "11006d56-fb66-45a0-a566-a4fbba4ccf64",
+                  "html": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>2</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></math>"
+                },
+                {
+                  "id": "e32e71d1-7f05-4d4d-a7ba-0a6420b0d672",
+                  "html": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>3</mn></mrow><mrow><mn>2</mn></mrow></mfrac></mrow></math>"
+                }
+              ],
+              "correctChoiceIds": [
+                "e527eac6-f612-44b9-9e79-af48f826338f"
+              ],
+              "referenceAnswer": "",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 2,
+              "importWarnings": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "e45d1839-89d7-4621-8b05-ee2481abafff",
+      "title": "Section 4: Lab Analysis",
+      "proficiency": "",
+      "instructions": "<p></p>",
+      "shuffleQuestions": true,
+      "items": [
+        {
+          "kind": "slot",
+          "id": "f68dec8c-a0f1-4544-9d0a-92367cfbd270",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "160244fb-61c5-46b1-8c41-50ade12b590b",
+              "type": "writtenResponse",
+              "stem": "MIX-START Use E12A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mi>v</mi><mo>=</mo><mfrac><mrow><mi>Δ</mi><mi>x</mi></mrow><mrow><mi>Δ</mi><mi>t</mi></mrow></mfrac></mrow></math> to analyze this run. MIX-AFTER.<p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdYAAACMCAIAAABOGh8oAAAKvklEQVR4nO3dX0wcVf/H8bNAGLA1u6Zgsk9DMJD4rxgsJmqBXSCxmNLarCY2jVIpJRrCU42NqX/Sai80thcoiZWApSUIjdkolRgpVBqMkpjSphfeELzYQitSkbixS6Fh7e6e52Ly20x2W2xc4Ls/eL+uZs7MOXOWfM+Hw0CCTWutAAASUqQnAACrFxEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEJF0EDw4OFhcXV1RUuFyuc+fOJTLUkSNHrKft7e0ul+vRRx8dGBhIbI5AUogp6UAg4PF4SktLPR5PIBBIZGTr2jl79mxeXl55eXl5efnBgwcTnTRi6CSTm5s7Njamtfb5fA899FAiQ9nt9ujx9PS02+0Oh8Ojo6MPPvhggpMExMWX9P79+z/66COtdWNj41tvvZXI4Na109nZ2dLSkthkcVtJtwtet26d3+9XSvn9/rm5Oeslh8OxZ8+e/Pz81tbW6urqvLy8pqam6NWRkZHS0tKCggKz8dChQ7Ozs5WVleZVv9+/d+/elJSUnJwcc3zT0aNHN27cWFRUxNYY/7/El3RfX9/OnTuVUjt37jx9+rT15kTWzu+//+50OuMnwNpZHNLfA2JduHDBMIyCggLDML799lvrJcMwhoeHr1y5YrPZzp8/f/nyZafTGb1aX18/NDTk9/ujjdbv5FEdHR179uyJnmZnZ8/MzIyOju7atWtJPg+wxKIlnZWVFQ6HtdbhcDg7O9t6TyJr5/XXX3/55ZdLSkqeeeYZn88XbWftLIqki2C3293d3a21/vLLL2tra62XMjMzQ6GQ1towDLPUrIUyMzNz7NixN998c82aNWZLfAT7fL4NGzZMT09HW2pqajwez8DAwFJ8FmCpWUt6gQhOZO3s27fv008/1VqfOnWqoqIi2s7aWRRJF8H33HOPWSKhUGjdunXWS9GyiD/QWj/99NPHjh2bmJi4++67469qra9fv/7YY48NDw/HPPHHH3989tlnd+/evWifAVgWMSW9YcOGyclJrfVvv/1WUFBgvTORtTM+Pm7GdygUysrKsg7L2klc0r0LfuCBB3766Sel1Llz5+67774773jx4sUdO3bMz88Hg0GzJRKJRCIR81hrXVNT88YbbzzxxBPRLoFAoKysbNOmTV1dXX19fYv2GYClF1/SVVVVXq9XKeX1equqqu58qIXXzttvv93b26uUOn/+/COPPGI2snYWS5r0BGK1tra+9tprSimbzXb8+PE779jQ0FBcXFxYWOhwOILBoGEYLpdr+/btZvV0dHR89913fr//s88+W7t2rdlot9u3bdv25JNPRiKRd999d4k+EbAU4kv6wIEDNTU1X3/9dVZW1ueff37nQy28dt5///3a2tqmpqaMjIy2tjazC2tnsdi01tJzAIBVKuleRADA6kEEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFJ90/sl06vO896um1oTGomQDJjpSyn1bILjqmqW7YAYKUss1URwberIWoLsGKlLL+VH8ELVw+1BZhYKSJWeATfSd1QWwArRcry/TruP1v+u2zPijp2Z7eJzA1IHqyUeFf7m5fhKSt8FwwAyYwIBgAxRDAAiLFpraXnsLT+8XcI/OU5oFgpQlb+LnjhuqGqABMrRcTKj2B1++qhqgArVsryWxURrG5VQ1QVEI+VssxW/rtgAEhaq2UXDABJiAgGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMErX1tbW1FRUVlZ2datWycmJv7x/iNHjvy7B42MjLS0tFgHsbYIcjgc0lMAbo3/mrHCnT179vDhw6dPn87MzOzv729sbBwcHFy4i8PhuHbtWoLPXZRBFktSTQawYhe8wjU2Nn744YeZmZlKqS1btuTn59+8eXNkZKS0tLSgoKCpqcm8zeFw1NbWfvLJJ4cOHZqdna2srIyO4HA49u/f73K53G73+Pj41NRUVVWV2+2uqqqampo6evToxo0bi4qKBgYG1P/tN62DmC0xvcz2AwcOlJWVFRYW9vT0WOccncxff/1VXV391FNPud3uCxcuKKX+/PPP5557rry8vLKycnp6+pbDmn3/+OOP7du3u1yu3bt3L/2XGfi3NFa09evXz8/PxzTW19cPDQ35/X6n02m2ZGRknDlzxjy22+3WmzMyMrxer9a6q6vL4/G88MILnZ2dWuvOzs4XX3wxOzt7ZmZmdHR0165d1r4xBzG9tNaZmZkff/yx1vrSpUs5OTkxTzQnU1dXNzw8rLW+cuVKYWGh1vqll1764osvtNbt7e319fXxw0b7VldXnzx5Umvd09NjGEZCX0RgyfAiYoVzOp2XL182DMPaeP36da/X6/P5mpubZ2dnlVJr166dmZlJSUlRcT+233XXXdeuXUtPTw8Gg7m5uampqWNjY4ZhBIPBvLy8zZs3BwKBhoaGzZs3W/vGHKxfv97aa3JyMiMjY2pqytwj2+32QCAQfWJ0Mjk5Ofn5+Wbj5OTkL7/8kpubOzY2lp6eHg6HZ2dnH3744ZhhrX19Pp9hGKFQyG63z83NLeWXGfiXeBGxwt1///0///yzeay1rqmpUUo9//zzSqlXX33VzFylVFpaWvQ4RkpKSmpqqnlsbietVzs6Ovbt29fS0lJbW7vANOK/06enp0d/S2az2ayXopMJhUJnzpz54Ycfvv/++xMnTqSmpobDYXOo1NRUc38dM2y0799//222RCIR9hlIWkTwCtfQ0HDw4MFgMKiU8nq95sHFixd37NgxPz9vnsaIRCKRSCR6GgqF+vr6lFJfffVVRUVFRUVFd3e3Uqq7u7ukpKSsrGzTpk1dXV3mPbcbxNqrvLxcKXW7xLcqKSkxXxP39/cfPnxYKfX4449/8803Sqnjx4+/88478cNGFRcXm3f29PQQwUhavIhY+T744AOv15udnX3vvfc2NzdnZWW99957p06dKiwsHBwc/PXXXw3DsL582Lp1q81m6+3tNU8dDofH4xkbG3M4HCdOnLh582ZdXd3c3NyaNWva29tPnjzp9XojkUhdXd3evXuj40QHMVuuXr1q7eV0Oq1PjHn1ET2dmJh45ZVXbty4kZaW1tbWlpeXd+nSpbq6Oq213W7v7Oy8cePG7YYdHx83t/zFxcWtra38RQSSExGMf8BfdAFLhxcRACCGXTAAiGEXDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiPkf68Ni58VZW80AAAAASUVORK5CYII=\" width=\"288\" height=\"86\" alt=\"Imported illustration 1\"></p><p>Between diagrams record the baseline.</p><p><img src=\"data:image/jpeg;base64,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\" width=\"192\" height=\"77\" alt=\"Imported illustration 2\"></p><p>After diagrams compare the reading. <strong>Bold marker</strong><em> Italic marker</em></p><p><table><tbody><tr><td><p>Time (s)</p></td><td><p>Position (m)</p></td><td><p>Instrument</p></td></tr><tr><td><p>2</p></td><td><p>8</p></td><td><p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdYAAACMCAIAAABOGh8oAAAKvklEQVR4nO3dX0wcVf/H8bNAGLA1u6Zgsk9DMJD4rxgsJmqBXSCxmNLarCY2jVIpJRrCU42NqX/Sai80thcoiZWApSUIjdkolRgpVBqMkpjSphfeELzYQitSkbixS6Fh7e6e52Ly20x2W2xc4Ls/eL+uZs7MOXOWfM+Hw0CCTWutAAASUqQnAACrFxEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEJF0EDw4OFhcXV1RUuFyuc+fOJTLUkSNHrKft7e0ul+vRRx8dGBhIbI5AUogp6UAg4PF4SktLPR5PIBBIZGTr2jl79mxeXl55eXl5efnBgwcTnTRi6CSTm5s7Njamtfb5fA899FAiQ9nt9ujx9PS02+0Oh8Ojo6MPPvhggpMExMWX9P79+z/66COtdWNj41tvvZXI4Na109nZ2dLSkthkcVtJtwtet26d3+9XSvn9/rm5Oeslh8OxZ8+e/Pz81tbW6urqvLy8pqam6NWRkZHS0tKCggKz8dChQ7Ozs5WVleZVv9+/d+/elJSUnJwcc3zT0aNHN27cWFRUxNYY/7/El3RfX9/OnTuVUjt37jx9+rT15kTWzu+//+50OuMnwNpZHNLfA2JduHDBMIyCggLDML799lvrJcMwhoeHr1y5YrPZzp8/f/nyZafTGb1aX18/NDTk9/ujjdbv5FEdHR179uyJnmZnZ8/MzIyOju7atWtJPg+wxKIlnZWVFQ6HtdbhcDg7O9t6TyJr5/XXX3/55ZdLSkqeeeYZn88XbWftLIqki2C3293d3a21/vLLL2tra62XMjMzQ6GQ1towDLPUrIUyMzNz7NixN998c82aNWZLfAT7fL4NGzZMT09HW2pqajwez8DAwFJ8FmCpWUt6gQhOZO3s27fv008/1VqfOnWqoqIi2s7aWRRJF8H33HOPWSKhUGjdunXWS9GyiD/QWj/99NPHjh2bmJi4++67469qra9fv/7YY48NDw/HPPHHH3989tlnd+/evWifAVgWMSW9YcOGyclJrfVvv/1WUFBgvTORtTM+Pm7GdygUysrKsg7L2klc0r0LfuCBB3766Sel1Llz5+67774773jx4sUdO3bMz88Hg0GzJRKJRCIR81hrXVNT88YbbzzxxBPRLoFAoKysbNOmTV1dXX19fYv2GYClF1/SVVVVXq9XKeX1equqqu58qIXXzttvv93b26uUOn/+/COPPGI2snYWS5r0BGK1tra+9tprSimbzXb8+PE779jQ0FBcXFxYWOhwOILBoGEYLpdr+/btZvV0dHR89913fr//s88+W7t2rdlot9u3bdv25JNPRiKRd999d4k+EbAU4kv6wIEDNTU1X3/9dVZW1ueff37nQy28dt5///3a2tqmpqaMjIy2tjazC2tnsdi01tJzAIBVKuleRADA6kEEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFJ90/sl06vO896um1oTGomQDJjpSyn1bILjqmqW7YAYKUss1URwberIWoLsGKlLL+VH8ELVw+1BZhYKSJWeATfSd1QWwArRcry/TruP1v+u2zPijp2Z7eJzA1IHqyUeFf7m5fhKSt8FwwAyYwIBgAxRDAAiLFpraXnsLT+8XcI/OU5oFgpQlb+LnjhuqGqABMrRcTKj2B1++qhqgArVsryWxURrG5VQ1QVEI+VssxW/rtgAEhaq2UXDABJiAgGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMErX1tbW1FRUVlZ2datWycmJv7x/iNHjvy7B42MjLS0tFgHsbYIcjgc0lMAbo3/mrHCnT179vDhw6dPn87MzOzv729sbBwcHFy4i8PhuHbtWoLPXZRBFktSTQawYhe8wjU2Nn744YeZmZlKqS1btuTn59+8eXNkZKS0tLSgoKCpqcm8zeFw1NbWfvLJJ4cOHZqdna2srIyO4HA49u/f73K53G73+Pj41NRUVVWV2+2uqqqampo6evToxo0bi4qKBgYG1P/tN62DmC0xvcz2AwcOlJWVFRYW9vT0WOccncxff/1VXV391FNPud3uCxcuKKX+/PPP5557rry8vLKycnp6+pbDmn3/+OOP7du3u1yu3bt3L/2XGfi3NFa09evXz8/PxzTW19cPDQ35/X6n02m2ZGRknDlzxjy22+3WmzMyMrxer9a6q6vL4/G88MILnZ2dWuvOzs4XX3wxOzt7ZmZmdHR0165d1r4xBzG9tNaZmZkff/yx1vrSpUs5OTkxTzQnU1dXNzw8rLW+cuVKYWGh1vqll1764osvtNbt7e319fXxw0b7VldXnzx5Umvd09NjGEZCX0RgyfAiYoVzOp2XL182DMPaeP36da/X6/P5mpubZ2dnlVJr166dmZlJSUlRcT+233XXXdeuXUtPTw8Gg7m5uampqWNjY4ZhBIPBvLy8zZs3BwKBhoaGzZs3W/vGHKxfv97aa3JyMiMjY2pqytwj2+32QCAQfWJ0Mjk5Ofn5+Wbj5OTkL7/8kpubOzY2lp6eHg6HZ2dnH3744ZhhrX19Pp9hGKFQyG63z83NLeWXGfiXeBGxwt1///0///yzeay1rqmpUUo9//zzSqlXX33VzFylVFpaWvQ4RkpKSmpqqnlsbietVzs6Ovbt29fS0lJbW7vANOK/06enp0d/S2az2ayXopMJhUJnzpz54Ycfvv/++xMnTqSmpobDYXOo1NRUc38dM2y0799//222RCIR9hlIWkTwCtfQ0HDw4MFgMKiU8nq95sHFixd37NgxPz9vnsaIRCKRSCR6GgqF+vr6lFJfffVVRUVFRUVFd3e3Uqq7u7ukpKSsrGzTpk1dXV3mPbcbxNqrvLxcKXW7xLcqKSkxXxP39/cfPnxYKfX4449/8803Sqnjx4+/88478cNGFRcXm3f29PQQwUhavIhY+T744AOv15udnX3vvfc2NzdnZWW99957p06dKiwsHBwc/PXXXw3DsL582Lp1q81m6+3tNU8dDofH4xkbG3M4HCdOnLh582ZdXd3c3NyaNWva29tPnjzp9XojkUhdXd3evXuj40QHMVuuXr1q7eV0Oq1PjHn1ET2dmJh45ZVXbty4kZaW1tbWlpeXd+nSpbq6Oq213W7v7Oy8cePG7YYdHx83t/zFxcWtra38RQSSExGMf8BfdAFLhxcRACCGXTAAiGEXDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiPkf68Ni58VZW80AAAAASUVORK5CYII=\" width=\"96\" height=\"29\" alt=\"Imported illustration 3\"></p></td></tr><tr><td><p>5</p></td><td><p>20</p></td><td><p><em>Laser</em></p></td></tr></tbody></table></p><p>MIX-END E12B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>20</mn><mo>−</mo><mn>8</mn></mrow><mrow><mn>5</mn><mo>−</mo><mn>2</mn></mrow></mfrac></mrow></math> gives the average speed.</p>",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mn>4</mn></mrow></math> m/s.",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            },
+            {
+              "id": "d07351a5-0617-4587-8aa8-393d578b1e8b",
+              "type": "writtenResponse",
+              "stem": "<p>Alternate lab scenario. MIX-START Use E12A <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mi>v</mi><mo>=</mo><mfrac><mrow><mi>Δ</mi><mi>x</mi></mrow><mrow><mi>Δ</mi><mi>t</mi></mrow></mfrac></mrow></math> to analyze this run. MIX-AFTER.</p><p></p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdYAAACMCAIAAABOGh8oAAAKvklEQVR4nO3dX0wcVf/H8bNAGLA1u6Zgsk9DMJD4rxgsJmqBXSCxmNLarCY2jVIpJRrCU42NqX/Sai80thcoiZWApSUIjdkolRgpVBqMkpjSphfeELzYQitSkbixS6Fh7e6e52Ly20x2W2xc4Ls/eL+uZs7MOXOWfM+Hw0CCTWutAAASUqQnAACrFxEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEJF0EDw4OFhcXV1RUuFyuc+fOJTLUkSNHrKft7e0ul+vRRx8dGBhIbI5AUogp6UAg4PF4SktLPR5PIBBIZGTr2jl79mxeXl55eXl5efnBgwcTnTRi6CSTm5s7Njamtfb5fA899FAiQ9nt9ujx9PS02+0Oh8Ojo6MPPvhggpMExMWX9P79+z/66COtdWNj41tvvZXI4Na109nZ2dLSkthkcVtJtwtet26d3+9XSvn9/rm5Oeslh8OxZ8+e/Pz81tbW6urqvLy8pqam6NWRkZHS0tKCggKz8dChQ7Ozs5WVleZVv9+/d+/elJSUnJwcc3zT0aNHN27cWFRUxNYY/7/El3RfX9/OnTuVUjt37jx9+rT15kTWzu+//+50OuMnwNpZHNLfA2JduHDBMIyCggLDML799lvrJcMwhoeHr1y5YrPZzp8/f/nyZafTGb1aX18/NDTk9/ujjdbv5FEdHR179uyJnmZnZ8/MzIyOju7atWtJPg+wxKIlnZWVFQ6HtdbhcDg7O9t6TyJr5/XXX3/55ZdLSkqeeeYZn88XbWftLIqki2C3293d3a21/vLLL2tra62XMjMzQ6GQ1towDLPUrIUyMzNz7NixN998c82aNWZLfAT7fL4NGzZMT09HW2pqajwez8DAwFJ8FmCpWUt6gQhOZO3s27fv008/1VqfOnWqoqIi2s7aWRRJF8H33HOPWSKhUGjdunXWS9GyiD/QWj/99NPHjh2bmJi4++67469qra9fv/7YY48NDw/HPPHHH3989tlnd+/evWifAVgWMSW9YcOGyclJrfVvv/1WUFBgvTORtTM+Pm7GdygUysrKsg7L2klc0r0LfuCBB3766Sel1Llz5+67774773jx4sUdO3bMz88Hg0GzJRKJRCIR81hrXVNT88YbbzzxxBPRLoFAoKysbNOmTV1dXX19fYv2GYClF1/SVVVVXq9XKeX1equqqu58qIXXzttvv93b26uUOn/+/COPPGI2snYWS5r0BGK1tra+9tprSimbzXb8+PE779jQ0FBcXFxYWOhwOILBoGEYLpdr+/btZvV0dHR89913fr//s88+W7t2rdlot9u3bdv25JNPRiKRd999d4k+EbAU4kv6wIEDNTU1X3/9dVZW1ueff37nQy28dt5///3a2tqmpqaMjIy2tjazC2tnsdi01tJzAIBVKuleRADA6kEEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFJ90/sl06vO896um1oTGomQDJjpSyn1bILjqmqW7YAYKUss1URwberIWoLsGKlLL+VH8ELVw+1BZhYKSJWeATfSd1QWwArRcry/TruP1v+u2zPijp2Z7eJzA1IHqyUeFf7m5fhKSt8FwwAyYwIBgAxRDAAiLFpraXnsLT+8XcI/OU5oFgpQlb+LnjhuqGqABMrRcTKj2B1++qhqgArVsryWxURrG5VQ1QVEI+VssxW/rtgAEhaq2UXDABJiAgGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMErX1tbW1FRUVlZ2datWycmJv7x/iNHjvy7B42MjLS0tFgHsbYIcjgc0lMAbo3/mrHCnT179vDhw6dPn87MzOzv729sbBwcHFy4i8PhuHbtWoLPXZRBFktSTQawYhe8wjU2Nn744YeZmZlKqS1btuTn59+8eXNkZKS0tLSgoKCpqcm8zeFw1NbWfvLJJ4cOHZqdna2srIyO4HA49u/f73K53G73+Pj41NRUVVWV2+2uqqqampo6evToxo0bi4qKBgYG1P/tN62DmC0xvcz2AwcOlJWVFRYW9vT0WOccncxff/1VXV391FNPud3uCxcuKKX+/PPP5557rry8vLKycnp6+pbDmn3/+OOP7du3u1yu3bt3L/2XGfi3NFa09evXz8/PxzTW19cPDQ35/X6n02m2ZGRknDlzxjy22+3WmzMyMrxer9a6q6vL4/G88MILnZ2dWuvOzs4XX3wxOzt7ZmZmdHR0165d1r4xBzG9tNaZmZkff/yx1vrSpUs5OTkxTzQnU1dXNzw8rLW+cuVKYWGh1vqll1764osvtNbt7e319fXxw0b7VldXnzx5Umvd09NjGEZCX0RgyfAiYoVzOp2XL182DMPaeP36da/X6/P5mpubZ2dnlVJr166dmZlJSUlRcT+233XXXdeuXUtPTw8Gg7m5uampqWNjY4ZhBIPBvLy8zZs3BwKBhoaGzZs3W/vGHKxfv97aa3JyMiMjY2pqytwj2+32QCAQfWJ0Mjk5Ofn5+Wbj5OTkL7/8kpubOzY2lp6eHg6HZ2dnH3744ZhhrX19Pp9hGKFQyG63z83NLeWXGfiXeBGxwt1///0///yzeay1rqmpUUo9//zzSqlXX33VzFylVFpaWvQ4RkpKSmpqqnlsbietVzs6Ovbt29fS0lJbW7vANOK/06enp0d/S2az2ayXopMJhUJnzpz54Ycfvv/++xMnTqSmpobDYXOo1NRUc38dM2y0799//222RCIR9hlIWkTwCtfQ0HDw4MFgMKiU8nq95sHFixd37NgxPz9vnsaIRCKRSCR6GgqF+vr6lFJfffVVRUVFRUVFd3e3Uqq7u7ukpKSsrGzTpk1dXV3mPbcbxNqrvLxcKXW7xLcqKSkxXxP39/cfPnxYKfX4449/8803Sqnjx4+/88478cNGFRcXm3f29PQQwUhavIhY+T744AOv15udnX3vvfc2NzdnZWW99957p06dKiwsHBwc/PXXXw3DsL582Lp1q81m6+3tNU8dDofH4xkbG3M4HCdOnLh582ZdXd3c3NyaNWva29tPnjzp9XojkUhdXd3evXuj40QHMVuuXr1q7eV0Oq1PjHn1ET2dmJh45ZVXbty4kZaW1tbWlpeXd+nSpbq6Oq213W7v7Oy8cePG7YYdHx83t/zFxcWtra38RQSSExGMf8BfdAFLhxcRACCGXTAAiGEXDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiPkf68Ni58VZW80AAAAASUVORK5CYII=\" alt=\"Imported illustration 1\" width=\"288\" height=\"86\"><p>Between diagrams record the baseline.</p><p></p><img src=\"data:image/jpeg;base64,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\" alt=\"Imported illustration 2\" width=\"192\" height=\"77\"><p>After diagrams compare the reading. <strong>Bold marker</strong><em> Italic marker</em></p><p></p><table><tbody><tr><td><p>Time (s)</p></td><td><p>Position (m)</p></td><td><p>Instrument</p></td></tr><tr><td><p>2</p></td><td><p>8</p></td><td><p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdYAAACMCAIAAABOGh8oAAAKvklEQVR4nO3dX0wcVf/H8bNAGLA1u6Zgsk9DMJD4rxgsJmqBXSCxmNLarCY2jVIpJRrCU42NqX/Sai80thcoiZWApSUIjdkolRgpVBqMkpjSphfeELzYQitSkbixS6Fh7e6e52Ly20x2W2xc4Ls/eL+uZs7MOXOWfM+Hw0CCTWutAAASUqQnAACrFxEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEJF0EDw4OFhcXV1RUuFyuc+fOJTLUkSNHrKft7e0ul+vRRx8dGBhIbI5AUogp6UAg4PF4SktLPR5PIBBIZGTr2jl79mxeXl55eXl5efnBgwcTnTRi6CSTm5s7Njamtfb5fA899FAiQ9nt9ujx9PS02+0Oh8Ojo6MPPvhggpMExMWX9P79+z/66COtdWNj41tvvZXI4Na109nZ2dLSkthkcVtJtwtet26d3+9XSvn9/rm5Oeslh8OxZ8+e/Pz81tbW6urqvLy8pqam6NWRkZHS0tKCggKz8dChQ7Ozs5WVleZVv9+/d+/elJSUnJwcc3zT0aNHN27cWFRUxNYY/7/El3RfX9/OnTuVUjt37jx9+rT15kTWzu+//+50OuMnwNpZHNLfA2JduHDBMIyCggLDML799lvrJcMwhoeHr1y5YrPZzp8/f/nyZafTGb1aX18/NDTk9/ujjdbv5FEdHR179uyJnmZnZ8/MzIyOju7atWtJPg+wxKIlnZWVFQ6HtdbhcDg7O9t6TyJr5/XXX3/55ZdLSkqeeeYZn88XbWftLIqki2C3293d3a21/vLLL2tra62XMjMzQ6GQ1towDLPUrIUyMzNz7NixN998c82aNWZLfAT7fL4NGzZMT09HW2pqajwez8DAwFJ8FmCpWUt6gQhOZO3s27fv008/1VqfOnWqoqIi2s7aWRRJF8H33HOPWSKhUGjdunXWS9GyiD/QWj/99NPHjh2bmJi4++67469qra9fv/7YY48NDw/HPPHHH3989tlnd+/evWifAVgWMSW9YcOGyclJrfVvv/1WUFBgvTORtTM+Pm7GdygUysrKsg7L2klc0r0LfuCBB3766Sel1Llz5+67774773jx4sUdO3bMz88Hg0GzJRKJRCIR81hrXVNT88YbbzzxxBPRLoFAoKysbNOmTV1dXX19fYv2GYClF1/SVVVVXq9XKeX1equqqu58qIXXzttvv93b26uUOn/+/COPPGI2snYWS5r0BGK1tra+9tprSimbzXb8+PE779jQ0FBcXFxYWOhwOILBoGEYLpdr+/btZvV0dHR89913fr//s88+W7t2rdlot9u3bdv25JNPRiKRd999d4k+EbAU4kv6wIEDNTU1X3/9dVZW1ueff37nQy28dt5///3a2tqmpqaMjIy2tjazC2tnsdi01tJzAIBVKuleRADA6kEEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiCGCAUAMEQwAYohgABBDBAOAGCIYAMQQwQAghggGADFJ90/sl06vO896um1oTGomQDJjpSyn1bILjqmqW7YAYKUss1URwberIWoLsGKlLL+VH8ELVw+1BZhYKSJWeATfSd1QWwArRcry/TruP1v+u2zPijp2Z7eJzA1IHqyUeFf7m5fhKSt8FwwAyYwIBgAxRDAAiLFpraXnsLT+8XcI/OU5oFgpQlb+LnjhuqGqABMrRcTKj2B1++qhqgArVsryWxURrG5VQ1QVEI+VssxW/rtgAEhaq2UXDABJiAgGADFEMACIIYIBQAwRDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMErX1tbW1FRUVlZ2datWycmJv7x/iNHjvy7B42MjLS0tFgHsbYIcjgc0lMAbo3/mrHCnT179vDhw6dPn87MzOzv729sbBwcHFy4i8PhuHbtWoLPXZRBFktSTQawYhe8wjU2Nn744YeZmZlKqS1btuTn59+8eXNkZKS0tLSgoKCpqcm8zeFw1NbWfvLJJ4cOHZqdna2srIyO4HA49u/f73K53G73+Pj41NRUVVWV2+2uqqqampo6evToxo0bi4qKBgYG1P/tN62DmC0xvcz2AwcOlJWVFRYW9vT0WOccncxff/1VXV391FNPud3uCxcuKKX+/PPP5557rry8vLKycnp6+pbDmn3/+OOP7du3u1yu3bt3L/2XGfi3NFa09evXz8/PxzTW19cPDQ35/X6n02m2ZGRknDlzxjy22+3WmzMyMrxer9a6q6vL4/G88MILnZ2dWuvOzs4XX3wxOzt7ZmZmdHR0165d1r4xBzG9tNaZmZkff/yx1vrSpUs5OTkxTzQnU1dXNzw8rLW+cuVKYWGh1vqll1764osvtNbt7e319fXxw0b7VldXnzx5Umvd09NjGEZCX0RgyfAiYoVzOp2XL182DMPaeP36da/X6/P5mpubZ2dnlVJr166dmZlJSUlRcT+233XXXdeuXUtPTw8Gg7m5uampqWNjY4ZhBIPBvLy8zZs3BwKBhoaGzZs3W/vGHKxfv97aa3JyMiMjY2pqytwj2+32QCAQfWJ0Mjk5Ofn5+Wbj5OTkL7/8kpubOzY2lp6eHg6HZ2dnH3744ZhhrX19Pp9hGKFQyG63z83NLeWXGfiXeBGxwt1///0///yzeay1rqmpUUo9//zzSqlXX33VzFylVFpaWvQ4RkpKSmpqqnlsbietVzs6Ovbt29fS0lJbW7vANOK/06enp0d/S2az2ayXopMJhUJnzpz54Ycfvv/++xMnTqSmpobDYXOo1NRUc38dM2y0799//222RCIR9hlIWkTwCtfQ0HDw4MFgMKiU8nq95sHFixd37NgxPz9vnsaIRCKRSCR6GgqF+vr6lFJfffVVRUVFRUVFd3e3Uqq7u7ukpKSsrGzTpk1dXV3mPbcbxNqrvLxcKXW7xLcqKSkxXxP39/cfPnxYKfX4449/8803Sqnjx4+/88478cNGFRcXm3f29PQQwUhavIhY+T744AOv15udnX3vvfc2NzdnZWW99957p06dKiwsHBwc/PXXXw3DsL582Lp1q81m6+3tNU8dDofH4xkbG3M4HCdOnLh582ZdXd3c3NyaNWva29tPnjzp9XojkUhdXd3evXuj40QHMVuuXr1q7eV0Oq1PjHn1ET2dmJh45ZVXbty4kZaW1tbWlpeXd+nSpbq6Oq213W7v7Oy8cePG7YYdHx83t/zFxcWtra38RQSSExGMf8BfdAFLhxcRACCGXTAAiGEXDABiiGAAEEMEA4AYIhgAxBDBACCGCAYAMUQwAIghggFADBEMAGKIYAAQQwQDgBgiGADEEMEAIIYIBgAxRDAAiPkf68Ni58VZW80AAAAASUVORK5CYII=\" width=\"96\" height=\"29\" alt=\"Imported illustration 3\"></p></td></tr><tr><td><p>5</p></td><td><p>20</p></td><td><p><em>Laser</em></p></td></tr></tbody></table><p>MIX-END E12B <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>20</mn><mo>−</mo><mn>8</mn></mrow><mrow><mn>5</mn><mo>−</mo><mn>2</mn></mrow></mfrac></mrow></math> gives the average speed.</p>",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mn>4</mn></mrow></math> m/s.",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c67604d5-b9a2-4347-9217-2f3579690ea8",
+      "title": "Section 5: Instrument Calibration",
+      "proficiency": "",
+      "instructions": "<p></p>",
+      "shuffleQuestions": true,
+      "items": [
+        {
+          "kind": "slot",
+          "id": "4ec5c192-b788-4ad2-81ff-3c404d888801",
+          "shufflePosition": true,
+          "variants": [
+            {
+              "id": "13e61a2c-ff6d-4bae-9fe6-3237add2b033",
+              "type": "writtenResponse",
+              "stem": "Calibration grid. Explain which reading is highest.<p><table><tbody><tr><td colspan=\"2\"><p><strong>Run group</strong></p></td><td><p>Notes</p></td></tr><tr><td rowspan=\"2\"><p>Series V</p></td><td><p><strong>14.250</strong></p></td><td><p>m/s</p></td></tr><tr><td><p>2.50</p></td><td><p>kg/m³</p></td></tr><tr><td><p>Last</p></td><td><p>6.02 × 10<sup>23</sup></p></td><td><p>H<sub>2</sub>O ratio <math xmlns=\"http://www.w3.org/1998/Math/MathML\" aria-label=\"Imported Word equation\"><mrow><mfrac><mrow><mn>7</mn></mrow><mrow><mn>4</mn></mrow></mfrac></mrow></math></p></td></tr></tbody></table></p>",
+              "choices": [],
+              "correctChoiceIds": [],
+              "referenceAnswer": "<p>Compare the stated measurements.</p>",
+              "points": 1,
+              "shuffleChoices": true,
+              "responseLines": 8,
+              "importWarnings": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "importWarnings": [],
+  "lastGeneration": {
+    "count": 6,
+    "seed": "talus-2026",
+    "runId": "1pslge1",
+    "sourceUpdatedAt": "2026-11-12T15:27:07.064Z",
+    "manifests": [
+      {
+        "label": "A",
+        "entries": [
+          {
+            "slotId": "24de7c52-34db-4036-8d3c-f0f3e0301b64",
+            "variantId": "bb55031a-aae9-41c8-8f54-b0cec88c1fc4",
+            "choiceOrder": [
+              "34539e36-8872-4e71-a9aa-bfe18cc242ce",
+              "1a7ec015-2e60-4a5b-9f82-eaef8fdec84a",
+              "3d4ff55d-5a05-40f3-83d1-761baaedea75",
+              "9f2c6fa4-39b9-47bc-8736-9bcd2369c848"
+            ],
+            "number": 1
+          },
+          {
+            "slotId": "be922f96-f428-414b-b104-87f22f8cf4e0",
+            "variantId": "26583d09-735c-49a5-a466-49aeb260d077",
+            "choiceOrder": [
+              "91ae1584-797a-41d1-9f5d-56d2b1987e78",
+              "35d263e2-4016-48fe-8ec8-a5bfd384dea0",
+              "6f29a9b5-98bb-43ad-b2ef-81934eeebfef",
+              "09da581a-56d2-4096-8c92-3a1a2aea18e1"
+            ],
+            "number": 2
+          },
+          {
+            "slotId": "0a1f6e96-69c4-4ab6-8ae4-b077ae813ff1",
+            "variantId": "34853a90-415d-4a2a-bece-24abc6ecc5d0",
+            "choiceOrder": [],
+            "number": 3
+          },
+          {
+            "slotId": "d6b310ca-5f87-44e6-8369-a98f8c3faba3",
+            "variantId": "a16ecdd1-8524-4ed5-9cf6-2d7799d816b0",
+            "choiceOrder": [],
+            "number": 4
+          },
+          {
+            "slotId": "1e17736f-f2cb-4ea8-931c-faa538383cb3",
+            "variantId": "2f33c317-4cba-4d48-b42b-19cae158d4b8",
+            "choiceOrder": [],
+            "number": 5
+          },
+          {
+            "slotId": "9ac4570f-3bfb-4630-8843-7cbb6e5128f9",
+            "variantId": "c5deae6a-0424-4a90-83cf-c91f4e781b32",
+            "choiceOrder": [],
+            "number": 6
+          },
+          {
+            "slotId": "5aebfff9-79b1-48b6-97bb-fe7cde4a00a0",
+            "variantId": "955ff029-8813-43ba-a6d3-31212437aec5",
+            "choiceOrder": [],
+            "number": 7
+          },
+          {
+            "slotId": "d39dbc87-e5b3-4518-bf70-eb34aeed8f7d",
+            "variantId": "d9fd21fa-5564-4346-84ba-04451a0717d2",
+            "choiceOrder": [],
+            "number": 8
+          },
+          {
+            "slotId": "091e950e-d0d3-43c8-8a1a-cde5d6428af5",
+            "variantId": "2ae59139-2946-4929-aeca-3134c10ecb07",
+            "choiceOrder": [],
+            "number": 9
+          },
+          {
+            "slotId": "0f35915c-0aa0-409a-96ef-ded8c44ecfd9",
+            "variantId": "9b06960b-e4b3-412f-9546-30f0f1720018",
+            "choiceOrder": [
+              "41283547-0d42-4cd8-bd61-02b753700b07",
+              "e527eac6-f612-44b9-9e79-af48f826338f",
+              "e32e71d1-7f05-4d4d-a7ba-0a6420b0d672",
+              "11006d56-fb66-45a0-a566-a4fbba4ccf64"
+            ],
+            "number": 10
+          },
+          {
+            "slotId": "6db348e5-9110-4118-91dd-25d7deb29c4a",
+            "variantId": "51c3f740-6532-481c-b352-bbc7ff2a56d5",
+            "choiceOrder": [],
+            "number": 11
+          },
+          {
+            "slotId": "f68dec8c-a0f1-4544-9d0a-92367cfbd270",
+            "variantId": "d07351a5-0617-4587-8aa8-393d578b1e8b",
+            "choiceOrder": [],
+            "number": 12
+          },
+          {
+            "slotId": "4ec5c192-b788-4ad2-81ff-3c404d888801",
+            "variantId": "13e61a2c-ff6d-4bae-9fe6-3237add2b033",
+            "choiceOrder": [],
+            "number": 13
+          }
+        ]
+      },
+      {
+        "label": "B",
+        "entries": [
+          {
+            "slotId": "24de7c52-34db-4036-8d3c-f0f3e0301b64",
+            "variantId": "bb55031a-aae9-41c8-8f54-b0cec88c1fc4",
+            "choiceOrder": [
+              "34539e36-8872-4e71-a9aa-bfe18cc242ce",
+              "1a7ec015-2e60-4a5b-9f82-eaef8fdec84a",
+              "9f2c6fa4-39b9-47bc-8736-9bcd2369c848",
+              "3d4ff55d-5a05-40f3-83d1-761baaedea75"
+            ],
+            "number": 1
+          },
+          {
+            "slotId": "be922f96-f428-414b-b104-87f22f8cf4e0",
+            "variantId": "26583d09-735c-49a5-a466-49aeb260d077",
+            "choiceOrder": [
+              "6f29a9b5-98bb-43ad-b2ef-81934eeebfef",
+              "91ae1584-797a-41d1-9f5d-56d2b1987e78",
+              "09da581a-56d2-4096-8c92-3a1a2aea18e1",
+              "35d263e2-4016-48fe-8ec8-a5bfd384dea0"
+            ],
+            "number": 2
+          },
+          {
+            "slotId": "0a1f6e96-69c4-4ab6-8ae4-b077ae813ff1",
+            "variantId": "34853a90-415d-4a2a-bece-24abc6ecc5d0",
+            "choiceOrder": [],
+            "number": 3
+          },
+          {
+            "slotId": "091e950e-d0d3-43c8-8a1a-cde5d6428af5",
+            "variantId": "2ae59139-2946-4929-aeca-3134c10ecb07",
+            "choiceOrder": [],
+            "number": 4
+          },
+          {
+            "slotId": "0f35915c-0aa0-409a-96ef-ded8c44ecfd9",
+            "variantId": "9b06960b-e4b3-412f-9546-30f0f1720018",
+            "choiceOrder": [
+              "e527eac6-f612-44b9-9e79-af48f826338f",
+              "e32e71d1-7f05-4d4d-a7ba-0a6420b0d672",
+              "11006d56-fb66-45a0-a566-a4fbba4ccf64",
+              "41283547-0d42-4cd8-bd61-02b753700b07"
+            ],
+            "number": 5
+          },
+          {
+            "slotId": "5aebfff9-79b1-48b6-97bb-fe7cde4a00a0",
+            "variantId": "955ff029-8813-43ba-a6d3-31212437aec5",
+            "choiceOrder": [],
+            "number": 6
+          },
+          {
+            "slotId": "1e17736f-f2cb-4ea8-931c-faa538383cb3",
+            "variantId": "2f33c317-4cba-4d48-b42b-19cae158d4b8",
+            "choiceOrder": [],
+            "number": 7
+          },
+          {
+            "slotId": "d6b310ca-5f87-44e6-8369-a98f8c3faba3",
+            "variantId": "a16ecdd1-8524-4ed5-9cf6-2d7799d816b0",
+            "choiceOrder": [],
+            "number": 8
+          },
+          {
+            "slotId": "9ac4570f-3bfb-4630-8843-7cbb6e5128f9",
+            "variantId": "c5deae6a-0424-4a90-83cf-c91f4e781b32",
+            "choiceOrder": [],
+            "number": 9
+          },
+          {
+            "slotId": "d39dbc87-e5b3-4518-bf70-eb34aeed8f7d",
+            "variantId": "d9fd21fa-5564-4346-84ba-04451a0717d2",
+            "choiceOrder": [],
+            "number": 10
+          },
+          {
+            "slotId": "6db348e5-9110-4118-91dd-25d7deb29c4a",
+            "variantId": "51c3f740-6532-481c-b352-bbc7ff2a56d5",
+            "choiceOrder": [],
+            "number": 11
+          },
+          {
+            "slotId": "f68dec8c-a0f1-4544-9d0a-92367cfbd270",
+            "variantId": "160244fb-61c5-46b1-8c41-50ade12b590b",
+            "choiceOrder": [],
+            "number": 12
+          },
+          {
+            "slotId": "4ec5c192-b788-4ad2-81ff-3c404d888801",
+            "variantId": "13e61a2c-ff6d-4bae-9fe6-3237add2b033",
+            "choiceOrder": [],
+            "number": 13
+          }
+        ]
+      },
+      {
+        "label": "C",
+        "entries": [
+          {
+            "slotId": "24de7c52-34db-4036-8d3c-f0f3e0301b64",
+            "variantId": "bb55031a-aae9-41c8-8f54-b0cec88c1fc4",
+            "choiceOrder": [
+              "34539e36-8872-4e71-a9aa-bfe18cc242ce",
+              "1a7ec015-2e60-4a5b-9f82-eaef8fdec84a",
+              "9f2c6fa4-39b9-47bc-8736-9bcd2369c848",
+              "3d4ff55d-5a05-40f3-83d1-761baaedea75"
+            ],
+            "number": 1
+          },
+          {
+            "slotId": "0a1f6e96-69c4-4ab6-8ae4-b077ae813ff1",
+            "variantId": "34853a90-415d-4a2a-bece-24abc6ecc5d0",
+            "choiceOrder": [],
+            "number": 2
+          },
+          {
+            "slotId": "be922f96-f428-414b-b104-87f22f8cf4e0",
+            "variantId": "26583d09-735c-49a5-a466-49aeb260d077",
+            "choiceOrder": [
+              "91ae1584-797a-41d1-9f5d-56d2b1987e78",
+              "6f29a9b5-98bb-43ad-b2ef-81934eeebfef",
+              "09da581a-56d2-4096-8c92-3a1a2aea18e1",
+              "35d263e2-4016-48fe-8ec8-a5bfd384dea0"
+            ],
+            "number": 3
+          },
+          {
+            "slotId": "091e950e-d0d3-43c8-8a1a-cde5d6428af5",
+            "variantId": "2ae59139-2946-4929-aeca-3134c10ecb07",
+            "choiceOrder": [],
+            "number": 4
+          },
+          {
+            "slotId": "9ac4570f-3bfb-4630-8843-7cbb6e5128f9",
+            "variantId": "c5deae6a-0424-4a90-83cf-c91f4e781b32",
+            "choiceOrder": [],
+            "number": 5
+          },
+          {
+            "slotId": "0f35915c-0aa0-409a-96ef-ded8c44ecfd9",
+            "variantId": "9b06960b-e4b3-412f-9546-30f0f1720018",
+            "choiceOrder": [
+              "41283547-0d42-4cd8-bd61-02b753700b07",
+              "e32e71d1-7f05-4d4d-a7ba-0a6420b0d672",
+              "e527eac6-f612-44b9-9e79-af48f826338f",
+              "11006d56-fb66-45a0-a566-a4fbba4ccf64"
+            ],
+            "number": 6
+          },
+          {
+            "slotId": "d6b310ca-5f87-44e6-8369-a98f8c3faba3",
+            "variantId": "a16ecdd1-8524-4ed5-9cf6-2d7799d816b0",
+            "choiceOrder": [],
+            "number": 7
+          },
+          {
+            "slotId": "1e17736f-f2cb-4ea8-931c-faa538383cb3",
+            "variantId": "2f33c317-4cba-4d48-b42b-19cae158d4b8",
+            "choiceOrder": [],
+            "number": 8
+          },
+          {
+            "slotId": "d39dbc87-e5b3-4518-bf70-eb34aeed8f7d",
+            "variantId": "d9fd21fa-5564-4346-84ba-04451a0717d2",
+            "choiceOrder": [],
+            "number": 9
+          },
+          {
+            "slotId": "5aebfff9-79b1-48b6-97bb-fe7cde4a00a0",
+            "variantId": "955ff029-8813-43ba-a6d3-31212437aec5",
+            "choiceOrder": [],
+            "number": 10
+          },
+          {
+            "slotId": "6db348e5-9110-4118-91dd-25d7deb29c4a",
+            "variantId": "51c3f740-6532-481c-b352-bbc7ff2a56d5",
+            "choiceOrder": [],
+            "number": 11
+          },
+          {
+            "slotId": "f68dec8c-a0f1-4544-9d0a-92367cfbd270",
+            "variantId": "d07351a5-0617-4587-8aa8-393d578b1e8b",
+            "choiceOrder": [],
+            "number": 12
+          },
+          {
+            "slotId": "4ec5c192-b788-4ad2-81ff-3c404d888801",
+            "variantId": "13e61a2c-ff6d-4bae-9fe6-3237add2b033",
+            "choiceOrder": [],
+            "number": 13
+          }
+        ]
+      },
+      {
+        "label": "D",
+        "entries": [
+          {
+            "slotId": "24de7c52-34db-4036-8d3c-f0f3e0301b64",
+            "variantId": "bb55031a-aae9-41c8-8f54-b0cec88c1fc4",
+            "choiceOrder": [
+              "34539e36-8872-4e71-a9aa-bfe18cc242ce",
+              "3d4ff55d-5a05-40f3-83d1-761baaedea75",
+              "9f2c6fa4-39b9-47bc-8736-9bcd2369c848",
+              "1a7ec015-2e60-4a5b-9f82-eaef8fdec84a"
+            ],
+            "number": 1
+          },
+          {
+            "slotId": "be922f96-f428-414b-b104-87f22f8cf4e0",
+            "variantId": "26583d09-735c-49a5-a466-49aeb260d077",
+            "choiceOrder": [
+              "6f29a9b5-98bb-43ad-b2ef-81934eeebfef",
+              "91ae1584-797a-41d1-9f5d-56d2b1987e78",
+              "09da581a-56d2-4096-8c92-3a1a2aea18e1",
+              "35d263e2-4016-48fe-8ec8-a5bfd384dea0"
+            ],
+            "number": 2
+          },
+          {
+            "slotId": "0a1f6e96-69c4-4ab6-8ae4-b077ae813ff1",
+            "variantId": "34853a90-415d-4a2a-bece-24abc6ecc5d0",
+            "choiceOrder": [],
+            "number": 3
+          },
+          {
+            "slotId": "d6b310ca-5f87-44e6-8369-a98f8c3faba3",
+            "variantId": "a16ecdd1-8524-4ed5-9cf6-2d7799d816b0",
+            "choiceOrder": [],
+            "number": 4
+          },
+          {
+            "slotId": "d39dbc87-e5b3-4518-bf70-eb34aeed8f7d",
+            "variantId": "d9fd21fa-5564-4346-84ba-04451a0717d2",
+            "choiceOrder": [],
+            "number": 5
+          },
+          {
+            "slotId": "1e17736f-f2cb-4ea8-931c-faa538383cb3",
+            "variantId": "2f33c317-4cba-4d48-b42b-19cae158d4b8",
+            "choiceOrder": [],
+            "number": 6
+          },
+          {
+            "slotId": "6db348e5-9110-4118-91dd-25d7deb29c4a",
+            "variantId": "51c3f740-6532-481c-b352-bbc7ff2a56d5",
+            "choiceOrder": [],
+            "number": 7
+          },
+          {
+            "slotId": "091e950e-d0d3-43c8-8a1a-cde5d6428af5",
+            "variantId": "2ae59139-2946-4929-aeca-3134c10ecb07",
+            "choiceOrder": [],
+            "number": 8
+          },
+          {
+            "slotId": "0f35915c-0aa0-409a-96ef-ded8c44ecfd9",
+            "variantId": "9b06960b-e4b3-412f-9546-30f0f1720018",
+            "choiceOrder": [
+              "e527eac6-f612-44b9-9e79-af48f826338f",
+              "e32e71d1-7f05-4d4d-a7ba-0a6420b0d672",
+              "41283547-0d42-4cd8-bd61-02b753700b07",
+              "11006d56-fb66-45a0-a566-a4fbba4ccf64"
+            ],
+            "number": 9
+          },
+          {
+            "slotId": "5aebfff9-79b1-48b6-97bb-fe7cde4a00a0",
+            "variantId": "955ff029-8813-43ba-a6d3-31212437aec5",
+            "choiceOrder": [],
+            "number": 10
+          },
+          {
+            "slotId": "9ac4570f-3bfb-4630-8843-7cbb6e5128f9",
+            "variantId": "c5deae6a-0424-4a90-83cf-c91f4e781b32",
+            "choiceOrder": [],
+            "number": 11
+          },
+          {
+            "slotId": "f68dec8c-a0f1-4544-9d0a-92367cfbd270",
+            "variantId": "160244fb-61c5-46b1-8c41-50ade12b590b",
+            "choiceOrder": [],
+            "number": 12
+          },
+          {
+            "slotId": "4ec5c192-b788-4ad2-81ff-3c404d888801",
+            "variantId": "13e61a2c-ff6d-4bae-9fe6-3237add2b033",
+            "choiceOrder": [],
+            "number": 13
+          }
+        ]
+      },
+      {
+        "label": "E",
+        "entries": [
+          {
+            "slotId": "24de7c52-34db-4036-8d3c-f0f3e0301b64",
+            "variantId": "bb55031a-aae9-41c8-8f54-b0cec88c1fc4",
+            "choiceOrder": [
+              "34539e36-8872-4e71-a9aa-bfe18cc242ce",
+              "1a7ec015-2e60-4a5b-9f82-eaef8fdec84a",
+              "9f2c6fa4-39b9-47bc-8736-9bcd2369c848",
+              "3d4ff55d-5a05-40f3-83d1-761baaedea75"
+            ],
+            "number": 1
+          },
+          {
+            "slotId": "0a1f6e96-69c4-4ab6-8ae4-b077ae813ff1",
+            "variantId": "34853a90-415d-4a2a-bece-24abc6ecc5d0",
+            "choiceOrder": [],
+            "number": 2
+          },
+          {
+            "slotId": "be922f96-f428-414b-b104-87f22f8cf4e0",
+            "variantId": "26583d09-735c-49a5-a466-49aeb260d077",
+            "choiceOrder": [
+              "6f29a9b5-98bb-43ad-b2ef-81934eeebfef",
+              "35d263e2-4016-48fe-8ec8-a5bfd384dea0",
+              "91ae1584-797a-41d1-9f5d-56d2b1987e78",
+              "09da581a-56d2-4096-8c92-3a1a2aea18e1"
+            ],
+            "number": 3
+          },
+          {
+            "slotId": "1e17736f-f2cb-4ea8-931c-faa538383cb3",
+            "variantId": "2f33c317-4cba-4d48-b42b-19cae158d4b8",
+            "choiceOrder": [],
+            "number": 4
+          },
+          {
+            "slotId": "9ac4570f-3bfb-4630-8843-7cbb6e5128f9",
+            "variantId": "c5deae6a-0424-4a90-83cf-c91f4e781b32",
+            "choiceOrder": [],
+            "number": 5
+          },
+          {
+            "slotId": "5aebfff9-79b1-48b6-97bb-fe7cde4a00a0",
+            "variantId": "955ff029-8813-43ba-a6d3-31212437aec5",
+            "choiceOrder": [],
+            "number": 6
+          },
+          {
+            "slotId": "d6b310ca-5f87-44e6-8369-a98f8c3faba3",
+            "variantId": "a16ecdd1-8524-4ed5-9cf6-2d7799d816b0",
+            "choiceOrder": [],
+            "number": 7
+          },
+          {
+            "slotId": "d39dbc87-e5b3-4518-bf70-eb34aeed8f7d",
+            "variantId": "d9fd21fa-5564-4346-84ba-04451a0717d2",
+            "choiceOrder": [],
+            "number": 8
+          },
+          {
+            "slotId": "6db348e5-9110-4118-91dd-25d7deb29c4a",
+            "variantId": "51c3f740-6532-481c-b352-bbc7ff2a56d5",
+            "choiceOrder": [],
+            "number": 9
+          },
+          {
+            "slotId": "091e950e-d0d3-43c8-8a1a-cde5d6428af5",
+            "variantId": "2ae59139-2946-4929-aeca-3134c10ecb07",
+            "choiceOrder": [],
+            "number": 10
+          },
+          {
+            "slotId": "0f35915c-0aa0-409a-96ef-ded8c44ecfd9",
+            "variantId": "9b06960b-e4b3-412f-9546-30f0f1720018",
+            "choiceOrder": [
+              "41283547-0d42-4cd8-bd61-02b753700b07",
+              "e527eac6-f612-44b9-9e79-af48f826338f",
+              "11006d56-fb66-45a0-a566-a4fbba4ccf64",
+              "e32e71d1-7f05-4d4d-a7ba-0a6420b0d672"
+            ],
+            "number": 11
+          },
+          {
+            "slotId": "f68dec8c-a0f1-4544-9d0a-92367cfbd270",
+            "variantId": "d07351a5-0617-4587-8aa8-393d578b1e8b",
+            "choiceOrder": [],
+            "number": 12
+          },
+          {
+            "slotId": "4ec5c192-b788-4ad2-81ff-3c404d888801",
+            "variantId": "13e61a2c-ff6d-4bae-9fe6-3237add2b033",
+            "choiceOrder": [],
+            "number": 13
+          }
+        ]
+      },
+      {
+        "label": "F",
+        "entries": [
+          {
+            "slotId": "24de7c52-34db-4036-8d3c-f0f3e0301b64",
+            "variantId": "bb55031a-aae9-41c8-8f54-b0cec88c1fc4",
+            "choiceOrder": [
+              "34539e36-8872-4e71-a9aa-bfe18cc242ce",
+              "9f2c6fa4-39b9-47bc-8736-9bcd2369c848",
+              "1a7ec015-2e60-4a5b-9f82-eaef8fdec84a",
+              "3d4ff55d-5a05-40f3-83d1-761baaedea75"
+            ],
+            "number": 1
+          },
+          {
+            "slotId": "be922f96-f428-414b-b104-87f22f8cf4e0",
+            "variantId": "26583d09-735c-49a5-a466-49aeb260d077",
+            "choiceOrder": [
+              "91ae1584-797a-41d1-9f5d-56d2b1987e78",
+              "6f29a9b5-98bb-43ad-b2ef-81934eeebfef",
+              "35d263e2-4016-48fe-8ec8-a5bfd384dea0",
+              "09da581a-56d2-4096-8c92-3a1a2aea18e1"
+            ],
+            "number": 2
+          },
+          {
+            "slotId": "0a1f6e96-69c4-4ab6-8ae4-b077ae813ff1",
+            "variantId": "34853a90-415d-4a2a-bece-24abc6ecc5d0",
+            "choiceOrder": [],
+            "number": 3
+          },
+          {
+            "slotId": "1e17736f-f2cb-4ea8-931c-faa538383cb3",
+            "variantId": "2f33c317-4cba-4d48-b42b-19cae158d4b8",
+            "choiceOrder": [],
+            "number": 4
+          },
+          {
+            "slotId": "091e950e-d0d3-43c8-8a1a-cde5d6428af5",
+            "variantId": "2ae59139-2946-4929-aeca-3134c10ecb07",
+            "choiceOrder": [],
+            "number": 5
+          },
+          {
+            "slotId": "6db348e5-9110-4118-91dd-25d7deb29c4a",
+            "variantId": "51c3f740-6532-481c-b352-bbc7ff2a56d5",
+            "choiceOrder": [],
+            "number": 6
+          },
+          {
+            "slotId": "d6b310ca-5f87-44e6-8369-a98f8c3faba3",
+            "variantId": "a16ecdd1-8524-4ed5-9cf6-2d7799d816b0",
+            "choiceOrder": [],
+            "number": 7
+          },
+          {
+            "slotId": "9ac4570f-3bfb-4630-8843-7cbb6e5128f9",
+            "variantId": "c5deae6a-0424-4a90-83cf-c91f4e781b32",
+            "choiceOrder": [],
+            "number": 8
+          },
+          {
+            "slotId": "d39dbc87-e5b3-4518-bf70-eb34aeed8f7d",
+            "variantId": "d9fd21fa-5564-4346-84ba-04451a0717d2",
+            "choiceOrder": [],
+            "number": 9
+          },
+          {
+            "slotId": "5aebfff9-79b1-48b6-97bb-fe7cde4a00a0",
+            "variantId": "955ff029-8813-43ba-a6d3-31212437aec5",
+            "choiceOrder": [],
+            "number": 10
+          },
+          {
+            "slotId": "0f35915c-0aa0-409a-96ef-ded8c44ecfd9",
+            "variantId": "9b06960b-e4b3-412f-9546-30f0f1720018",
+            "choiceOrder": [
+              "e527eac6-f612-44b9-9e79-af48f826338f",
+              "41283547-0d42-4cd8-bd61-02b753700b07",
+              "11006d56-fb66-45a0-a566-a4fbba4ccf64",
+              "e32e71d1-7f05-4d4d-a7ba-0a6420b0d672"
+            ],
+            "number": 11
+          },
+          {
+            "slotId": "f68dec8c-a0f1-4544-9d0a-92367cfbd270",
+            "variantId": "160244fb-61c5-46b1-8c41-50ade12b590b",
+            "choiceOrder": [],
+            "number": 12
+          },
+          {
+            "slotId": "4ec5c192-b788-4ad2-81ff-3c404d888801",
+            "variantId": "13e61a2c-ff6d-4bae-9fe6-3237add2b033",
+            "choiceOrder": [],
+            "number": 13
+          }
+        ]
+      }
+    ]
+  }
+}
