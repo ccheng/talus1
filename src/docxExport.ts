@@ -249,7 +249,10 @@ class WordWriter {
  question(q:RenderedQuestion,key:boolean):string {
   let out='';
   if(q.groupHtml)out+=this.html(q.groupHtml);
-  out+=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
+  const stemXml=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
+  // Explicit direct pagination control improves parity between Word and Writer,
+  // rather than depending solely on paragraph-style inheritance.
+  out+=stemXml.replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
   const compactChoices=q.choices.length>=2&&q.choices.length<=5;
   q.choices.forEach((choice,i)=>{
    const choiceXml=this.labelledHtml(choice.html,String.fromCharCode(65+i)+'. ','','Choice');
@@ -268,7 +271,8 @@ class WordWriter {
    // together, but longer responses can still continue onto another page.
    for(let start=0;start<count;start+=4){
     const size=Math.min(4,count-start);
-    out+=this.plain('Question '+q.number+' — response space'+(start?' (continued)':''),'ResponseLabel');
+    out+=this.plain('Question '+q.number+' — response space'+(start?' (continued)':''),'ResponseLabel')
+      .replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
     for(let i=0;i<size;i++){
      const line=this.plain('________________________________________________','ResponseLine');
      out+=i<size-1?line.replace(/<w:pPr>/,'<w:pPr><w:keepNext/>'):line;
