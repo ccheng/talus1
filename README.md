@@ -1,3 +1,14 @@
+## Milestone 3A corrective release v0.3.1 — independent acceptance (November 2026)
+
+The independent Milestone 3A Work-mode acceptance report failed two release-blocking cases, both confirmed in the original Word export evidence.
+
+- **3A-01 (P0):** Native Word summation previously emitted empty `m:nary/m:e` followed by a detached summand. The OOXML converter now binds the following MathML operand directly inside the n-ary object, preserving both limits. If the summand is absent or ambiguous, Word export fails visibly instead of emitting an empty formula box.
+- **3A-02 (P0):** The Word Lab table imported inside invalid-but-retained paragraph HTML (`<p><table>…</table></p>`) could previously be flattened into a text run, detaching its diagram from the cell. The block serializer now recursively handles nested block-level table elements rather than treating them as inline text. The result is a native editable Word table with the original rows, cells and in-cell image.
+
+**Test coverage:** `e2e/acceptance3a-corrective.spec.ts` permanently checks native OOXML operands and table/image-cell ancestry in **six student DOCX and six corresponding answer-key DOCX**. Cases include original paragraph-wrapped versus normalized table alternatives and rejection of summations with no operand. These tests run with all earlier Talus regressions in GitHub Actions. This permanent suite uses faithful compact reproductions of the independent evidence patterns, not byte-for-byte copies of every original user fixture.
+
+**Independent acceptance gate:** Retest the original `Science-Rich-Editing.docx` with the original 3A acceptance sequence and compare all 12 exported Word documents to the source, browser preview and Markdown. In particular, verify that the summation has a real editable Word operand and the Lab PNG remains inside its editable table cell in versions A/C/E and their keys. Previous already exported invalid Word documents must be regenerated.
+
 ## Milestone 3A — Editable Word/DOCX export (November 2026)
 
 The **Versions & answer keys** view now offers **Student Word (.docx)**, **Answer key Word (.docx)**, and **Word/DOCX (ZIP) — all versions & keys**. For a six-version run the ZIP includes **12 editable DOCX documents (student A–F and keyed A–F)** plus a run manifest. All conversion executes client-side through the existing `fflate` package; no server, Word installation, cloud upload, or hosted document service is needed.
