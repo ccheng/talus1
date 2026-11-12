@@ -166,12 +166,13 @@ class WordWriter {
    max=Math.max(max,column);emitted.push({cells:rowCells});
   }
   const grid='<w:tblGrid>'+Array.from({length:max},()=>'<w:gridCol w:w="'+Math.floor(9000/Math.max(max,1))+'"/>').join('')+'</w:tblGrid>';
-  return '<w:tbl><w:tblPr><w:tblW w:w="9000" w:type="dxa"/><w:tblBorders>'+
+  return '<w:tbl><w:tblPr><w:tblW w:w="9000" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="80" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar><w:tblBorders>'+
    ['top','bottom','left','right','insideH','insideV'].map(x=>'<w:'+x+' w:val="single" w:sz="4" w:color="888888"/>').join('')+
-   '</w:tblBorders></w:tblPr>'+grid+emitted.map(row=>'<w:tr>'+row.cells.map(cell=>{
+   '</w:tblBorders></w:tblPr>'+grid+emitted.map(row=>'<w:tr><w:trPr><w:cantSplit/></w:trPr>'+row.cells.map(cell=>{
     const props=(cell.span>1?'<w:gridSpan w:val="'+cell.span+'"/>':'')+(cell.merge?'<w:vMerge w:val="'+cell.merge+'"/>':'');
     const body=cell.el?this.blocksFromNodes(Array.from(cell.el.childNodes)):para('');
-    return '<w:tc><w:tcPr>'+props+'</w:tcPr>'+(body||para(''))+'</w:tc>';
+    const styled=(body||para('')).replace(/<w:p>(?!<w:pPr>)/g,'<w:p><w:pPr><w:pStyle w:val="TableCell"/></w:pPr>');
+    return '<w:tc><w:tcPr>'+props+'</w:tcPr>'+styled+'</w:tc>';
    }).join('')+'</w:tr>').join('')+'</w:tbl>';
  }
  private blocksFromNodes(nodes:Node[]):string{
@@ -209,11 +210,11 @@ class WordWriter {
  }
  plain(s:string,style?:string):string{return para(this.run(text(s)),style);}
  /** Keep Word question numbers, marks and answer letters on the prompt line. */
- private labelledHtml(html:string,prefix:string,suffix=''):string{
+ private labelledHtml(html:string,prefix:string,suffix='',style='Question'):string{
   const body=this.html(html);
   if(!body.startsWith('<w:p>')||body.startsWith('<w:p><w:pPr>'))
-   return this.plain(prefix+suffix)+body;
-  return ('<w:p>'+this.run(text(prefix))+body.slice(5))
+   return this.plain(prefix+suffix,style)+body;
+  return ('<w:p><w:pPr><w:pStyle w:val="'+style+'"/></w:pPr>'+this.run(text(prefix))+body.slice(5))
    .replace('</w:p>',this.run(text(suffix))+'</w:p>');
  }
  question(q:RenderedQuestion,key:boolean):string {
@@ -221,32 +222,35 @@ class WordWriter {
   if(q.groupHtml)out+=this.html(q.groupHtml);
   out+=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
   q.choices.forEach((choice,i)=>{
-   out+=this.labelledHtml(choice.html,String.fromCharCode(65+i)+'. ');
+   out+=this.labelledHtml(choice.html,String.fromCharCode(65+i)+'. ','','Choice');
   });
   if(key){
    const letters=q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):'').filter(Boolean).join(', ');
-   if(q.choices.length)out+=this.plain('Answer: '+letters);
-   else out+=this.labelledHtml(q.referenceAnswer,'Answer: ');
+   if(q.choices.length)out+=this.plain('Answer: '+letters,'Answer');
+   else out+=this.labelledHtml(q.referenceAnswer,'Answer: ','','Answer');
   }else if(!q.choices.length){
-   for(let i=0;i<responseLineCount(q.type,q.responseLines);i++)out+=this.plain('________________________________________________');
+   for(let i=0;i<responseLineCount(q.type,q.responseLines);i++)out+=this.plain('________________________________________________','ResponseLine');
   }
   return out;
  }
  build(master:MasterTest,v:GeneratedVersion,answerKey:boolean):Uint8Array {
   let body=this.plain(master.title+' — '+(answerKey?'Answer Key ':'Version ')+v.label,'Title');
-  if(master.lastGeneration)body+=this.plain('Run ID: '+master.lastGeneration.runId);
+  if(master.lastGeneration)body+=this.plain('Run ID: '+master.lastGeneration.runId,'Metadata');
+  if(!answerKey)body+=this.plain('Name: ______________________________    Class: ______________    Date: ______________','StudentDetails');
   body+=this.html(master.instructions);
   for(const section of v.sections){
    body+=this.plain(sectionHeading(section.title,section.proficiency),'Heading1');
    body+=this.html(section.instructions);
    for(const q of section.questions)body+=this.question(q,answerKey);
   }
-  body+='<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="900" w:right="900" w:bottom="900" w:left="900"/></w:sectPr>';
+  body+='<w:sectPr><w:headerReference w:type="default" r:id="rIdHeader"/><w:footerReference w:type="default" r:id="rIdFooter"/><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720"/></w:sectPr>';
   const document='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<w:document xmlns:w="'+NS_W+'" xmlns:r="'+NS_R+'" xmlns:m="'+NS_M+'" xmlns:a="'+NS_A+
    '" xmlns:pic="'+NS_PIC+'" xmlns:wp="'+NS_WP+'"><w:body>'+body+'</w:body></w:document>';
   const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+   '<Relationship Id="rIdHeader" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'+
+   '<Relationship Id="rIdFooter" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+
    this.media.map(m=>'<Relationship Id="'+m.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/'+m.path.split('/').pop()+'"/>').join('')+
    '</Relationships>';
   const types='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
@@ -254,16 +258,39 @@ class WordWriter {
    '<Default Extension="xml" ContentType="application/xml"/>'+
    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+   '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'+
+   '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'+
    [...new Set(this.media.map(m=>m.mime))].map(m=>'<Default Extension="'+(m==='image/jpeg'?'jpg':m.split('/')[1])+'" ContentType="'+m+'"/>').join('')+
    '</Types>';
+  const style=(id:string,name:string,paragraph:string,run='')=>'<w:style w:type="paragraph" w:styleId="'+id+'"><w:name w:val="'+name+'"/><w:basedOn w:val="Normal"/><w:pPr>'+paragraph+'</w:pPr>'+(run?'<w:rPr>'+run+'</w:rPr>':'')+'</w:style>';
+  const space=(before:number,after:number)=>'<w:spacing w:before="'+before+'" w:after="'+after+'" w:line="276" w:lineRule="auto"/>';
   const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="'+NS_W+'">'+
-   ['Title','Heading1','Heading2','Heading3'].map((name,i)=>'<w:style w:type="paragraph" w:styleId="'+name+'"><w:name w:val="'+name+'"/>'+
-    '<w:rPr><w:b/><w:sz w:val="'+(i===0?'36':i===1?'28':'24')+'"/></w:rPr></w:style>').join('')+'</w:styles>';
+   '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Aptos" w:hAnsi="Aptos" w:eastAsia="Aptos"/><w:sz w:val="22"/></w:rPr></w:rPrDefault>'+
+   '<w:pPrDefault><w:pPr><w:spacing w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
+   '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr>'+space(0,80)+'</w:pPr></w:style>'+
+   style('Title','Title',space(0,180)+'<w:keepNext/>','<w:b/><w:sz w:val="32"/>')+
+   style('Heading1','Section heading',space(220,100)+'<w:keepNext/><w:keepLines/>','<w:b/><w:sz w:val="26"/>')+
+   style('Heading2','Subheading',space(160,80)+'<w:keepNext/>','<w:b/><w:sz w:val="24"/>')+
+   style('Heading3','Minor heading',space(120,60)+'<w:keepNext/>','<w:b/>')+
+   style('StudentDetails','Student fields',space(80,180)+'<w:keepNext/>')+
+   style('Metadata','Run metadata',space(0,80),'<w:color w:val="606060"/><w:sz w:val="18"/>')+
+   style('Question','Question prompt',space(160,70)+'<w:keepNext/><w:keepLines/>')+
+   style('Choice','Multiple-choice option',space(0,45)+'<w:ind w:left="360" w:hanging="180"/>')+
+   style('Answer','Teacher answer',space(80,120)+'<w:ind w:left="240"/>','<w:color w:val="24436A"/>')+
+   style('ResponseLine','Student response line',space(0,100)+'<w:ind w:left="240"/>')+
+   style('TableCell','Table cell',space(0,0))+
+   '</w:styles>';
+  const header='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr xmlns:w="'+NS_W+'">'+
+   para(this.run(text(master.title+'  |  '+(answerKey?'Answer Key ':'Version ')+v.label)),'Metadata')+'</w:hdr>';
+  const footer='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="'+NS_W+'">'+
+   para(this.run(text('Page '))+'<w:fldSimple w:instr="PAGE"><w:r>'+text('1')+'</w:r></w:fldSimple>','Metadata')+'</w:ftr>';
   const files:Record<string,Uint8Array>={
    '[Content_Types].xml':strToU8(types),
    '_rels/.rels':strToU8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'),
    'word/document.xml':strToU8(document),
    'word/styles.xml':strToU8(styles),
+   'word/header1.xml':strToU8(header),
+   'word/footer1.xml':strToU8(footer),
    'word/_rels/document.xml.rels':strToU8(rels)
   };
   for(const m of this.media)files[m.path]=m.bytes;
