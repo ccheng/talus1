@@ -101,3 +101,22 @@ test('3B.1 page-break safeguards and XML package relationships are structurally 
   for(const part of ['header1.xml','footer1.xml'])expect(rels).toContain('Target="'+part+'"');
  }
 });
+
+test('3B.1 oversized diagrams scale proportionally within printable page without changing embedded media',async({page})=>{
+ const huge=JSON.parse(JSON.stringify(master));
+ huge.sections[0].items[0].variants[0].stem=huge.sections[0].items[0].variants[0].stem.replace('width="320" height="180"','width="936" height="468"');
+ await page.goto('./');page.on('dialog',d=>d.accept());
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'oversize.talus.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(huge))});
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await page.locator('.rightbar').getByRole('button',{name:'Generate',exact:true}).click();
+ const dl=page.waitForEvent('download');await page.getByRole('button',{name:/Word.*DOCX.*ZIP/i}).click();
+ const all=unzipSync(new Uint8Array(await readFile(await(await dl).path()!)));
+ const doc=word(all,'-VA.docx'),xml=content(doc,'word/document.xml');
+ expect(xml).toContain('cx="5943600"'); // 624*9525 = printable width
+ expect(xml).toContain('cy="2971800"'); // proportional height 312*9525
+ expect(xml).toContain('<w:jc w:val="center"/>');
+ expect(xml).toContain('<w:tblHeader w:val="true"/>');
+ const media=Object.entries(doc).filter(([name])=>name.startsWith('word/media/'));
+ expect(media).toHaveLength(1);
+ expect(Buffer.from(media[0][1]).toString('base64')).toBe(IMG.split(',')[1]);
+});
