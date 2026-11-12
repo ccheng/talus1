@@ -170,14 +170,30 @@ class WordWriter {
    }
    max=Math.max(max,column);emitted.push({cells:rowCells});
   }
+  // Source Word commonly uses <td> rather than <th> for header rows.
+  // Recognize an all-text leading row followed by measured values.
+  const firstRow=rows[0];
+  const firstCells=firstRow?Array.from(firstRow.children).filter(e=>tag(e)==='th'||tag(e)==='td'):[];
+  const hasHeaderCells=firstCells.some(e=>tag(e)==='th');
+  const looksLikeHeader=rows.length>1 && firstCells.length>0 &&
+   firstCells.every(e=>!!e.textContent?.trim() && !/\d/.test(e.textContent||'') &&
+    (e.textContent||'').trim().length<90) &&
+   rows.slice(1).some(row=>/\d/.test(row.textContent||''));
+  const headerRow=hasHeaderCells||looksLikeHeader;
+  const keepCompactRowsTogether=rows.length<=5;
   const grid='<w:tblGrid>'+Array.from({length:max},()=>'<w:gridCol w:w="'+Math.floor(9000/Math.max(max,1))+'"/>').join('')+'</w:tblGrid>';
   return '<w:tbl><w:tblPr><w:tblW w:w="9000" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="80" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar><w:tblBorders>'+
    ['top','bottom','left','right','insideH','insideV'].map(x=>'<w:'+x+' w:val="single" w:sz="4" w:color="888888"/>').join('')+
-   '</w:tblBorders></w:tblPr>'+grid+emitted.map((row,i)=>'<w:tr><w:trPr><w:cantSplit/>'+(i===0&&row.cells.some(cell=>cell.el&&tag(cell.el)==='th')?'<w:tblHeader w:val="true"/>':'')+'</w:trPr>'+row.cells.map(cell=>{
+   '</w:tblBorders></w:tblPr>'+grid+emitted.map((row,i)=>'<w:tr><w:trPr><w:cantSplit/>'+(i===0&&headerRow?'<w:tblHeader w:val="true"/>':'')+'</w:trPr>'+row.cells.map(cell=>{
     const props=(cell.span>1?'<w:gridSpan w:val="'+cell.span+'"/>':'')+(cell.merge?'<w:vMerge w:val="'+cell.merge+'"/>':'');
     const body=cell.el?this.blocksFromNodes(Array.from(cell.el.childNodes)):para('');
     const styled=(body||para('')).replace(/<w:p>(?!<w:pPr>)/g,'<w:p><w:pPr><w:pStyle w:val="TableCell"/></w:pPr>');
-    return '<w:tc><w:tcPr>'+props+'</w:tcPr>'+styled+'</w:tc>';
+    // Paragraph keep-with-next is understood by Word/Writer across table rows.
+    // Use only for compact tables to avoid making large tables unbreakable.
+    const guarded=keepCompactRowsTogether&&i<emitted.length-1
+     ? styled.replace(/<w:pPr>/g,'<w:pPr><w:keepNext/>')
+     : styled;
+    return '<w:tc><w:tcPr>'+props+'</w:tcPr>'+guarded+'</w:tc>';
    }).join('')+'</w:tr>').join('')+'</w:tbl>';
  }
  private blocksFromNodes(nodes:Node[]):string{
@@ -195,11 +211,15 @@ class WordWriter {
    }else if(t==='p'||t==='div'||t==='h1'||t==='h2'||t==='h3'){
     flush();const sub=this.paragraphContents(el);
     if(sub){
-     const onlyImage=children(el).length===1 && tag(children(el)[0])==='img' && !(el.textContent||'').trim();
+     // Nested spans or prose-only edits must not change diagram alignment.
+     const imageOnly=!(el.textContent||'').trim() && el.querySelectorAll('img').length>0 &&
+      !el.querySelector('table,math');
      const onlyDisplayMath=children(el).length===1 && tag(children(el)[0])==='math' && children(el)[0].getAttribute('display')==='block';
-     if(onlyImage||onlyDisplayMath)out+= '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="80" w:after="80"/></w:pPr>'+sub+'</w:p>';
+     if(imageOnly||onlyDisplayMath)out+= '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="80" w:after="80"/></w:pPr>'+sub+'</w:p>';
      else out+=para(sub,t.startsWith('h')?'Heading'+t.slice(1):undefined);
-    }else if(t==='p')out+=para('');
+    }
+    // Intentionally omit empty imported paragraphs; they can break the
+    // heading's keep-with-next chain and orphan a section at a page bottom.
    }else if(t==='table'){flush();out+=this.table(el);}
    else if(t==='ul'||t==='ol'){
     flush();let index=0;for(const li of children(el)){if(tag(li)!=='li')continue;index++;
@@ -208,7 +228,7 @@ class WordWriter {
    }else if(t==='math'&&el.getAttribute('display')==='block'){
     flush();out+=para('<m:oMathPara><m:oMath>'+mathTree(el)+'</m:oMath></m:oMathPara>');
    }else if(t==='br'){flush();out+=para('');}
-   else if(t==='img'){flush();out+=para(this.inline(el));}
+   else if(t==='img'){flush();out+='<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="80" w:after="80"/></w:pPr>'+this.inline(el)+'</w:p>';}
    else pending+=this.inline(el);
   }
   flush();return out;
@@ -229,16 +249,35 @@ class WordWriter {
  question(q:RenderedQuestion,key:boolean):string {
   let out='';
   if(q.groupHtml)out+=this.html(q.groupHtml);
-  out+=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
+  const stemXml=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
+  // Explicit direct pagination control improves parity between Word and Writer,
+  // rather than depending solely on paragraph-style inheritance.
+  out+=stemXml.replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
+  const compactChoices=q.choices.length>=2&&q.choices.length<=5;
   q.choices.forEach((choice,i)=>{
-   out+=this.labelledHtml(choice.html,String.fromCharCode(65+i)+'. ','','Choice');
+   const choiceXml=this.labelledHtml(choice.html,String.fromCharCode(65+i)+'. ','','Choice');
+   // Chain complete short MC groups without preventing large groups from paginating.
+   // The key's final choice also stays with the answer label.
+   const keep=compactChoices&&(i<q.choices.length-1||key);
+   out+=keep?choiceXml.replace(/<w:pPr>/,'<w:pPr><w:keepNext/>'):choiceXml;
   });
   if(key){
    const letters=q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):'').filter(Boolean).join(', ');
    if(q.choices.length)out+=this.plain('Answer: '+letters,'Answer');
    else out+=this.labelledHtml(q.referenceAnswer,'Answer: ','','Answer');
   }else if(!q.choices.length){
-   for(let i=0;i<responseLineCount(q.type,q.responseLines);i++)out+=this.plain('________________________________________________','ResponseLine');
+   const count=responseLineCount(q.type,q.responseLines);
+   // Each four-line chunk has its own question-number context and is kept
+   // together, but longer responses can still continue onto another page.
+   for(let start=0;start<count;start+=4){
+    const size=Math.min(4,count-start);
+    out+=this.plain('Question '+q.number+' — response space'+(start?' (continued)':''),'ResponseLabel')
+      .replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
+    for(let i=0;i<size;i++){
+     const line=this.plain('________________________________________________','ResponseLine');
+     out+=i<size-1?line.replace(/<w:pPr>/,'<w:pPr><w:keepNext/>'):line;
+    }
+   }
   }
   return out;
  }
@@ -286,6 +325,7 @@ class WordWriter {
    style('Question','Question prompt',space(160,70)+'<w:keepNext/><w:keepLines/>')+
    style('Choice','Multiple-choice option',space(0,45)+'<w:ind w:left="360" w:hanging="180"/>')+
    style('Answer','Teacher answer',space(80,120)+'<w:ind w:left="240"/>','<w:color w:val="24436A"/>')+
+   style('ResponseLabel','Response space label',space(80,20)+'<w:keepNext/>','<w:color w:val="606060"/><w:sz w:val="18"/>')+
    style('ResponseLine','Student response line',space(0,100)+'<w:ind w:left="240"/>')+
    style('TableCell','Table cell',space(0,0))+
    '</w:styles>';
