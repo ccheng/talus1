@@ -249,9 +249,25 @@ class WordWriter {
  question(q:RenderedQuestion,key:boolean):string {
   let out='';
   if(q.groupHtml)out+=this.html(q.groupHtml);
-  const stemXml=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
-  // Explicit direct pagination control improves parity between Word and Writer,
-  // rather than depending solely on paragraph-style inheritance.
+  let stemXml=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
+  // Word cannot repeat a question heading when a multi-page stem continues.
+  // Put small, numbered continuation cues immediately before independently
+  // paginating rich-content blocks, with keepNext binding cue to its content.
+  // They are editable Word text, not layout-time overlays or page counts.
+  const continuation=()=>this.plain('Question '+q.number+' — continued','Continuation')
+   .replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
+  const lastTableEnd=stemXml.lastIndexOf('</w:tbl>');
+  const richTail=lastTableEnd>=0 && stemXml.slice(lastTableEnd+9).includes('<m:oMath>');
+  const multiPartRichStem=lastTableEnd>=0 && richTail;
+  if(multiPartRichStem){
+   const firstTable=stemXml.indexOf('<w:tbl>');
+   stemXml=stemXml.slice(0,firstTable)+continuation()+stemXml.slice(firstTable);
+   const end=stemXml.lastIndexOf('</w:tbl>')+'</w:tbl>'.length;
+   const nextParagraph=stemXml.indexOf('<w:p>',end);
+   if(nextParagraph>=0)
+    stemXml=stemXml.slice(0,nextParagraph)+continuation()+stemXml.slice(nextParagraph);
+  }
+  // Explicit direct pagination control improves parity between Word and Writer.
   out+=stemXml.replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
   const compactChoices=q.choices.length>=2&&q.choices.length<=5;
   q.choices.forEach((choice,i)=>{
@@ -264,7 +280,12 @@ class WordWriter {
   if(key){
    const letters=q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):'').filter(Boolean).join(', ');
    if(q.choices.length)out+=this.plain('Answer: '+letters,'Answer');
-   else out+=this.labelledHtml(q.referenceAnswer,'Answer: ','','Answer');
+   else{
+    // A long illustrated question can push its key onto a new page. Keep a
+    // clear question number with that key without duplicating answer content.
+    if(multiPartRichStem)out+=continuation();
+    out+=this.labelledHtml(q.referenceAnswer,'Answer: ','','Answer');
+   }
   }else if(!q.choices.length){
    const count=responseLineCount(q.type,q.responseLines);
    // Each four-line chunk has its own question-number context and is kept
@@ -325,6 +346,7 @@ class WordWriter {
    style('Question','Question prompt',space(160,70)+'<w:keepNext/><w:keepLines/>')+
    style('Choice','Multiple-choice option',space(0,45)+'<w:ind w:left="360" w:hanging="180"/>')+
    style('Answer','Teacher answer',space(80,120)+'<w:ind w:left="240"/>','<w:color w:val="24436A"/>')+
+   style('Continuation','Question continuation cue',space(80,30)+'<w:keepNext/>','<w:color w:val="606060"/><w:sz w:val="18"/>')+
    style('ResponseLabel','Response space label',space(80,20)+'<w:keepNext/>','<w:color w:val="606060"/><w:sz w:val="18"/>')+
    style('ResponseLine','Student response line',space(0,100)+'<w:ind w:left="240"/>')+
    style('TableCell','Table cell',space(0,0))+
