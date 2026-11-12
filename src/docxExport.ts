@@ -37,7 +37,7 @@ function naryWithOperand(operator:Element,operand:Element):string{
  const lo=t!=='mover'?mathTree(c[1]):'';
  const hi=t==='munderover'?mathTree(c[2]):t==='mover'?mathTree(c[1]):'';
  if(!operand.textContent?.trim())throw Error('Summation operand is missing.');
- if(tag(operand)==='mo'&&/^[+−-=]$/.test(operand.textContent||''))
+ if(tag(operand)==='mo'&&/^[+=−-]$/.test(operand.textContent||''))
   throw Error('Summation operand is ambiguous; group it explicitly.');
  const body=mathTree(operand);
  if(!body.trim())throw Error('Summation operand is missing.');
