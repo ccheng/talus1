@@ -109,7 +109,12 @@ class WordWriter {
    entry={path:'word/media/image'+(this.media.length+1)+'.'+ext,rid:'rId'+(this.media.length+2),mime:'image/'+kind,bytes};
    this.media.push(entry);this.mediaBySource.set(src,entry);
   }
-  const width=Math.max(1,Number(e.getAttribute('width')||240)),height=Math.max(1,Number(e.getAttribute('height')||120));
+  const originalWidth=Math.max(1,Number(e.getAttribute('width')||240));
+  const originalHeight=Math.max(1,Number(e.getAttribute('height')||120));
+  // Printable US Letter width at 1-inch margins: 6.5 inches = 624 CSS px.
+  // Scale oversize drawings proportionally; never crop or distort their bytes.
+  const scale=Math.min(1,624/originalWidth);
+  const width=originalWidth*scale,height=originalHeight*scale;
   const cx=Math.round(width*9525),cy=Math.round(height*9525),id=this.nextDrawing++,alt=esc(e.getAttribute('alt')||'Imported image');
   return '<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
    '<wp:docPr id="'+id+'" name="Talus image '+id+'" descr="'+alt+'"/><wp:cNvGraphicFramePr/>'+
@@ -189,8 +194,12 @@ class WordWriter {
     flush();out+=this.blocksFromNodes(Array.from(el.childNodes));
    }else if(t==='p'||t==='div'||t==='h1'||t==='h2'||t==='h3'){
     flush();const sub=this.paragraphContents(el);
-    if(sub)out+=para(sub,t.startsWith('h')?'Heading'+t.slice(1):undefined);
-    else if(t==='p')out+=para('');
+    if(sub){
+     const onlyImage=children(el).length===1 && tag(children(el)[0])==='img' && !(el.textContent||'').trim();
+     const onlyDisplayMath=children(el).length===1 && tag(children(el)[0])==='math' && children(el)[0].getAttribute('display')==='block';
+     if(onlyImage||onlyDisplayMath)out+= '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="80" w:after="80"/></w:pPr>'+sub+'</w:p>';
+     else out+=para(sub,t.startsWith('h')?'Heading'+t.slice(1):undefined);
+    }else if(t==='p')out+=para('');
    }else if(t==='table'){flush();out+=this.table(el);}
    else if(t==='ul'||t==='ol'){
     flush();let index=0;for(const li of children(el)){if(tag(li)!=='li')continue;index++;
