@@ -23,8 +23,41 @@ const mathRun=(s:string)=>'<m:r><m:t xml:space="preserve">'+esc(s)+'</m:t></m:r>
 const mathArg=(name:string,contents:string)=>'<m:'+name+'>'+contents+'</m:'+name+'>';
 const children=(e:Element)=>Array.from(e.children);
 const tag=(e:Element)=>e.localName.toLowerCase();
+/** Word n-ary nodes must own the expression following the operator; an empty
+ * m:e silently changes the formula, so never emit a detached summand. */
+function isNary(e:Element):boolean {
+ const c=children(e);
+ return ['munder','mover','munderover'].includes(tag(e)) &&
+  !!c.length && /^[∑∏∫∬∭⋃⋂]$/.test(c[0].textContent||'');
+}
+function naryWithOperand(operator:Element,operand:Element):string{
+ const c=children(operator),t=tag(operator);
+ if((t==='munderover'&&c.length!==3)||(t!=='munderover'&&c.length!==2))
+  throw Error('Summation operand or limit structure is incomplete.');
+ const lo=t!=='mover'?mathTree(c[1]):'';
+ const hi=t==='munderover'?mathTree(c[2]):t==='mover'?mathTree(c[1]):'';
+ if(!operand.textContent?.trim())throw Error('Summation operand is missing.');
+ if(tag(operand)==='mo'&&/^[+−-=]$/.test(operand.textContent||''))
+  throw Error('Summation operand is ambiguous; group it explicitly.');
+ const body=mathTree(operand);
+ if(!body.trim())throw Error('Summation operand is missing.');
+ return '<m:nary><m:naryPr><m:chr m:val="'+esc(c[0].textContent||'')+
+  '"/><m:limLoc m:val="undOvr"/></m:naryPr>'+
+  mathArg('sub',lo)+mathArg('sup',hi)+mathArg('e',body)+'</m:nary>';
+}
+function mathSiblings(items:Element[]):string{
+ let result='';
+ for(let i=0;i<items.length;i++){
+  const current=items[i];
+  if(isNary(current)){
+   if(i+1>=items.length)throw Error('Summation operand is missing after the operator.');
+   result+=naryWithOperand(current,items[++i]);
+  }else result+=mathTree(current);
+ }
+ return result;
+}
 function mathTree(e:Element):string{
- const t=tag(e), c=children(e), nested=()=>c.map(mathTree).join('');
+ const t=tag(e), c=children(e), nested=()=>mathSiblings(c);
  if(t==='math'||t==='mrow'||t==='mstyle'||t==='semantics')return nested();
  if(t==='mi'||t==='mn'||t==='mo'||t==='mtext'||t==='ms'||t==='mspace')return mathRun(e.textContent||'');
  if(t==='mfrac'&&c.length===2)return '<m:f><m:fPr><m:type m:val="bar"/></m:fPr>'+mathArg('num',mathTree(c[0]))+mathArg('den',mathTree(c[1]))+'</m:f>';
@@ -42,10 +75,8 @@ function mathTree(e:Element):string{
  }
  if((t==='munder'||t==='mover'||t==='munderover')&&(c.length===2||c.length===3)){
   const base=c[0].textContent||'';
-  if(/^[∑∏∫∬∭⋃⋂]$/.test(base)){
-   const lo=t!=='mover'?mathTree(c[1]):'',hi=t==='munderover'?mathTree(c[2]):t==='mover'?mathTree(c[1]):'';
-   return '<m:nary><m:naryPr><m:chr m:val="'+esc(base)+'"/><m:limLoc m:val="undOvr"/></m:naryPr>'+mathArg('sub',lo)+mathArg('sup',hi)+mathArg('e','')+'</m:nary>';
-  }
+  if(/^[∑∏∫∬∭⋃⋂]$/.test(base))
+   throw Error('Summation operand is missing or detached; place its body after the operator.');
   if(t==='munderover')
    return '<m:sSubSup>'+mathArg('e',mathTree(c[0]))+
     mathArg('sub',mathTree(c[1]))+mathArg('sup',mathTree(c[2]))+'</m:sSubSup>';
@@ -150,7 +181,12 @@ class WordWriter {
    if(n.nodeType===3){if((n.textContent||'').trim())pending+=this.inline(n);continue;}
    if(n.nodeType!==1)continue;
    const el=n as Element,t=tag(el);
-   if(t==='p'||t==='div'||t==='h1'||t==='h2'||t==='h3'){
+   // Word requires block-level w:tbl. Some imported Word HTML stores
+   // a table under <p> (invalid HTML but preserved by earlier import stages).
+   // Do not pass such descendants through inline(), which flattens their cells.
+   if(el.querySelector('table')&&t!=='table'){
+    flush();out+=this.blocksFromNodes(Array.from(el.childNodes));
+   }else if(t==='p'||t==='div'||t==='h1'||t==='h2'||t==='h3'){
     flush();const sub=this.paragraphContents(el);
     if(sub)out+=para(sub,t.startsWith('h')?'Heading'+t.slice(1):undefined);
     else if(t==='p')out+=para('');
