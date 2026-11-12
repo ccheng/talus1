@@ -21,8 +21,34 @@ export interface GenerationRecord {
   count:number; seed:string; runId:string; sourceUpdatedAt:string;
   manifests: {label:string;entries:{slotId:string;variantId:string;choiceOrder:string[];number:number}[]}[];
 }
+export interface WordLayoutSettings {
+  paper: 'letter'|'a4';
+  marginInches: number;
+  fontSizePt: number;
+  lineSpacing: 1|1.15|1.5;
+  sectionPageBreaks: boolean;
+  responseLinesPerGroup: 2|4|6;
+  showHeader: boolean;
+  showPageNumbers: boolean;
+}
+export const DEFAULT_WORD_LAYOUT:WordLayoutSettings={
+  paper:'letter',marginInches:1,fontSizePt:11,lineSpacing:1.15,
+  sectionPageBreaks:false,responseLinesPerGroup:4,showHeader:true,showPageNumbers:true,
+};
+export const wordLayoutSchema=z.object({
+  paper:z.enum(['letter','a4']),
+  marginInches:z.number().min(0.5).max(1.5),
+  fontSizePt:z.number().min(9).max(14),
+  lineSpacing:z.union([z.literal(1),z.literal(1.15),z.literal(1.5)]),
+  sectionPageBreaks:z.boolean(),
+  responseLinesPerGroup:z.union([z.literal(2),z.literal(4),z.literal(6)]),
+  showHeader:z.boolean(),showPageNumbers:z.boolean()
+});
+export function wordLayout(settings?:Partial<WordLayoutSettings>):WordLayoutSettings {
+ return wordLayoutSchema.parse({...DEFAULT_WORD_LAYOUT,...settings});
+}
 export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string;
-  generationSettings?:{count:number;seed:string}; lastGeneration?:GenerationRecord; importWarnings?:string[];
+  generationSettings?:{count:number;seed:string}; wordLayout?:WordLayoutSettings; lastGeneration?:GenerationRecord; importWarnings?:string[];
 }
 export type RichText = string;
 export const uid = (): string => crypto.randomUUID();
@@ -37,7 +63,7 @@ const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shuffle
 const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema)});
 const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficiency:z.string(),instructions:z.string(),shuffleQuestions:z.boolean(),items:z.array(z.union([slotSchema,groupSchema]))});
 export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:z.array(sectionSchema),updatedAt:z.string(),
- generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(), importWarnings:z.array(z.string()).optional(),
+ generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(), wordLayout:wordLayoutSchema.optional(), importWarnings:z.array(z.string()).optional(),
  lastGeneration:z.object({count:z.number().int().min(1).max(30),seed:z.string(),runId:z.string(),sourceUpdatedAt:z.string(),
   manifests:z.array(z.object({label:z.string(),entries:z.array(z.object({slotId:z.string(),variantId:z.string(),choiceOrder:z.array(z.string()),number:z.number().int()}))}))}).optional()
 });
