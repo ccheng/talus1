@@ -170,19 +170,25 @@ class WordWriter {
   return this.blocksFromNodes(Array.from(parsed.body.childNodes));
  }
  plain(s:string,style?:string):string{return para(this.run(text(s)),style);}
+ /** Keep Word question numbers, marks and answer letters on the prompt line. */
+ private labelledHtml(html:string,prefix:string,suffix=''):string{
+  const body=this.html(html);
+  if(!body.startsWith('<w:p>')||body.startsWith('<w:p><w:pPr>'))
+   return this.plain(prefix+suffix)+body;
+  return ('<w:p>'+this.run(text(prefix))+body.slice(5))
+   .replace('</w:p>',this.run(text(suffix))+'</w:p>');
+ }
  question(q:RenderedQuestion,key:boolean):string {
   let out='';
   if(q.groupHtml)out+=this.html(q.groupHtml);
-  out+=this.plain(q.number+'.   '+markLabel(q.points));
-  out+=this.html(q.stem);
+  out+=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
   q.choices.forEach((choice,i)=>{
-   out+=this.plain(String.fromCharCode(65+i)+'.');
-   out+=this.html(choice.html);
+   out+=this.labelledHtml(choice.html,String.fromCharCode(65+i)+'. ');
   });
   if(key){
    const letters=q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):'').filter(Boolean).join(', ');
-   out+=this.plain('Answer: '+letters);
-   if(!q.choices.length)out+=this.html(q.referenceAnswer);
+   if(q.choices.length)out+=this.plain('Answer: '+letters);
+   else out+=this.labelledHtml(q.referenceAnswer,'Answer: ');
   }else if(!q.choices.length){
    for(let i=0;i<responseLineCount(q.type,q.responseLines);i++)out+=this.plain('________________________________________________');
   }
