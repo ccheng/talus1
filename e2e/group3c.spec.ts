@@ -66,8 +66,10 @@ test('3C groups imported children, preserves rich context through save and all e
   expect(xml.indexOf('First prompt.')).toBeLessThan(xml.indexOf('Linked '));
   expect(xml).toContain('<w:tbl>');
   expect(xml).toContain('<m:f>');
-  const finalShared=xml.split('</w:p>').find(paragraph=>paragraph.includes('Shared ratio'));
-  expect(finalShared).toContain('<w:keepNext/>');
+  const paragraphs=xml.split('</w:p>');
+  for(const anchor of ['Shared passage for linked items.','Shared plot','Shared measurement','Shared ratio']){
+   expect(paragraphs.find(paragraph=>paragraph.includes(anchor)),anchor).toContain('<w:keepNext/>');
+  }
   expect(Buffer.from(Object.entries(parts).find(([path])=>path.startsWith('word/media/'))![1]).toString('base64')).toBe(png);
   expect(xml.includes('Beta response.')).toBe(name.endsWith('-key.docx'));
  }
@@ -79,6 +81,16 @@ test('3C groups imported children, preserves rich context through save and all e
   expect(text).toContain('<mfrac>');
   expect(text).toContain('Shared measurement');
  }
+ const generatedBackup=await getDownload(page,'Backup JSON');
+ const generation=JSON.parse(generatedBackup.toString()).lastGeneration;
+ await page.locator('.header-actions input[type=file]').setInputFiles({
+  name:'grouped-with-generation.talus.json',mimeType:'application/json',buffer:generatedBackup
+ });
+ await expect(page.getByText('Imported backup.')).toBeVisible();
+ await page.getByRole('button',{name:'2. Versions & answer keys'}).click();
+ await expect(preview.getByText('Run ID: '+generation.runId,{exact:true})).toBeVisible();
+ const restoredWord=unzipSync(await getDownload(page,/Word\/DOCX \(ZIP\)/));
+ expect(restoredWord['generation-manifest.json']).toEqual(word['generation-manifest.json']);
  await page.getByRole('button',{name:'1. Author'}).click();
  await chooseQuestion(page,2).click();
  const ungroup=page.getByRole('button',{name:'Ungroup questions'});

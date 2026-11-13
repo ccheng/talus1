@@ -1,6 +1,6 @@
 import { describe,expect,it } from 'vitest';
-import { createMaster,createSlot,createVariant,validateMaster } from './model';
-import { generateVersions,generationRecord,restoreGenerated } from './generate';
+import { createMaster,createSlot,createVariant,masterSchema,validateMaster,type Group } from './model';
+import { generateVersions,generationRecord,generationRunId,hashSeed,restoreGenerated } from './generate';
 
 function fixture(){
   const master=createMaster();master.title='Sample';
@@ -48,4 +48,30 @@ describe('generator',()=>{
     expect(versions[0].sections[1].questions[0].number).toBe(8);
   });
   it('rejects incomplete answers',()=>{const m=fixture();const slot=m.sections[0].items[0];if(slot.kind!=='slot')throw Error();slot.variants[0].correctChoiceIds=[];expect(validateMaster(m).some(x=>x.includes('correct'))).toBe(true);});
+});
+
+describe('grouped generation backup restoration',()=>{
+ it('keeps the run ID across schema parsing and restores exact versions without regeneration',()=>{
+  const m=fixture(),section=m.sections[0];
+  const children=section.items.splice(1,2);
+  if(children.some(item=>item.kind!=='slot'))throw Error();
+  const group={kind:'group',id:'group-fixture',items:children,sharedHtml:'<p>Shared setup</p>',shuffleWithinGroup:true} as Group;
+  section.items.splice(1,0,group);
+  const versions=generateVersions(m,6,'grouped-run');
+  const generation=generationRecord(m,versions,6,'grouped-run');
+  m.lastGeneration=generation;
+  const restored=masterSchema.parse(JSON.parse(JSON.stringify(m)));
+  expect(generationRunId(restored,6,'grouped-run')).toBe(generation.runId);
+  expect(restoreGenerated(restored)).toEqual(versions);
+
+  // Historical records generated from a schema-parsed 3C backup are still valid.
+  const schemaOrderGroup={kind:group.kind,id:group.id,sharedHtml:group.sharedHtml,shuffleWithinGroup:group.shuffleWithinGroup,items:group.items};
+  const previousSections=[{...section,items:section.items.map(item=>item===group?schemaOrderGroup:item)}];
+  const previousHash=hashSeed(JSON.stringify({id:m.id,updatedAt:m.updatedAt,count:6,seed:'grouped-run',sections:previousSections})).toString(36).padStart(7,'0');
+  restored.lastGeneration={...generation,runId:previousHash};
+  expect(restoreGenerated(restored)).toEqual(versions);
+  const restoredGroup=restored.sections[0].items[1] as Group;
+  restoredGroup.sharedHtml='<p>Changed setup</p>';
+  expect(restoreGenerated(restored)).toEqual([]);
+ });
 });

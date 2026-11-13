@@ -1,5 +1,5 @@
 import type { MasterTest, TestItem, Slot, Choice, Variant } from './model';
-import { validateMaster } from './model';
+import { masterSectionsSchema,validateMaster } from './model';
 
 export interface RenderedQuestion { slotId:string; variantId:string; number:number; sectionId:string; groupHtml?:string; stem:string; type:Variant['type'];points:number; choices:Choice[]; correctChoiceIds:string[]; referenceAnswer:string;responseLines?:number }
 export interface RenderedSection { id:string;title:string;proficiency:string;instructions:string;questions:RenderedQuestion[] }
@@ -46,8 +46,16 @@ export function generateVersions(master:MasterTest,count:number,seed:string):Gen
   });
 }
 
+function hashGeneration(master:MasterTest,count:number,seed:string,sections:MasterTest['sections']):string{
+ return hashSeed(JSON.stringify({id:master.id,updatedAt:master.updatedAt,count,seed,sections})).toString(36).padStart(7,'0');
+}
 export function generationRunId(master:MasterTest,count:number,seed:string):string {
-  return hashSeed(JSON.stringify({id:master.id,updatedAt:master.updatedAt,count,seed,sections:master.sections})).toString(36).padStart(7,'0');
+ // The schema gives slots, variants and sections one field order regardless of
+ // property insertion order in a backup. Keep 3C's original authored group order.
+ const sections=masterSectionsSchema.parse(master.sections).map(section=>({...section,items:section.items.map(item=>
+  item.kind==='slot'?item:{kind:item.kind,id:item.id,items:item.items,sharedHtml:item.sharedHtml,shuffleWithinGroup:item.shuffleWithinGroup}
+ )}));
+ return hashGeneration(master,count,seed,sections);
 }
 export function generationRecord(master:MasterTest, versions:GeneratedVersion[], count:number, seed:string) {
   return {count,seed,runId:generationRunId(master,count,seed),sourceUpdatedAt:master.updatedAt,
@@ -55,7 +63,12 @@ export function generationRecord(master:MasterTest, versions:GeneratedVersion[],
 }
 export function restoreGenerated(master:MasterTest):GeneratedVersion[] {
   const record=master.lastGeneration;
-  if(!record||record.sourceUpdatedAt!==master.updatedAt || record.runId!==generationRunId(master,record.count,record.seed)) return [];
+  if(!record||record.sourceUpdatedAt!==master.updatedAt)return [];
+ const {count,seed,runId}=record;
+ // Restore earlier version-one records generated either directly from the
+ // draft or from the former backup parser's group field order.
+ if(runId!==generationRunId(master,count,seed)&&runId!==hashGeneration(master,count,seed,master.sections)&&
+    runId!==hashGeneration(master,count,seed,masterSectionsSchema.parse(master.sections)))return [];
   const versions=generateVersions(master,record.count,record.seed);
   if(JSON.stringify(versions.map(v=>({label:v.label,entries:v.manifest})))!==JSON.stringify(record.manifests)) return [];
   return versions;

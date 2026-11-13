@@ -253,13 +253,17 @@ class WordWriter {
   let out='';
   if(q.groupHtml){
    const shared=this.html(q.groupHtml);
-   // Bind the final shared paragraph or table row to the first child.
-   // Earlier context may paginate normally when the shared passage is long.
-   const lastParagraph=shared.lastIndexOf('<w:p>');
-   const trailing=shared.slice(lastParagraph);
-   out+=lastParagraph<0?shared:shared.slice(0,lastParagraph)+(trailing.startsWith('<w:p><w:pPr>')
-    ?trailing.replace('<w:pPr>','<w:pPr><w:keepNext/>')
-    :trailing.replace('<w:p>','<w:p><w:pPr><w:keepNext/></w:pPr>'));
+   const paragraphs=[...shared.matchAll(/<w:p>(?:<w:pPr>[\s\S]*?<\/w:pPr>)?/g)];
+   const tallImage=[...shared.matchAll(/<wp:extent\b[^>]*\bcy="(\d+)"/g)].some(image=>Number(image[1])>914400*2);
+   const multipleImages=(shared.match(/<w:drawing>/g)??[]).length>1;
+   // Keep short shared material and its first question together. Large
+   // contexts still flow across pages with the final paragraph anchored.
+   const compact=paragraphs.length<=12&&shared.replace(/<[^>]+>/g,'').length<=900&&!tallImage&&!multipleImages;
+   const bound=new Set((compact?paragraphs:paragraphs.slice(-1)).map(match=>match.index));
+   out+=shared.replace(/<w:p>(?:<w:pPr>[\s\S]*?<\/w:pPr>)?/g,(opening:string,index:number)=>{
+    if(!bound.has(index)||opening.includes('<w:keepNext/>'))return opening;
+    return opening.includes('<w:pPr>')?opening.replace('<w:pPr>','<w:pPr><w:keepNext/>'):'<w:p><w:pPr><w:keepNext/></w:pPr>';
+   });
   }
   let stemXml=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
   // Word cannot repeat a question heading when a multi-page stem continues.
