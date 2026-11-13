@@ -184,6 +184,11 @@ function sectionName(text:string):string {
  return text.replace(/\b(?:answer\s*key|answers|solutions)\b/gi,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 }
 
+export function detachedKeyAmbiguity(number:string,hasSection:boolean,sectionCount:number,totalCount:number):string|undefined {
+ if(hasSection&&sectionCount>1)return 'Source Q'+number+' repeats within the key section. Assign the answer explicitly.';
+ if(!hasSection&&totalCount>1)return 'Repeated source question number has no matching key section. Assign the answer explicitly.';
+}
+
 export function reviewAnnotation(source:AnnotationSource,raw:string,fallbackTitle:string):AnnotationReview{
  const data=decodeAnnotation(raw,source.fingerprint);
  const blocks=new Map(source.blocks.map(b=>[b.id,b]));
@@ -231,12 +236,15 @@ export function reviewAnnotation(source:AnnotationSource,raw:string,fallbackTitl
  const defaults:string[]=[];
  const keys:KeyReview[]=[];
  const usedQuestionNumbers=new Map<string,number>();
+ const sectionQuestionNumbers=data.sections.map(()=>new Map<string,number>());
  const sourceNumbers=new Map<Reference,Piece>();
- for(const s of data.sections)for(const q of s.questions)if(q.number){
+ for(const [index,section] of data.sections.entries())for(const q of section.questions)if(q.number){
   const piece=labelPiece(q.number),number=numberFrom(piece.text);
   if(!number)throw Error('Invalid source question number: '+piece.text);
   sourceNumbers.set(q.number,piece);
   usedQuestionNumbers.set(number,(usedQuestionNumbers.get(number)??0)+1);
+  const counts=sectionQuestionNumbers[index];
+  counts.set(number,(counts.get(number)??0)+1);
  }
  let lastQuestion:Piece|undefined;
  let lastBody:Piece|undefined;
@@ -295,7 +303,10 @@ export function reviewAnnotation(source:AnnotationSource,raw:string,fallbackTitl
     if(label&&compare(label,content.pieces[0])>=0)throw Error(location+' has a source answer label after its content.');
     const group=number?groups.filter(g=>compare(g.heading,number)<0).at(-1):undefined;
     if(group&&group.section!==sectionIndex)throw Error(location+' has a detached answer from a different section.');
-    if(number&&sourceNumber&&usedQuestionNumbers.get(sourceNumber)!>1&&!group)flags.push('Repeated source question number has no matching key section. Assign the answer explicitly.');
+    if(number&&sourceNumber){
+     const ambiguity=detachedKeyAmbiguity(sourceNumber,!!group,sectionQuestionNumbers[sectionIndex].get(sourceNumber)??0,usedQuestionNumbers.get(sourceNumber)??0);
+     if(ambiguity)flags.push(ambiguity);
+    }
     if(!flags.length&&choiceType){
      const letters=content.text.toUpperCase().split(/\s*(?:,|;|\/|\band\b|&)\s*|\s+/i).map(choiceFrom);
      const mapped=letters.map(letter=>choices.findIndex(c=>c.letter===letter));

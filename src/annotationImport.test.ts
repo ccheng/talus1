@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {decodeAnnotation,verifyCoverage,type AnnotationBlock} from './annotationImport';
+import {decodeAnnotation,detachedKeyAmbiguity,verifyCoverage,type AnnotationBlock} from './annotationImport';
 
 const fingerprint='a'.repeat(64);
 const contract={format:'talus-annotation',version:1,fingerprint,sections:[
@@ -17,6 +17,12 @@ describe('2D.1 annotation validation',()=>{
   expect(verifyCoverage(blocks,[{block:'B1',start:0,end:4}])).toEqual(['B1']);
   expect(()=>verifyCoverage(blocks,[{block:'B1'},{block:'B1',start:0,end:4}])).toThrow(/overlap/i);
   expect(verifyCoverage(blocks,[{block:'B1',start:0,end:4},{block:'B1',start:5,end:20}])).toEqual([]);
+ });
+ it('requires a unique source question inside the declared detached-key section',()=>{
+  expect(detachedKeyAmbiguity('7',true,1,2)).toBeUndefined();
+  expect(detachedKeyAmbiguity('7',true,2,2)).toMatch(/within the key section/);
+  expect(detachedKeyAmbiguity('7',false,1,2)).toMatch(/no matching key section/);
+  expect(detachedKeyAmbiguity('7',false,1,1)).toBeUndefined();
  });
  it('cannot split Unicode characters or protected objects',()=>{
   const blocks:AnnotationBlock[]=[{id:'B1',text:'😀[Math]',html:'',atoms:[{start:2,end:8}]}];

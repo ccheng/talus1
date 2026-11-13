@@ -56,7 +56,8 @@ export function AnnotationExchange({source,filename,review,confirmed,onConfirm,o
    {review.ignored.length>0&&<><h4>Proposed exclusions</h4><ul>{review.ignored.map((item,i)=><li key={i}>{item.text} ({item.reason})</li>)}</ul></>}
    {review.defaults.length>0&&<details><summary>Marks that use the Talus default</summary><ul>{review.defaults.map((item,i)=><li key={i}>{item}</li>)}</ul></details>}
    {review.unassignedKeyText&&<p>Unassigned source key material: {review.unassignedKeyText}</p>}
-   <details open><summary>Source answer associations</summary>
+   <details open><summary>Original proposed answer associations</summary>
+    <p className="help">These are the original proposal. Review any edits in the proposed structure pane before accepting.</p>
     {review.keys.map((key,i)=><div className="import-flag" key={i}>
      <p><strong>{key.section} · {key.sourceNumber===undefined?'Question '+(i+1):'Source Q'+key.sourceNumber}</strong> {key.stem}</p>
      {!!key.choices.length&&<ul>{key.choices.map(choice=><li key={choice}>{choice}</li>)}</ul>}
