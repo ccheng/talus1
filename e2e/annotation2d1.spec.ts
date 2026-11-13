@@ -56,6 +56,10 @@ async function open(page:Page,bytes:Buffer){
  const {blocks}=JSON.parse(input);
  expect(blocks.map(({id}: {id:string})=>id)).toContain('B10');
  expect(blocks[8].text).toContain('[Image:');
+ if(blocks[6].text.startsWith('[Equation:')){
+  expect(blocks[6].atoms[0].description).toBe('[Equation: (1)/(2)]');
+  expect(blocks[6].text).not.toContain('[Equation: 12]');
+ }
  expect(input).not.toContain('data:image/');
 }
 async function apply(page:Page,value:unknown){
@@ -93,6 +97,7 @@ test('2D.1 checks exact source and reviewed keys, then preserves rich content in
  await apply(page,data);
  await expect(page.getByText(/Proposed answer: B\. Nitrogen/)).toBeVisible();
  await expect(page.getByText(/Proposed answer: A\. Iron \/ C\. Zinc/)).toBeVisible();
+ await expect(page.getByText(/Interpret the fraction\. \[Equation: \(1\)\/\(2\)\]/)).toBeVisible();
  await expect(page.getByRole('button',{name:'Accept reviewed import'})).toBeDisabled();
  page.on('dialog',dialog=>dialog.accept());
  await accept(page);
