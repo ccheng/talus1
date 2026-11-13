@@ -72,10 +72,11 @@ run.onclick=async()=>{
   const inferenceStarted=performance.now();
   result=await runLocalAnnotation(source,localInference(activeEngine,activeTokenizer),message=>{status.textContent=message;},controller.signal,call=>calls.push(call));
   const review=reviewAnnotation(source,JSON.stringify(result.annotation),title);
-  record.inferenceMs=performance.now()-inferenceStarted;record.calls=result.telemetry;record.sourceIssues=review.issues;
-  status.textContent=review.issues.length?'Source coverage requires repair. Use external annotation or Detect.':'Proposal ready for teacher review in the 2D.1 import workspace.';
-  output.textContent=JSON.stringify({issues:review.issues,keys:review.keys,timings:result.telemetry},null,2);
-  save.disabled=review.issues.length>0;
+  const issues=[...review.issues,...(review.unassignedSourceKeys.length?['Unassigned source key material requires teacher review.']:[])];
+  record.inferenceMs=performance.now()-inferenceStarted;record.calls=result.telemetry;record.sourceIssues=issues;
+  status.textContent=issues.length?'Source coverage requires repair. Use external annotation or Detect.':'Proposal ready for teacher review in the 2D.1 import workspace.';
+  output.textContent=JSON.stringify({issues,keys:review.keys,timings:result.telemetry},null,2);
+  save.disabled=issues.length>0;
  }catch(error){record.error=String(error);status.textContent=String(error);}
  finally{
   record.totalMs=performance.now()-started;

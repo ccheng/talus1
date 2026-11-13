@@ -40,7 +40,8 @@ type Atom=Interval&{description?:string};
 export interface AnnotationBlock {id:string;text:string;html:string;atoms:Atom[]}
 export interface AnnotationSource {fingerprint:string;blocks:AnnotationBlock[];issues:string[]}
 export interface KeyReview {section:string;sourceNumber?:number;stem:string;choices:string[];sourceKey:string;resolved:string}
-export interface AnnotationReview {draft:ImportDraft;issues:string[];ignored:{text:string;reason:string}[];defaults:string[];keys:KeyReview[];unassignedKeyText:string}
+export interface UnassignedSourceKey {block:number;start:number;end:number;blockLength:number;text:string}
+export interface AnnotationReview {draft:ImportDraft;issues:string[];ignored:{text:string;reason:string}[];defaults:string[];keys:KeyReview[];unassignedKeyText:string;unassignedSourceKeys:UnassignedSourceKey[]}
 
 export function decodeAnnotation(raw:string,fingerprint:string):Annotation {
  if(new Blob([raw]).size>MAX_ANNOTATION_BYTES)throw Error('Annotation exceeds the 1 MB size limit.');
@@ -269,6 +270,9 @@ export function reviewAnnotation(source:AnnotationSource,raw:string,fallbackTitl
   return {heading,section:g.section};
  }).sort((a,b)=>compare(a.heading,b.heading));
  const unassigned=readAll(data.unassignedKeys);
+ const unassignedSourceKeys=unassigned.pieces.map(({block,start,end,text})=>({
+  block,start,end,text,blockLength:blocks.get('B'+block)!.text.length
+ }));
  const defaults:string[]=[];
  const keys:KeyReview[]=[];
  const usedQuestionNumbers=new Map<string,number>();
@@ -378,13 +382,14 @@ export function reviewAnnotation(source:AnnotationSource,raw:string,fallbackTitl
   throw Error('Answer appendix headings must follow the assessment questions.');
  const missing=verifyCoverage(source.blocks,used);
  if(missing.length)issues.push('Unassigned source content: '+missing.join(', ')+'. Update the annotation and review it again.');
+ let blockedKeys:UnassignedSourceKey[]=[];
  if(unassigned.text){
   const unkeyed=sections.flatMap(s=>s.questions).find(q=>q.reviewFlags?.length);
   if(unkeyed)unkeyed.reviewFlags!.push('Unassigned source key material: '+unassigned.text);
-  else issues.push('Unassigned source key material remains even though every question has a key. Resolve its assignment before accepting.');
+  else blockedKeys=unassignedSourceKeys;
  }
  const warnings:string[]=[];
  const draft:ImportDraft={title,instructions,source:source.blocks.map(b=>b.text).join('\n'),
   lines:source.blocks.map((b,i)=>({text:b.text,html:b.html,number:i+1})),sections,warnings,format:'docx'};
- return {draft,issues,ignored,defaults,keys,unassignedKeyText:unassigned.text};
+ return {draft,issues,ignored,defaults,keys,unassignedKeyText:unassigned.text,unassignedSourceKeys:blockedKeys};
 }
