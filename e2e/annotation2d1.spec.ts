@@ -19,7 +19,7 @@ const image='<w:p><w:r><w:drawing><wp:inline><wp:extent cx="914400" cy="914400"/
 function fixture(namespaced=true,damaged=false,customBody?:string) {
  const appendix=namespaced?keys:['Answer Key','7. B','7. A, C','8. One half'];
  const document='<w:document xmlns:w="'+w+'" xmlns:m="'+m+'" xmlns:r="'+r+'" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+
-  (customBody??(lines.map(p).join('')+(damaged?fraction.replace('<m:den><m:r><m:t>2</m:t></m:r></m:den>',''):fraction)+table+image+appendix.map(p).join(''))+'</w:body></w:document>';
+  (customBody??(lines.map(p).join('')+(damaged?fraction.replace('<m:den><m:r><m:t>2</m:t></m:r></m:den>',''):fraction)+table+image+appendix.map(p).join('')))+'</w:body></w:document>';
  return Buffer.from(zipSync({
   '[Content_Types].xml':strToU8('<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'),
   '_rels/.rels':strToU8('<Relationships xmlns="'+pr+'"><Relationship Id="rId1" Type="'+r+'/officeDocument" Target="word/document.xml"/></Relationships>'),
