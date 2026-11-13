@@ -37,8 +37,8 @@ test.describe('3B2-01: student identification labels stay attached to their writ
    expect(Object.keys(archive).filter(name=>name.endsWith('.docx'))).toHaveLength(12);
    const directory=await mkdtemp(join(tmpdir(),'talus-3b2-01-'));
    try{
-    const studentFiles=Object.entries(archive).filter(([name])=>/-V[A-F]\\.docx$/.test(name));
-    const keyFiles=Object.entries(archive).filter(([name])=>/-V[A-F]-key\\.docx$/.test(name));
+    const studentFiles=Object.entries(archive).filter(([name])=>/-V[A-F]\.docx$/.test(name));
+    const keyFiles=Object.entries(archive).filter(([name])=>/-V[A-F]-key\.docx$/.test(name));
     expect(studentFiles).toHaveLength(6);
     expect(keyFiles).toHaveLength(6);
     for(const [name,bytes] of keyFiles){
