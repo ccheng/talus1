@@ -62,7 +62,8 @@ const variantSchema = z.object({
 const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shufflePosition:z.boolean(),variants:z.array(variantSchema)});
 const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema)});
 const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficiency:z.string(),instructions:z.string(),shuffleQuestions:z.boolean(),items:z.array(z.union([slotSchema,groupSchema]))});
-export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:z.array(sectionSchema),updatedAt:z.string(),
+export const masterSectionsSchema=z.array(sectionSchema);
+export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:masterSectionsSchema,updatedAt:z.string(),
  generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(), wordLayout:wordLayoutSchema.optional(), importWarnings:z.array(z.string()).optional(),
  lastGeneration:z.object({count:z.number().int().min(1).max(30),seed:z.string(),runId:z.string(),sourceUpdatedAt:z.string(),
   manifests:z.array(z.object({label:z.string(),entries:z.array(z.object({slotId:z.string(),variantId:z.string(),choiceOrder:z.array(z.string()),number:z.number().int()}))}))}).optional()
