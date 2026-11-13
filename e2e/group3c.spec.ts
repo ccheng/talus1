@@ -30,7 +30,7 @@ test('3C groups imported children, preserves rich context through save and all e
  await expect(shuffle).not.toBeChecked();
  await page.getByRole('button',{name:'Add or edit shared HTML source'}).click();
  await page.getByLabel('Shared group material HTML source').fill(shared);
- await expect(page.getByRole('textbox',{name:'Shared group material',exact:true}).locator('img')).toHaveAttribute('alt','Shared plot');
+ await expect(page.getByRole('textbox',{name:'Shared group material',exact:true}).getByRole('img',{name:'Shared plot',exact:true})).toHaveAttribute('src','data:image/png;base64,'+png);
  await page.getByRole('button',{name:'Include next question'}).click();
  await chooseQuestion(page,3).click();
  await page.getByRole('button',{name:'Move this question out of group'}).click();
@@ -54,7 +54,7 @@ test('3C groups imported children, preserves rich context through save and all e
  await generate(page,6,'3c-group-regression');
  const preview=page.locator('.print-page');
  await expect(preview.getByText('Shared passage for linked items.')).toHaveCount(1);
- await expect(preview.locator('img')).toHaveAttribute('alt','Shared plot');
+ await expect(preview.getByRole('img',{name:'Shared plot',exact:true})).toHaveAttribute('src','data:image/png;base64,'+png);
  const word=unzipSync(await getDownload(page,/Word\/DOCX \(ZIP\)/));
  const markdown=unzipSync(await getDownload(page,'Download all versions & keys (ZIP)'));
  const documents=Object.entries(word).filter(([name])=>name.endsWith('.docx'));
