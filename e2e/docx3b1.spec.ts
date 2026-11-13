@@ -62,8 +62,8 @@ test('3B.1 student identification and page-number footer are editable and correc
     expect(header).toContain('Answer Key');
    }else{
     expect(main).toContain('Name: __________________');
-    expect(main).toContain('Class: ______________');
-    expect(main).toContain('Date: ______________');
+    expect(main).toContain('Class:\\u00a0______________');
+    expect(main).toContain('Date:\\u00a0______________');
    }
   }
  }
