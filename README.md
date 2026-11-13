@@ -1,3 +1,11 @@
+# Current development status and handoff (2026-11-12)
+
+**Incoming developer or agent:** Start with [docs/HANDOFF.md](docs/HANDOFF.md) (product and code map), [docs/QUALITY_GATE.md](docs/QUALITY_GATE.md) (development/QA protocol), [docs/MILESTONES.md](docs/MILESTONES.md) (accepted status), and [docs/MILESTONE_2D.md](docs/MILESTONE_2D.md) (next proposed AI-assisted import scope). Current source and latest CI/PRs are authoritative.
+
+**Current status:** Milestone **3B.2 accepted and closed**, including 3B2-01 corrected and independently retested; **2D AI-assisted import is not implemented**. The product owner has prioritized 2D over further Word-like editing; **2D.1 contract/scope awaits explicit approval**. Historical sections below are a chronological development record and may refer to subsequently completed features as “future work.” Do not interpret those older statements as current status.
+
+---
+
 ## Milestone 3B.2 corrective release — 3B2-01 student identification fields
 
 The 2026-11-12 independent acceptance report **ACCEPTED** 3B.2 after 72 rendered
