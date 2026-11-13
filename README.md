@@ -1,3 +1,23 @@
+## Milestone 3B.2 corrective release — 3B2-01 student identification fields
+
+The 2026-11-12 independent acceptance report **ACCEPTED** 3B.2 after 72 rendered
+Word documents / 427 pages, with one P3 formatting issue. In the A4/1.5-inch/
+14-pt/1.5-spacing and Letter/1.25-inch/12-pt/1.15-spacing profiles, the
+student Class or Date label could wrap away from its writing rule.
+
+The correction keeps each label and underline together with a nonbreaking
+space in the editable Word paragraph, while preserving wrapping *between*
+fields. It does not modify page geometry, sections, answers, equations, tables,
+or the six-version generation snapshot. The permanent Playwright test
+`e2e/acceptance3b2-identity.spec.ts` exports 12 Word files for each of the
+two original failing profiles and renders all six student versions with
+LibreOffice/Poppler to verify label-rule integrity on page one. These tests
+are run automatically in the required CI workflow before production deployment.
+
+The screenshot/PDF examples `D1-wide.png` and `D1-middle.png` and the
+original classroom fixture remain in the independent acceptance evidence ZIP
+rather than being committed as large binary regression artifacts.
+
 ## Milestone 3B.2 — Customizable Word layout
 
 The **Versions & answer keys** screen now has editable, persistent Word layout settings. Defaults exactly match the validated 3B.1 professional layout. Teachers may choose US Letter/A4, 0.5–1.5 inch margins, body font size 9–14 pt, line spacing (1 / 1.15 / 1.5), optional new-page-per-section, 2/4/6 response lines per kept block, and show/hide running headers and page-number footers. **Restore professional defaults** resets every Word layout option.

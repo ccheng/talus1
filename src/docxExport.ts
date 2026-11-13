@@ -309,7 +309,9 @@ class WordWriter {
  build(master:MasterTest,v:GeneratedVersion,answerKey:boolean):Uint8Array {
   let body=this.plain(master.title+' — '+(answerKey?'Answer Key ':'Version ')+v.label,'Title');
   if(master.lastGeneration)body+=this.plain('Run ID: '+master.lastGeneration.runId,'Metadata');
-  if(!answerKey)body+=this.plain('Name: ______________________________    Class: ______________    Date: ______________','StudentDetails');
+  // Keep each label attached to its writing rule while allowing wrapping BETWEEN fields.
+  // Non-breaking spaces are Word-native and preserve the editable paragraph.
+  if(!answerKey)body+=this.plain('Name:\u00a0______________________________    Class:\u00a0______________    Date:\u00a0______________','StudentDetails');
   body+=this.html(master.instructions);
   for(const [index,section] of v.sections.entries()){
    const heading=this.plain(sectionHeading(section.title,section.proficiency),'Heading1');
