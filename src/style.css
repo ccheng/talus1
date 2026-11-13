@@ -47,3 +47,6 @@
 .rich-media-editor .tiptap-content math[display="block"]{display:block}
 .rich-media-editor .tiptap-content p{margin:7px 0}
 @media print{.rich-node-control,.rich-node-panel{display:none!important}}
+.annotation-exchange{background:#f4f6fa;padding:13px;border:1px solid #dce3ee;border-radius:7px;margin-bottom:20px}
+.annotation-exchange summary{cursor:pointer}
+.annotation-exchange li,.annotation-exchange p{overflow-wrap:anywhere}
