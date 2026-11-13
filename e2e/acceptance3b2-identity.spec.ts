@@ -38,14 +38,23 @@ test.describe('3B2-01: student identification labels stay attached to their writ
    const directory=await mkdtemp(join(tmpdir(),'talus-3b2-01-'));
    try{
     const studentFiles=Object.entries(archive).filter(([name])=>/-V[A-F]\.docx$/.test(name));
+    const keyFiles=Object.entries(archive).filter(([name])=>/-V[A-F]-key\.docx$/.test(name));
     expect(studentFiles).toHaveLength(6);
+    expect(keyFiles).toHaveLength(6);
+    for(const [name,bytes] of keyFiles){
+     const keyXml=strFromU8(unzipSync(bytes)['word/document.xml']);
+     for(const label of ['Name','Class','Date'])
+      expect(keyXml,name+' must omit student identification fields').not.toContain(label+':');
+    }
     const paths:string[]=[];
     for(const [name,bytes] of studentFiles){
      const file=join(directory,name);
      paths.push(file);
      await writeFile(file,bytes);
      const xml=strFromU8(unzipSync(bytes)['word/document.xml']);
-     for(const label of ['Name','Class','Date'])expect(xml).toContain(label+':');
+     for(const [label,count] of [['Name',30],['Class',14],['Date',14]] as const)
+      expect(xml,name+' must keep an editable label/rule pair')
+       .toContain(label+':'+String.fromCharCode(160)+'_'.repeat(count));
     }
     await run('soffice',['-env:UserInstallation='+pathToFileURL(join(directory,'lo-profile')).href,
      '--headless','--convert-to','pdf','--outdir',directory,...paths],{timeout:90_000});
@@ -53,7 +62,7 @@ test.describe('3B2-01: student identification labels stay attached to their writ
      const pdf=file.replace(/\.docx$/,'.pdf');
      const {stdout}=await run('pdftotext',['-f','1','-l','1','-layout',pdf,'-']);
      await info.attach(profile.name+'-'+file.split('/').pop()+'.txt',{body:stdout,contentType:'text/plain'});
-     for(const label of ['Name','Class','Date']){
+     for(const [label,count] of [['Name',30],['Class',14],['Date',14]] as const){
       const lines=stdout.split(/\r?\n/).filter(line=>line.includes(label+':'));
       expect(lines,profile.name+' '+file+' '+label+' must occur once').toHaveLength(1);
       expect(lines[0],profile.name+' '+file+' '+label+' and writing rule separated')
