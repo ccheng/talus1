@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {compareImportDrafts} from './importComparison';
+import {compareImportDrafts,reconcilableSourceKeys} from './importComparison';
 import type {ImportDraft,ImportQuestion} from './importParser';
 
 const question=(id:string,sourceStart=1):ImportQuestion=>({
@@ -35,5 +35,23 @@ describe('2D.3 import comparison',()=>{
   const ai={...question('ai'),choices:['Nitrogen','Oxygen<img src="data:diagram">'],correct:[0]};
   const findings=compareImportDrafts(draft([detect]),draft([ai],'Exemplary'),text,rich);
   expect(findings[0].changes.map(change=>change.kind)).toEqual(['Section','Choices','Marks','Rich placement']);
+ });
+});
+
+describe('2D.3 key reconciliation',()=>{
+ it('requires the specific corrected question and exact whole detached source reference',()=>{
+  const detect={...question('detect'),sourceKeyLines:[20]};
+  const ai={...question('ai'),correct:[0],sourceKeyLines:[4]};
+  const current={...ai,correct:[1]};
+  const evidence=[{block:20,start:0,end:4,blockLength:4,text:'7. B'}];
+  const normalized=(html:string)=>html.replace(/<[^>]+>/g,'').trim();
+  const detectLines=[{number:20,text:'7. B',html:'<p>7. B</p>'}];
+  const original={...draft([detect]),lines:detectLines};
+  expect(reconcilableSourceKeys(original,draft([ai]),draft([ai]),evidence,normalized,rich)).toEqual([]);
+  expect(reconcilableSourceKeys(original,draft([ai]),draft([current]),evidence,normalized,rich))
+   .toEqual([{questionId:'ai',blocks:[20],answer:'Nitrogen'}]);
+  expect(reconcilableSourceKeys(original,draft([ai]),draft([{...current,id:'other'}]),evidence,normalized,rich)).toEqual([]);
+  expect(reconcilableSourceKeys(original,draft([ai]),draft([current]),[{...evidence[0],end:2}],normalized,rich)).toEqual([]);
+  expect(reconcilableSourceKeys(original,draft([ai]),draft([current]),[{...evidence[0],text:'8. C'}],normalized,rich)).toEqual([]);
  });
 });
