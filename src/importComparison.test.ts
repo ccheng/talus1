@@ -10,7 +10,7 @@ const draft=(questions:ImportQuestion[],title='Base'):ImportDraft=>({
  title:'Test',source:'',lines:[],sections:[{id:'section',title,proficiency:title,instructions:'',questions}],format:'docx',warnings:[]
 });
 const text=(html:string)=>html.replace(/<[^>]+>/g,'').trim();
-const rich=(html:string)=>html.includes('<img')?['image:diagram']:[];
+const rich=(html:string)=>html.includes('<img')?[{label:'Image diagram',identity:'image:diagram'}]:[];
 
 describe('2D.3 import comparison',()=>{
  it('keeps equivalent paragraph markup and equal answers quiet',()=>{
@@ -28,7 +28,7 @@ describe('2D.3 import comparison',()=>{
  it('matches repeated numbers by source position and reports omissions without equating unrelated questions',()=>{
   const one=question('d1',1),two=question('d2',15);
   const findings=compareImportDrafts(draft([one,two]),draft([{...two,id:'a2'}]),text,rich);
-  expect(findings).toMatchObject([{questionId:undefined,changes:[{kind:'Question boundary'}]}]);
+  expect(findings).toMatchObject([{changes:[{kind:'Question boundary'}]}]);
  });
  it('flags a moved image separately from text, and never compares choice indices across changed order',()=>{
   const detect={...question('detect'),stem:'<p>Which gas?</p><img src="data:diagram">',marks:3};

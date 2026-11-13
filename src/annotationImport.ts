@@ -331,10 +331,12 @@ export function reviewAnnotation(source:AnnotationSource,raw:string,fallbackTitl
    const flags:string[]=[];
    if(q.keyUncertain)flags.push('The source answer association was marked uncertain. Assign the answer explicitly.');
    let correct:number[]=[],answer='',sourceKey='',resolved='';
+   let sourceKeyLines:number[]|undefined;
    if(q.key){
     const label=q.key.label?labelPiece(q.key.label):undefined;
     const number=q.key.number?labelPiece(q.key.number):undefined;
     const content=readAll(q.key.content);
+    sourceKeyLines=[...(label?[label.block]:[]),...(number?[number.block]:[]),...content.pieces.map(p=>p.block)];
     sourceKey=[label?.text,number?.text,content.text].filter(Boolean).join(' ');
     if(label&&!/^(?:answer|key|solution)(?:\s*[:.–-])?$/i.test(label.text))throw Error(location+' has an invalid answer label.');
     if(number&&(!sourceNumber||numberFrom(number.text)!==sourceNumber))throw Error(location+' does not match the detached answer number.');
@@ -364,7 +366,9 @@ export function reviewAnnotation(source:AnnotationSource,raw:string,fallbackTitl
    if(!resolved&&!flags.length)flags.push('No source key was identified. Supply the answer before generation.');
    if(!resolved&&sourceKey)flags.push('Original source key for review: '+sourceKey);
    keys.push({section:sectionTitle,sourceNumber:sourceNumber?Number(sourceNumber):undefined,stem:stem.text,choices:choices.map(c=>c.letter+'. '+c.text),sourceKey,resolved:resolved||flags[0]});
-   return {id:uid(),sourceStart:first.block,sourceEnd:stem.pieces.at(-1)!.block,sourceNumber:sourceNumber?Number(sourceNumber):undefined,
+   return {id:uid(),sourceStart:first.block,sourceEnd:stem.pieces.at(-1)!.block,
+    sourceStemLines:stem.pieces.map(p=>p.block),sourceChoiceLines:choices.flatMap(c=>c.pieces.map(p=>p.block)),
+    sourceKeyLines,sourceMarkLines:marksPiece?[marksPiece.block]:undefined,sourceNumber:sourceNumber?Number(sourceNumber):undefined,
     stem:stem.html,choices:choices.map(c=>c.html),correct,answer,type:q.type,marks:markMatch?Number(markMatch[1]):1,
     responseLines:q.type==='writtenResponse'?8:2,warnings:[],reviewFlags:flags};
   });

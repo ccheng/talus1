@@ -8,6 +8,7 @@ import {inspectImportedMedia,applyWordImageDimensions} from './media';
 import {prepareWordMath,restoreWordMath} from './wordMath';
 import {RichEditor} from './Editor';
 import {AnnotationExchange} from './AnnotationExchange';
+import {ImportComparison} from './ImportComparison';
 import {makeAnnotationSource,MAX_ANNOTATION_DOCX_BYTES,type AnnotationReview,type AnnotationSource} from './annotationImport';
 
 const uid=()=>crypto.randomUUID();
@@ -214,6 +215,10 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
       <button className="secondary" onClick={()=>modify(d=>{d.sections.push({id:uid(),title:'New section',proficiency:'',instructions:'',questions:[]});})}>+ Section</button>
       <button className="secondary" onClick={()=>modify(d=>{const s=d.sections.at(-1);if(s)s.questions.push({id:uid(),sourceStart:0,sourceEnd:0,stem:'',choices:[],correct:[],answer:'',type:'shortAnswer',marks:1,responseLines:2,warnings:['Provide a prompt and answer']});})}>+ Question</button>
      </div>
+     {annotationReview&&deterministic.current&&<ImportComparison key={annotationReview.draft.sections[0]?.id} detect={deterministic.current} ai={annotationReview.draft} current={draft} onQuestion={id=>{
+      setFilter('all');setExpanded(id);
+      requestAnimationFrame(()=>document.getElementById('review-'+id)?.focus());
+     }}/>}
      {draft.warnings.length>0&&<details className="import-warnings"><summary>Parser notes ({draft.warnings.length})</summary><ul>{draft.warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}
      {draft.sections.map((s,si)=><div className="import-section" key={s.id}>
       <div className="import-section-head"><strong>Section {si+1}</strong><label>Name<input aria-label={'Section '+(si+1)+' name'} value={s.title} onChange={e=>updateSection(s.id,'title',e.target.value)}/></label>
@@ -225,7 +230,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
       {s.questions.map((q,qi)=>{
        const flags=reviewWarnings({title:'',format:'plain',source:'',lines:[],sections:[{...s,questions:[q]}],warnings:[]});
        if(filter==='warnings'&&!flags.length)return null;
-       return <div className="import-question" key={q.id}><button className="import-question-toggle" onClick={()=>setExpanded(expanded===q.id?null:q.id)}>
+       return <div className="import-question" key={q.id}><button id={'review-'+q.id} className="import-question-toggle" onClick={()=>setExpanded(expanded===q.id?null:q.id)}>
         <strong>Question {qi+1}</strong><span>{text(q.stem).slice(0,85)||'(empty prompt)'}</span>{flags.length?<span className="import-flag">Needs review</span>:<span className="import-ok">Ready</span>}
        </button>{expanded===q.id&&<div className="import-question-body">
         <div className="import-question-actions"><span className="help">Source lines {q.sourceStart}–{q.sourceEnd}</span>
