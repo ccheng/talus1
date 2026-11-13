@@ -1,7 +1,8 @@
 import {describe,expect,it} from 'vitest';
+import type {AnnotationBlock} from './annotationImport';
 import {buildLocalWindows,mergeLocalFragments,type LocalFragment} from './localAnnotation';
 
-const block=(n:number,text='word')=>({id:'B'+n,text,html:'',atoms:[]});
+const block=(n:number,text='word'):AnnotationBlock=>({id:'B'+n,text,html:'',atoms:[]});
 const r=(n:number)=>({block:'B'+n});
 const q=(n:number,number:number)=>({type:'shortAnswer' as const,number:r(number),stem:[r(n)]});
 const section=(n:number,questions:ReturnType<typeof q>[]):LocalFragment=>({sections:[{heading:r(n),questions}]});
@@ -33,5 +34,12 @@ describe('2D.2 feasibility orchestration',()=>{
   expect(()=>mergeLocalFragments('a'.repeat(64),[section(1,[first])],[{matches:[
    {question:r(3),key:{content:[r(8)]}},{question:r(3),key:{content:[r(9)]}}
   ]}])).toThrow(/conflict/i);
+ });
+ it('retains uncertain detached source entries without assigning an answer',()=>{
+  const sourceKey={number:r(8),content:[r(9)]};
+  const combined=mergeLocalFragments('a'.repeat(64),[section(1,[q(3,2)])],
+   [{matches:[{question:r(3),key:sourceKey,uncertain:true}]}]);
+  expect(combined.sections[0].questions[0].key).toBeUndefined();
+  expect(combined.unassignedKeys).toEqual([r(8),r(9)]);
  });
 });

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Talus 2D.2 feasibility</title>
+  <style>
+    body { max-width: 780px; margin: 2rem auto; padding: 0 1rem; font: 16px/1.5 system-ui, sans-serif; color: #182b43; }
+    button { margin: .5rem .4rem .5rem 0; padding: .5rem .8rem; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #f1f5fa; }
+  </style>
+</head>
+<body>
+  <h1>Talus local annotation feasibility</h1>
+  <p>Chrome downloads the pinned model and runs it locally with WebGPU. The model is approximately 2 GB. Use synthetic or approved test DOCX files.</p>
+  <label>Assessment <input id="file" type="file" accept=".docx"></label>
+  <div>
+    <button id="load">Download or load cached model</button>
+    <button id="run" disabled>Run local annotation</button>
+    <button id="stop" disabled>Cancel</button>
+  </div>
+  <p id="status" role="status">Waiting for model setup.</p>
+  <div>
+    <button id="save" disabled>Save annotation JSON</button>
+    <button id="evidence" disabled>Save timing evidence</button>
+  </div>
+  <pre id="result"></pre>
+  <script type="module" src="./runner.ts"></script>
+</body>
+</html>
