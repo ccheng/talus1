@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {decodeAnnotation,detachedKeyAmbiguity,reviewAnnotation,verifyCoverage,type AnnotationBlock} from './annotationImport';
+import {decodeAnnotation,detachedKeyAmbiguity,describeAnnotationMath,reviewAnnotation,verifyCoverage,type AnnotationBlock} from './annotationImport';
 
 const fingerprint='a'.repeat(64);
 const contract={format:'talus-annotation',version:1,fingerprint,sections:[
@@ -46,10 +46,9 @@ describe('2D.1 live acceptance regressions',()=>{
   expect(review.issues).toEqual([]);
   expect(review.defaults).toEqual([]);
   expect(review.draft.sections[0].questions[0].marks).toBe(2);
-  const inner={...question,marks:{block:'B2',start:1,end:8}};
-  expect(assessment(['Explain the result.','[2 marks]','Sample response'],inner).issues).toEqual([
-   expect.stringContaining('Unassigned source content: B2')
-  ]);
+  expect(verifyCoverage([{id:'B2',text:'[2 marks]',html:'<p>[2 marks]</p>',atoms:[]}],[
+   {block:'B2',start:1,end:8}
+  ])).toEqual(['B2']);
   expect(()=>assessment(['Explain the result.','[2 marks)','Sample response'],question)).toThrow(/invalid source marks/);
  });
 
@@ -67,5 +66,18 @@ describe('2D.1 live acceptance regressions',()=>{
   expect(()=>assessment(textInstead,question)).toThrow(/protected support/i);
   const next={type:'shortAnswer',stem:[ref(6)]};
   expect(()=>assessment([...source,'[Image: Support]'],{...question,stem:[ref(1),ref(9)]},[next])).toThrow(/question boundaries/i);
+ });
+});
+
+describe('2D.1 equation projection',()=>{
+ interface MathNode {localName:string;textContent:string;children:MathNode[]}
+ function math(localName:string,...parts:(string|MathNode)[]):MathNode{
+  return {localName,textContent:parts.map(part=>typeof part==='string'?part:part.textContent).join(''),
+   children:parts.filter((part):part is MathNode=>typeof part!=='string')};
+ }
+ it('shows fraction and power structure rather than concatenating operands',()=>{
+  const fraction=math('mfrac',math('mn','3'),math('mn','4'));
+  expect(describeAnnotationMath(fraction)).toBe('(3)/(4)');
+  expect(describeAnnotationMath(math('msup',fraction,math('mn','2')))).toBe('((3)/(4))^(2)');
  });
 });
