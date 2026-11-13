@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import type {AnnotationBlock} from './annotationImport';
-import {buildLocalWindows,mergeLocalFragments,type LocalFragment} from './localAnnotation';
+import {buildLocalWindows,mergeLocalFragments,runLocalAnnotation,type LocalFragment} from './localAnnotation';
 
 const block=(n:number,text='word'):AnnotationBlock=>({id:'B'+n,text,html:'',atoms:[]});
 const r=(n:number)=>({block:'B'+n});
@@ -41,5 +41,28 @@ describe('2D.2 feasibility orchestration',()=>{
    [{matches:[{question:r(3),key:sourceKey,uncertain:true}]}]);
   expect(combined.sections[0].questions[0].key).toBeUndefined();
   expect(combined.unassignedKeys).toEqual([r(8),r(9)]);
+ });
+});
+
+describe('2D.2 length recovery',()=>{
+ const source={fingerprint:'a'.repeat(64),issues:[],blocks:Array.from({length:40},(_,i)=>block(i+1))};
+ it('retries a truncated response once with smaller overlapping windows and records every attempt',async()=>{
+  let calls=0;
+  const result=await runLocalAnnotation(source,{count:()=>100,complete:async()=>{
+   calls++;
+   return calls===1?{text:'truncated',finish:'length'}:
+    {text:JSON.stringify(section(1,[q(3,2)])),finish:'stop'};
+  }});
+  expect(result.telemetry.map(call=>[call.attempt,call.blocks.length,call.finish])).toEqual([
+   [1,40,'length'],[2,20,'stop'],[2,20,'stop'],[2,8,'stop']
+  ]);
+  expect(result.telemetry[2].blocks.slice(0,4)).toEqual(result.telemetry[1].blocks.slice(-4));
+ });
+ it('fails closed instead of repeatedly retrying a truncated small window',async()=>{
+  let calls=0;
+  await expect(runLocalAnnotation(source,{count:()=>100,complete:async()=>{
+   calls++;return {text:'truncated',finish:'length'};
+  }})).rejects.toThrow(/context limit/);
+  expect(calls).toBe(2);
  });
 });

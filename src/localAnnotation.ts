@@ -115,7 +115,7 @@ export interface LocalInference {
  complete:(prompt:string,outputLimit:number)=>Promise<{text:string;promptTokens?:number;completionTokens?:number;finish?:string}>;
 }
 interface LocalCall {
- phase:string;blocks:string[];plannedTokens:number;promptTokens?:number;completionTokens?:number;finish?:string;ms:number;
+ phase:string;attempt:number;blocks:string[];plannedTokens:number;promptTokens?:number;completionTokens?:number;finish?:string;ms:number;
 }
 export async function runLocalAnnotation(source:AnnotationSource,inference:LocalInference,
  progress:(message:string)=>void=()=>{},signal?:AbortSignal,recordCall?:(call:LocalCall)=>void){
@@ -131,17 +131,30 @@ export async function runLocalAnnotation(source:AnnotationSource,inference:Local
   signal?.throwIfAborted();
   const windows=buildLocalWindows(blocks,{...budget,render});
   const results:T[]=[];
-  for(const [index,window] of windows.entries()){
+  async function request(window:typeof windows[number],attempt:number){
    signal?.throwIfAborted();
-   progress(phase+' '+(index+1)+'/'+windows.length);
    const start=performance.now(),response=await inference.complete(window.prompt,budget.output);
    signal?.throwIfAborted();
-   const call={phase,blocks:window.blocks.map(b=>b.id),plannedTokens:window.inputTokens,ms:performance.now()-start,
+   const call={phase,attempt,blocks:window.blocks.map(b=>b.id),plannedTokens:window.inputTokens,ms:performance.now()-start,
     promptTokens:response.promptTokens,completionTokens:response.completionTokens,finish:response.finish};
    telemetry.push(call);recordCall?.(call);
-   if(response.finish==='length'||(response.promptTokens??0)+budget.output>4096)
-    throw Error('The local model reached its context limit. Use external annotation or Detect.');
-   results.push(parseResponse(response.text,schema));
+   if(response.finish==='length'||(response.promptTokens??0)+budget.output>4096)return null;
+   return parseResponse(response.text,schema);
+  }
+  for(const [index,window] of windows.entries()){
+   progress(phase+' '+(index+1)+'/'+windows.length);
+   const response=await request(window,1);
+   if(response!==null){results.push(response);continue;}
+   const maxBlocks=Math.max(budget.overlap+1,Math.ceil(window.blocks.length/2));
+   const limitError='The local model reached its context limit. Use external annotation or Detect.';
+   if(maxBlocks>=window.blocks.length)throw Error(limitError);
+   const retry=buildLocalWindows(window.blocks,{...budget,maxBlocks,render});
+   for(const [part,smaller] of retry.entries()){
+    progress(phase+' '+(index+1)+'/'+windows.length+' · smaller window '+(part+1)+'/'+retry.length);
+    const retried=await request(smaller,2);
+    if(retried===null)throw Error(limitError);
+    results.push(retried);
+   }
   }
   return results;
  }
