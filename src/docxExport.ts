@@ -251,7 +251,16 @@ class WordWriter {
  }
  question(q:RenderedQuestion,key:boolean):string {
   let out='';
-  if(q.groupHtml)out+=this.html(q.groupHtml);
+  if(q.groupHtml){
+   const shared=this.html(q.groupHtml);
+   // Bind the final shared paragraph or table row to the first child.
+   // Earlier context may paginate normally when the shared passage is long.
+   const lastParagraph=shared.lastIndexOf('<w:p>');
+   const trailing=shared.slice(lastParagraph);
+   out+=lastParagraph<0?shared:shared.slice(0,lastParagraph)+(trailing.startsWith('<w:p><w:pPr>')
+    ?trailing.replace('<w:pPr>','<w:pPr><w:keepNext/>')
+    :trailing.replace('<w:p>','<w:p><w:pPr><w:keepNext/></w:pPr>'));
+  }
   let stemXml=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
   // Word cannot repeat a question heading when a multi-page stem continues.
   // Put small, numbered continuation cues immediately before independently
