@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {key,question,ref,refs,reviewAnnotation,type Annotation,type AnnotationBlock,type AnnotationSource,type Reference} from './annotationImport';
+import {key,question,ref,refs,type Annotation,type AnnotationBlock,type AnnotationSource,type Reference} from './annotationImport';
 
 const section=z.strictObject({heading:ref.optional(),instructions:refs.optional(),questions:z.array(question).max(500)});
 const fragment=z.strictObject({
@@ -117,7 +117,7 @@ export interface LocalInference {
 interface LocalCall {
  phase:string;blocks:string[];plannedTokens:number;promptTokens?:number;completionTokens?:number;finish?:string;ms:number;
 }
-export async function runLocalAnnotation(source:AnnotationSource,title:string,inference:LocalInference,
+export async function runLocalAnnotation(source:AnnotationSource,inference:LocalInference,
  progress:(message:string)=>void=()=>{},signal?:AbortSignal,recordCall?:(call:LocalCall)=>void){
  if(source.issues.length)throw Error(source.issues.join(' '));
  const split=source.blocks.findIndex(b=>/^(?:answer\s*key|answers|solutions)\s*[:.\-–]?$/i.test(b.text.trim()));
@@ -161,6 +161,5 @@ export async function runLocalAnnotation(source:AnnotationSource,title:string,in
   'Return strict JSON only, shape '+keyShape+'. '+refRules+' Match each detached answer only to a unique source anchor in the index, honoring sections. Retain ambiguous entries as unassigned; never guess. Index rows are [section ref,section text,[[question stem ref,source question number],...]]. Convert compact B1:start:end refs to JSON reference objects. Use heading only for the general answer-key heading and groups for actual section headings in these key blocks.\nIndex: '+JSON.stringify(anchors)+'\nKey blocks: '+projected(blocks),
  keyFragment);
  const annotation=mergeLocalFragments(source.fingerprint,fragments,keyFragments);
- const review=reviewAnnotation(source,JSON.stringify(annotation),title);
- return {annotation,review,telemetry};
+ return {annotation,telemetry};
 }
