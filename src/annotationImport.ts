@@ -9,14 +9,14 @@ const MAX_ANNOTATION_BYTES=1_000_000;
 const MAX_PROJECTION_UNITS=250_000;
 export const MAX_ANNOTATION_DOCX_BYTES=12_000_000;
 const VERSION=1;
-const ref=z.strictObject({
+export const ref=z.strictObject({
  block:z.string().regex(/^B[1-9]\d{0,4}$/),
  start:z.number().int().nonnegative().optional(),
  end:z.number().int().positive().optional()
 }).refine(r=>(r.start===undefined)===(r.end===undefined)&&(r.start===undefined||r.end!>r.start),'A span needs two ordered offsets');
-const refs=z.array(ref).min(1).max(200);
-const key=z.strictObject({label:ref.optional(),number:ref.optional(),content:refs});
-const question=z.strictObject({
+export const refs=z.array(ref).min(1).max(200);
+export const key=z.strictObject({label:ref.optional(),number:ref.optional(),content:refs});
+export const question=z.strictObject({
  type:z.enum(['singleChoice','multipleSelect','shortAnswer','writtenResponse']),
  number:ref.optional(),stem:refs,marks:ref.optional(),
  choices:z.array(z.strictObject({label:ref,content:refs})).min(2).max(26).optional(),
@@ -33,8 +33,8 @@ const annotation=z.strictObject({
  unassignedKeys:refs.optional(),
  ignored:z.array(z.strictObject({ref,reason:z.enum(['decoration','pageNumber','layoutArtifact'])})).max(200).optional()
 });
-type Reference=z.infer<typeof ref>;
-type Annotation=z.infer<typeof annotation>;
+export type Reference=z.infer<typeof ref>;
+export type Annotation=z.infer<typeof annotation>;
 type Interval={start:number;end:number};
 type Atom=Interval&{description?:string};
 export interface AnnotationBlock {id:string;text:string;html:string;atoms:Atom[]}

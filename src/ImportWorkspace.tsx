@@ -13,7 +13,7 @@ import {makeAnnotationSource,MAX_ANNOTATION_DOCX_BYTES,type AnnotationReview,typ
 const uid=()=>crypto.randomUUID();
 const asHtml=(value:string)=>value.includes('<')?value:'<p>'+value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p>';
 const text=(html:string)=>{const tmp=document.createElement('div');tmp.innerHTML=DOMPurify.sanitize(html);return tmp.textContent||'';};
-export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onAccept:(m:MasterTest)=>void;onClose:()=>void}){
+export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterTest;active:boolean;onAccept:(m:MasterTest)=>void;onClose:()=>void}){
  const [source,setSource]=useState('');
  const [format,setFormat]=useState<'plain'|'markdown'>('plain');
  const [draft,setDraft]=useState<ImportDraft|null>(null);
@@ -29,6 +29,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  const [annotationConfirmed,setAnnotationConfirmed]=useState(false);
  const [annotationEpoch,setAnnotationEpoch]=useState(0);
  const [annotationError,setAnnotationError]=useState('');
+ const [localAnnotationRunning,setLocalAnnotationRunning]=useState(false);
  const deterministic=useRef<ImportDraft|null>(null);
  const readEpoch=useRef(0);
  function makeDraft(raw:string,kind:'plain'|'markdown',name='Pasted assessment'){
@@ -43,7 +44,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
   }
   const lostMedia=!!richSource?.hasMedia;
   readEpoch.current++;
-  setAnnotationSource(null);setAnnotationReview(null);setAnnotationError('');
+  setAnnotationSource(null);setAnnotationReview(null);setAnnotationError('');setLocalAnnotationRunning(false);
   setRichSource(null);
   setSourcePreviewHtml('');
   try{
@@ -59,7 +60,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
   const file=event.target.files?.[0];if(!file)return;
   event.target.value='';
   const currentRead=++readEpoch.current;
-  setAnnotationSource(null);setAnnotationReview(null);setAnnotationConfirmed(false);setAnnotationError('');
+  setAnnotationSource(null);setAnnotationReview(null);setAnnotationConfirmed(false);setAnnotationError('');setLocalAnnotationRunning(false);
   setAnnotationEpoch(n=>n+1);deterministic.current=null;
   setRichSource(null);setSourcePreviewHtml('');setFileName(file.name);setDraft(null);
   const title=file.name.replace(/\.(docx|md|markdown|txt|html)$/i,'');
@@ -157,7 +158,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
    }});
  }
  function accept(){
-  if(!draft)return;
+  if(!draft||localAnnotationRunning)return;
   if(annotationReview&&(annotationReview.issues.length||!annotationConfirmed)){setMessage('Resolve the source coverage and confirm the annotation review before accepting.');return;}
   const warnings=reviewWarnings(draft);
   const empty=draft.sections.flatMap(s=>s.questions).filter(q=>!text(q.stem).trim()&&!/<(?:img|table)\b/i.test(q.stem));
@@ -185,7 +186,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
      <input aria-label="Upload assessment" type="file" accept=".docx,.md,.markdown,.txt,.html,.htm" onChange={e=>void readFile(e)}/></label>
     {fileName&&<p className="help">Loaded: {fileName}</p>}
     {annotationError&&<p className="help">Annotation unavailable: {annotationError}</p>}
-    {annotationSource&&<AnnotationExchange key={annotationEpoch} source={annotationSource} filename={fileName} review={annotationReview}
+    {annotationSource&&<AnnotationExchange key={annotationEpoch} source={annotationSource} active={active} onLocalRunning={setLocalAnnotationRunning} filename={fileName} review={annotationReview}
       confirmed={annotationConfirmed} onConfirm={setAnnotationConfirmed} onReview={review=>{
        setAnnotationReview(review);setAnnotationConfirmed(false);
        setDraft(review.draft);setExpanded(review.draft.sections[0]?.questions[0]?.id??null);
@@ -261,7 +262,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
      <div className="import-accept">
       <label>Import mode <select aria-label="Import mode" value={mode} onChange={e=>setMode(e.target.value as typeof mode)}><option value="replace">Replace open assessment</option><option value="append">Append sections to open assessment</option></select></label>
       <p className="help">{warnings.length} unresolved warning(s). Incomplete answers will remain incomplete and block version generation until corrected.</p>
-      <button className="primary" disabled={count===0||!!annotationReview&&(annotationReview.issues.length>0||!annotationConfirmed)} onClick={accept}>Accept reviewed import</button>
+      <button className="primary" disabled={count===0||localAnnotationRunning||!!annotationReview&&(annotationReview.issues.length>0||!annotationConfirmed)} onClick={accept}>Accept reviewed import</button>
      </div>
     </>}
    </section>

@@ -1,0 +1,68 @@
+import {describe,expect,it} from 'vitest';
+import type {AnnotationBlock} from './annotationImport';
+import {buildLocalWindows,mergeLocalFragments,runLocalAnnotation,type LocalFragment} from './localAnnotation';
+
+const block=(n:number,text='word'):AnnotationBlock=>({id:'B'+n,text,html:'',atoms:[]});
+const r=(n:number)=>({block:'B'+n});
+const q=(n:number,number:number)=>({type:'shortAnswer' as const,number:r(number),stem:[r(n)]});
+const section=(n:number,questions:ReturnType<typeof q>[]):LocalFragment=>({sections:[{heading:r(n),questions}]});
+const count=(value:string)=>value.length;
+const budget={context:100,output:20,overlap:1,count,render:(ids:ReturnType<typeof block>[])=>ids.map(b=>b.text).join(' ')};
+describe('2D.2 feasibility orchestration',()=>{
+ it('splits at a forced boundary, retains original IDs, and overlaps one block',()=>{
+  const windows=buildLocalWindows([block(1,'a'.repeat(30)),block(2,'b'.repeat(30)),block(3,'c'.repeat(30))],budget);
+  expect(windows.map(window=>window.blocks.map(b=>b.id))).toEqual([['B1','B2'],['B2','B3']]);
+  expect(windows.every(window=>window.inputTokens+budget.output<=budget.context)).toBe(true);
+ });
+ it('stops when a source block or overlap cannot fit intact',()=>{
+  expect(()=>buildLocalWindows([block(1,'a'.repeat(81))],budget)).toThrow(/B1/);
+  expect(()=>buildLocalWindows([block(1,'a'.repeat(70)),block(2,'b'.repeat(70))],budget)).toThrow(/overlap/i);
+ });
+ it('deduplicates identical source-backed questions and isolates repeated numbers in separate sections',()=>{
+  const first=q(3,2),second=q(6,5);
+  const firstKey={number:r(8),content:[r(9)]},secondKey={number:r(11),content:[r(12)]};
+  const combined=mergeLocalFragments('a'.repeat(64),[section(1,[first]),section(1,[first]),section(4,[second])],
+   [{heading:r(7),groups:[{heading:r(10),sectionHeading:r(4)}],matches:[
+    {question:r(3),key:firstKey},{question:r(6),key:secondKey}
+   ]}]);
+  expect(combined.sections.map(section=>section.questions.map(item=>item.key))).toEqual([[firstKey],[secondKey]]);
+  expect(combined.keyGroups).toEqual([{heading:r(10),section:1}]);
+ });
+ it('stops on incompatible overlapping proposals and competing key assignments',()=>{
+  const first=q(3,2);
+  expect(()=>mergeLocalFragments('a'.repeat(64),[section(1,[first]),section(1,[{...first,stem:[r(3),r(4)]}])],[])).toThrow(/conflict/i);
+  expect(()=>mergeLocalFragments('a'.repeat(64),[section(1,[first])],[{matches:[
+   {question:r(3),key:{content:[r(8)]}},{question:r(3),key:{content:[r(9)]}}
+  ]}])).toThrow(/conflict/i);
+ });
+ it('retains uncertain detached source entries without assigning an answer',()=>{
+  const sourceKey={number:r(8),content:[r(9)]};
+  const combined=mergeLocalFragments('a'.repeat(64),[section(1,[q(3,2)])],
+   [{matches:[{question:r(3),key:sourceKey,uncertain:true}]}]);
+  expect(combined.sections[0].questions[0].key).toBeUndefined();
+  expect(combined.unassignedKeys).toEqual([r(8),r(9)]);
+ });
+});
+
+describe('2D.2 length recovery',()=>{
+ const source={fingerprint:'a'.repeat(64),issues:[],blocks:Array.from({length:40},(_,i)=>block(i+1))};
+ it('retries a truncated response once with smaller overlapping windows and records every attempt',async()=>{
+  let calls=0;
+  const result=await runLocalAnnotation(source,{count:()=>100,complete:async()=>{
+   calls++;
+   return calls===1?{text:'truncated',finish:'length'}:
+    {text:JSON.stringify(section(1,[q(3,2)])),finish:'stop'};
+  }});
+  expect(result.telemetry.map(call=>[call.attempt,call.blocks.length,call.finish])).toEqual([
+   [1,40,'length'],[2,20,'stop'],[2,20,'stop'],[2,8,'stop']
+  ]);
+  expect(result.telemetry[2].blocks.slice(0,4)).toEqual(result.telemetry[1].blocks.slice(-4));
+ });
+ it('fails closed instead of repeatedly retrying a truncated small window',async()=>{
+  let calls=0;
+  await expect(runLocalAnnotation(source,{count:()=>100,complete:async()=>{
+   calls++;return {text:'truncated',finish:'length'};
+  }})).rejects.toThrow(/context limit/);
+  expect(calls).toBe(2);
+ });
+});
