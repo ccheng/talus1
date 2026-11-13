@@ -1,4 +1,4 @@
-import {useRef,useState,type ChangeEvent} from 'react';
+import {useMemo,useRef,useState,type ChangeEvent} from 'react';
 import DOMPurify from 'dompurify';
 import * as mammoth from 'mammoth';
 import {marked} from 'marked';
@@ -8,7 +8,8 @@ import {inspectImportedMedia,applyWordImageDimensions} from './media';
 import {prepareWordMath,restoreWordMath} from './wordMath';
 import {RichEditor} from './Editor';
 import {AnnotationExchange} from './AnnotationExchange';
-import {ImportComparison} from './ImportComparison';
+import {ImportComparison,normalizeHtml,richAssets} from './ImportComparison';
+import {reconcilableSourceKeys} from './importComparison';
 import {makeAnnotationSource,MAX_ANNOTATION_DOCX_BYTES,type AnnotationReview,type AnnotationSource} from './annotationImport';
 
 const uid=()=>crypto.randomUUID();
@@ -28,11 +29,21 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
  const [annotationSource,setAnnotationSource]=useState<AnnotationSource|null>(null);
  const [annotationReview,setAnnotationReview]=useState<AnnotationReview|null>(null);
  const [annotationConfirmed,setAnnotationConfirmed]=useState(false);
+ const [confirmedKeys,setConfirmedKeys]=useState<string[]>([]);
  const [annotationEpoch,setAnnotationEpoch]=useState(0);
  const [annotationError,setAnnotationError]=useState('');
  const [localAnnotationRunning,setLocalAnnotationRunning]=useState(false);
  const deterministic=useRef<ImportDraft|null>(null);
  const readEpoch=useRef(0);
+ const reconciliations=useMemo(()=>annotationReview&&draft&&deterministic.current
+  ?reconcilableSourceKeys(deterministic.current,annotationReview.draft,draft,annotationReview.unassignedSourceKeys,normalizeHtml,richAssets):[],
+ [annotationReview,draft]);
+ const reconciledBlocks=new Set(reconciliations.filter(item=>confirmedKeys.includes(item.questionId)).flatMap(item=>item.blocks));
+ const pendingKeys=annotationReview?.unassignedSourceKeys.some(piece=>!reconciledBlocks.has(piece.block));
+ const annotationIssues=annotationReview?[...annotationReview.issues,...(pendingKeys?[
+  'Unassigned source key material remains. Resolve the competing key in the comparison panel or revise the annotation.'
+ ]:[])]:[];
+
  function makeDraft(raw:string,kind:'plain'|'markdown',name='Pasted assessment'){
   // A Word/HTML import is rich source, not a plain-text clipboard paste.
   // Re-running detection without changing the source must never strip its media.
@@ -112,7 +123,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
   }catch(error){if(currentRead===readEpoch.current)setMessage('File import failed: '+String(error));}
  }
  function modify(fn:(copy:ImportDraft)=>void){
-  setAnnotationConfirmed(false);
+  setAnnotationConfirmed(false);setConfirmedKeys([]);
   setDraft(old=>{if(!old)return old;const next=structuredClone(old);fn(next);return next;});
  }
  function updateSection(id:string,field:keyof ImportSection,value:string){
@@ -160,7 +171,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
  }
  function accept(){
   if(!draft||localAnnotationRunning)return;
-  if(annotationReview&&(annotationReview.issues.length||!annotationConfirmed)){setMessage('Resolve the source coverage and confirm the annotation review before accepting.');return;}
+  if(annotationReview&&(annotationIssues.length||!annotationConfirmed)){setMessage('Resolve the source coverage and confirm the annotation review before accepting.');return;}
   const warnings=reviewWarnings(draft);
   const empty=draft.sections.flatMap(s=>s.questions).filter(q=>!text(q.stem).trim()&&!/<(?:img|table)\b/i.test(q.stem));
   if(empty.length){setMessage('Cannot import empty question prompts. Edit or remove them first.');return;}
@@ -187,13 +198,13 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
      <input aria-label="Upload assessment" type="file" accept=".docx,.md,.markdown,.txt,.html,.htm" onChange={e=>void readFile(e)}/></label>
     {fileName&&<p className="help">Loaded: {fileName}</p>}
     {annotationError&&<p className="help">Annotation unavailable: {annotationError}</p>}
-    {annotationSource&&<AnnotationExchange key={annotationEpoch} source={annotationSource} active={active} onLocalRunning={setLocalAnnotationRunning} filename={fileName} review={annotationReview}
+    {annotationSource&&<AnnotationExchange key={annotationEpoch} source={annotationSource} active={active} onLocalRunning={setLocalAnnotationRunning} filename={fileName} review={annotationReview} issues={annotationIssues}
       confirmed={annotationConfirmed} onConfirm={setAnnotationConfirmed} onReview={review=>{
-       setAnnotationReview(review);setAnnotationConfirmed(false);
+       setAnnotationReview(review);setAnnotationConfirmed(false);setConfirmedKeys([]);
        setDraft(review.draft);setExpanded(review.draft.sections[0]?.questions[0]?.id??null);
        setMessage('Annotation loaded. Compare the source and proposed structure before accepting.');
       }} onReset={()=>{
-       setAnnotationReview(null);setAnnotationConfirmed(false);setDraft(deterministic.current);
+       setAnnotationReview(null);setAnnotationConfirmed(false);setConfirmedKeys([]);setDraft(deterministic.current);
        setExpanded(deterministic.current?.sections[0]?.questions[0]?.id??null);
        setMessage('Returned to deterministic detection.');
       }}/>}
@@ -215,7 +226,11 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
       <button className="secondary" onClick={()=>modify(d=>{d.sections.push({id:uid(),title:'New section',proficiency:'',instructions:'',questions:[]});})}>+ Section</button>
       <button className="secondary" onClick={()=>modify(d=>{const s=d.sections.at(-1);if(s)s.questions.push({id:uid(),sourceStart:0,sourceEnd:0,stem:'',choices:[],correct:[],answer:'',type:'shortAnswer',marks:1,responseLines:2,warnings:['Provide a prompt and answer']});})}>+ Question</button>
      </div>
-     {annotationReview&&deterministic.current&&<ImportComparison key={annotationReview.draft.sections[0]?.id} detect={deterministic.current} ai={annotationReview.draft} current={draft} onQuestion={id=>{
+     {annotationReview&&deterministic.current&&<ImportComparison key={annotationReview.draft.sections[0]?.id} detect={deterministic.current} ai={annotationReview.draft} current={draft}
+      reconciliations={reconciliations} confirmed={confirmedKeys} onConfirmKey={(id,checked)=>{
+       setAnnotationConfirmed(false);
+       setConfirmedKeys(old=>checked?[...old,id]:old.filter(key=>key!==id));
+      }} onQuestion={id=>{
       setFilter('all');setExpanded(id);
       requestAnimationFrame(()=>document.getElementById('review-'+id)?.focus());
      }}/>}
@@ -267,7 +282,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
      <div className="import-accept">
       <label>Import mode <select aria-label="Import mode" value={mode} onChange={e=>setMode(e.target.value as typeof mode)}><option value="replace">Replace open assessment</option><option value="append">Append sections to open assessment</option></select></label>
       <p className="help">{warnings.length} unresolved warning(s). Incomplete answers will remain incomplete and block version generation until corrected.</p>
-      <button className="primary" disabled={count===0||localAnnotationRunning||!!annotationReview&&(annotationReview.issues.length>0||!annotationConfirmed)} onClick={accept}>Accept reviewed import</button>
+      <button className="primary" disabled={count===0||localAnnotationRunning||!!annotationReview&&(annotationIssues.length>0||!annotationConfirmed)} onClick={accept}>Accept reviewed import</button>
      </div>
     </>}
    </section>

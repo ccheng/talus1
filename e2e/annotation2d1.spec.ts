@@ -175,7 +175,7 @@ test('2D.3 surfaces source-backed competing keys and exports the teacher correct
   heading:b(1),questions:[{type:'singleChoice',number:reference(2,'1.'),stem:[reference(2,'Which is the reference reading?')],
    choices:[option('B3',body[2],'A.','21'),option('B4',body[3],'B.','29')],
    key:{label:reference(5,'Answer:'),content:[{block:'B5',start:8,end:9}]}}]
- }],ignored:[{ref:b(7),reason:'layoutArtifact'}]};
+ }],unassignedKeys:[b(7)]};
  await page.goto('./');
  await page.getByRole('button',{name:'Import assessment',exact:true}).click();
  await page.getByLabel('Upload assessment',{exact:true}).setInputFiles({name:'competing-keys.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:bytes});
@@ -191,6 +191,8 @@ test('2D.3 surfaces source-backed competing keys and exports the teacher correct
  await expect(page.getByRole('radio',{name:'Correct A',exact:true})).toBeChecked();
  await page.getByRole('radio',{name:'Correct B',exact:true}).check();
  await expect(comparison).toContainText('Key mapping · Edited in current draft');
+ await expect(page.getByRole('button',{name:'Accept reviewed import'})).toBeDisabled();
+ await comparison.getByRole('checkbox',{name:/Use source B7 for this question/}).check();
  page.on('dialog',dialog=>dialog.accept());
  await accept(page);
  await generate(page,6,'2d3-reviewed');

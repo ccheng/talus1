@@ -9,13 +9,14 @@ interface Props {
  onLocalRunning:(running:boolean)=>void;
  filename:string;
  review:AnnotationReview|null;
+ issues:string[];
  confirmed:boolean;
  onConfirm:(confirmed:boolean)=>void;
  onReview:(review:AnnotationReview)=>void;
  onReset:()=>void;
 }
 
-export function AnnotationExchange({source,active,filename,review,confirmed,onConfirm,onReview,onReset,onLocalRunning}:Props){
+export function AnnotationExchange({source,active,filename,review,issues,confirmed,onConfirm,onReview,onReset,onLocalRunning}:Props){
  const [raw,setRaw]=useState('');
  const [feedback,setFeedback]=useState('');
  const [open,setOpen]=useState(false);
@@ -59,7 +60,7 @@ export function AnnotationExchange({source,active,filename,review,confirmed,onCo
   </div>
   {feedback&&<p role="status">{feedback}</p>}
   {review&&<>
-   {review.issues.length>0&&<div className="validation" role="alert"><strong>Resolve these issues before accepting</strong><ul>{review.issues.map((issue,i)=><li key={i}>{issue}</li>)}</ul></div>}
+   {issues.length>0&&<div className="validation" role="alert"><strong>Resolve these issues before accepting</strong><ul>{issues.map((issue,i)=><li key={i}>{issue}</li>)}</ul></div>}
    {review.ignored.length>0&&<><h4>Proposed exclusions</h4><ul>{review.ignored.map((item,i)=><li key={i}>{item.text} ({item.reason})</li>)}</ul></>}
    {review.defaults.length>0&&<details><summary>Marks that use the Talus default</summary><ul>{review.defaults.map((item,i)=><li key={i}>{item}</li>)}</ul></details>}
    {review.unassignedKeyText&&<p>Unassigned source key material: {review.unassignedKeyText}</p>}
@@ -71,7 +72,7 @@ export function AnnotationExchange({source,active,filename,review,confirmed,onCo
      <p>Source key: {key.sourceKey||'None mapped'} · Proposed answer: {key.resolved}</p>
     </div>)}
    </details>
-   <label className="check"><input type="checkbox" disabled={review.issues.length>0} checked={confirmed}
+   <label className="check"><input type="checkbox" disabled={issues.length>0} checked={confirmed}
     onChange={event=>onConfirm(event.target.checked)}/> I reviewed the proposed structure, source answers, defaults and exclusions</label>
   </>}
  </details>;

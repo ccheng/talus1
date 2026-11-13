@@ -1,8 +1,8 @@
 import {useMemo,useState} from 'react';
-import {compareImportDrafts} from './importComparison';
+import {compareImportDrafts,type KeyReconciliation} from './importComparison';
 import type {ImportDraft} from './importParser';
 
-function normalizeHtml(html:string){
+export function normalizeHtml(html:string){
  const template=document.createElement('template');template.innerHTML=html;
  for(const element of template.content.querySelectorAll('img,table,math'))element.replaceWith(document.createTextNode(' '));
  for(const block of template.content.querySelectorAll('p,div,li,br,blockquote'))block.after(document.createTextNode(' '));
@@ -10,7 +10,7 @@ function normalizeHtml(html:string){
 }
 
 const assetNames={img:'Image',table:'Table',math:'Equation'};
-function richAssets(html:string){
+export function richAssets(html:string){
  const template=document.createElement('template');template.innerHTML=html;
  return Array.from(template.content.querySelectorAll('img,table,math'),element=>{
   const kind=element.localName as keyof typeof assetNames;
@@ -22,8 +22,9 @@ function richAssets(html:string){
  });
 }
 
-export function ImportComparison({detect,ai,current,onQuestion}:{
+export function ImportComparison({detect,ai,current,onQuestion,reconciliations,confirmed,onConfirmKey}:{
  detect:ImportDraft;ai:ImportDraft;current:ImportDraft;onQuestion:(id:string)=>void;
+ reconciliations:KeyReconciliation[];confirmed:string[];onConfirmKey:(id:string,checked:boolean)=>void;
 }){
  const findings=useMemo(()=>compareImportDrafts(detect,ai,normalizeHtml,richAssets),[detect,ai]);
  const [showAll,setShowAll]=useState(false);
@@ -50,6 +51,10 @@ export function ImportComparison({detect,ai,current,onQuestion}:{
       {!!change.aiLines.length&&<p className="help">Source {change.aiLines.map(line=>'B'+line).join(', ')} · {preview(ai,change.aiLines)}</p>}</div>
     </div>
    </section>)}
+   {reconciliations.filter(item=>item.questionId===finding.questionId).map(item=><label key={item.questionId} className="check">
+    <input type="checkbox" checked={confirmed.includes(item.questionId)} onChange={event=>onConfirmKey(item.questionId,event.target.checked)}/>
+    Use source {item.blocks.map(block=>'B'+block).join(', ')} for this question ({item.answer})
+   </label>)}
    {finding.questionId&&currentIds.has(finding.questionId)&&<button className="secondary" onClick={()=>onQuestion(finding.questionId!)}>Review this question</button>}
   </details>)}
   {findings.length>8&&<button className="secondary" onClick={()=>setShowAll(value=>!value)}>{showAll?'Show fewer disagreements':'Show all '+findings.length+' disagreements'}</button>}
