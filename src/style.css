@@ -50,3 +50,11 @@
 .annotation-exchange{background:#f4f6fa;padding:13px;border:1px solid #dce3ee;border-radius:7px;margin-bottom:20px}
 .annotation-exchange summary{cursor:pointer}
 .annotation-exchange li,.annotation-exchange p{overflow-wrap:anywhere}
+.import-comparison{border:1px solid #dce3ee;background:#f8fafc;padding:14px;border-radius:8px;margin:16px 0}
+.import-comparison h3,.comparison-change h4{margin:0 0 8px}
+.import-comparison details{margin:8px 0;padding:8px;border:1px solid #e0e6ef;border-radius:6px;background:#fff}
+.import-comparison summary{cursor:pointer}
+.comparison-change{margin:10px 0}
+.comparison-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.comparison-pair>div{min-width:0;overflow-wrap:anywhere}
+.comparison-pair p{margin:4px 0}

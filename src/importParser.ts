@@ -2,7 +2,8 @@ import { createSection,createSlot,createVariant,uid,type MasterTest,type Questio
 
 export interface SourceLine { text:string; html:string; number:number }
 export interface ImportQuestion {
- id:string; sourceStart:number; sourceEnd:number; sourceNumber?:number; stem:string; choices:string[]; correct:number[];
+ id:string; sourceStart:number; sourceEnd:number; sourceNumber?:number;
+ sourceStemLines?:number[]; sourceChoiceLines?:number[]; sourceKeyLines?:number[]; sourceMarkLines?:number[]; stem:string; choices:string[]; correct:number[];
  answer:string; type:QuestionType; marks:number; responseLines:number; warnings:string[]; reviewFlags?:string[];
 }
 export interface ImportSection {
@@ -135,7 +136,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
  const sections:ImportSection[]=[];let current=newSection('Section 1');
  let q:ImportQuestion|undefined;let seenQuestions=false;let keyMode=false;
  let preamble:string[]=[];let instructions='';let sourceTitle=false;
- const warnings:string[]=[];const detachedKeys:{number:number;value:string}[]=[];
+ const warnings:string[]=[];const detachedKeys:{number:number;value:string;line:number}[]=[];
  const meaningful=lines.filter(line=>line.text.trim()||/<(?:img|table)\b/i.test(line.html));
  const flush=()=>{if(q){classify(q);current.questions.push(q);q=undefined;seenQuestions=true;}};
  for(let i=0;i<meaningful.length;i++){
@@ -146,7 +147,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   }
   if(keyMode){
    const match=numberedKey.exec(raw);
-   if(match)detachedKeys.push({number:Number(match[1]),value:match[2].trim()});
+   if(match)detachedKeys.push({number:Number(match[1]),value:match[2].trim(),line:line.number});
    else if(raw)warnings.push('Unmapped answer-key content: '+raw);
    continue;
   }
@@ -172,7 +173,8 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    flush();
    const marksMatch=marks.exec(n[2]),stem=marksMatch?n[2].replace(marks,'').trim():n[2].trim();
    q=newQuestion(line.number,stem,stripPrefix(line.html,numberedPrefix,raw));
-   q.sourceNumber=Number(n[1]);if(marksMatch)q.marks=Number(marksMatch[1]);
+   q.sourceStemLines=[line.number];
+   q.sourceNumber=Number(n[1]);if(marksMatch){q.marks=Number(marksMatch[1]);q.sourceMarkLines=[line.number];}
    continue;
   }
   const a=answer.exec(raw);
@@ -183,13 +185,14 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
     const letters=/^[A-H](?:\s*[,;&+]\s*[A-H])*$/i.test(value)
       ?value.match(/[A-H]/gi)??[]:[];
     if(letters.length&&letters.every(l=>l.toUpperCase().charCodeAt(0)-65<q!.choices.length)){
-     q.correct=[...new Set(letters.map(l=>l.toUpperCase().charCodeAt(0)-65))];
+     q.correct=[...new Set(letters.map(l=>l.toUpperCase().charCodeAt(0)-65))];q.sourceKeyLines=[line.number];
     }else q.reviewFlags?.push('Answer '+value+' does not match the detected answer choices');
-   }else q.answer=stripAnswerLabel(line.html);
+   }else {q.answer=stripAnswerLabel(line.html);q.sourceKeyLines=[line.number];}
    continue;
   }
   const choiceMatch=choice.exec(raw);
   if(choiceMatch&&q){
+   (q.sourceChoiceLines??=[]).push(line.number);
    const index=(choiceMatch[1]||choiceMatch[2]).toUpperCase().charCodeAt(0)-65;
    if(index===q.choices.length){
     q.choices.push(stripPrefix(line.html,choicePrefix,raw));q.sourceEnd=line.number;
@@ -200,6 +203,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    continue;
   }
   if(q){
+   (q.sourceStemLines??=[]).push(line.number);
    if(q.choices.length && /^(?:draw|graph|explain|calculate|describe|justify|compare)\b/i.test(raw))q.reviewFlags?.push('Possible unnumbered additional question: '+raw.slice(0,90));
    if(/^[-*]\s+/.test(raw)||/^<li\b/i.test(line.html)){
     const rendered=line.html.startsWith('<li')?line.html:'<li>'+line.html.replace(/^[-*]\s+/,'')+'</li>';
@@ -230,13 +234,14 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
     warnings.push('Answer-key entry '+key.number+' could not be matched uniquely: '+key.value);continue;
    }
    const target=matches[0];
+
    if(target.choices.length){
     const chars=/^[A-H](?:\s*[,;&+]\s*[A-H])*$/i.test(key.value)?key.value.match(/[A-H]/gi)??[]:[];
     const choices=chars.map(l=>l.toUpperCase().charCodeAt(0)-65);
     if(!choices.length||choices.some(i=>i>=target.choices.length)){
      target.reviewFlags?.push('Answer-key entry '+key.number+' is not a valid choice: '+key.value);
-    }else target.correct=[...new Set(choices)];
-   }else target.answer=escape(key.value);
+    }else {target.correct=[...new Set(choices)];target.sourceKeyLines=[key.line];}
+   }else {target.answer=escape(key.value);target.sourceKeyLines=[key.line];}
   }
  }
  for(const s of sections)for(const item of s.questions){

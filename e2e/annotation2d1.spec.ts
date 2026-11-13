@@ -16,10 +16,10 @@ const keys=['Answer Key','Base Answers','7. B','Proficient Answers','7. A, C','8
 const table='<w:tbl><w:tblGrid><w:gridCol w:w="1500"/><w:gridCol w:w="1500"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:gridSpan w:val="2"/></w:tcPr>'+p('Merged cell')+'</w:tc></w:tr></w:tbl>';
 const fraction='<w:p><m:oMath><m:f><m:num><m:r><m:t>1</m:t></m:r></m:num><m:den><m:r><m:t>2</m:t></m:r></m:den></m:f></m:oMath></w:p>';
 const image='<w:p><w:r><w:drawing><wp:inline><wp:extent cx="914400" cy="914400"/><wp:docPr id="1" name="Diagram" descr="Test image"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:blipFill><a:blip r:embed="rIdImage"/></pic:blipFill></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
-function fixture(namespaced=true,damaged=false) {
+function fixture(namespaced=true,damaged=false,customBody?:string) {
  const appendix=namespaced?keys:['Answer Key','7. B','7. A, C','8. One half'];
  const document='<w:document xmlns:w="'+w+'" xmlns:m="'+m+'" xmlns:r="'+r+'" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+
-  lines.map(p).join('')+(damaged?fraction.replace('<m:den><m:r><m:t>2</m:t></m:r></m:den>',''):fraction)+table+image+appendix.map(p).join('')+'</w:body></w:document>';
+  (customBody??(lines.map(p).join('')+(damaged?fraction.replace('<m:den><m:r><m:t>2</m:t></m:r></m:den>',''):fraction)+table+image+appendix.map(p).join('')))+'</w:body></w:document>';
  return Buffer.from(zipSync({
   '[Content_Types].xml':strToU8('<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'),
   '_rels/.rels':strToU8('<Relationships xmlns="'+pr+'"><Relationship Id="rId1" Type="'+r+'/officeDocument" Target="word/document.xml"/></Relationships>'),
@@ -165,4 +165,43 @@ test('2D.1 cannot accept a DOCX with an incomplete source equation',async({page}
  await apply(page,annotation(bytes));
  await expect(page.getByText('Resolve these issues before accepting',{exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Accept reviewed import'})).toBeDisabled();
+});
+
+test('2D.3 surfaces source-backed competing keys and exports the teacher correction for six forms',async({page})=>{
+ const body=['Base','1. Which is the reference reading?','A. 21','B. 29','Answer: A','Answer Key','1. B'];
+ const bytes=fixture(true,false,body.map(p).join(''));
+ const reference=(n:number,value:string)=>part('B'+n,body[n-1],value);
+ const proposal={format:'talus-annotation',version:1,fingerprint:createHash('sha256').update(bytes).digest('hex'),keyHeading:b(6),sections:[{
+  heading:b(1),questions:[{type:'singleChoice',number:reference(2,'1.'),stem:[reference(2,'Which is the reference reading?')],
+   choices:[option('B3',body[2],'A.','21'),option('B4',body[3],'B.','29')],
+   key:{label:reference(5,'Answer:'),content:[{block:'B5',start:8,end:9}]}}]
+ }],ignored:[{ref:b(7),reason:'layoutArtifact'}]};
+ await page.goto('./');
+ await page.getByRole('button',{name:'Import assessment',exact:true}).click();
+ await page.getByLabel('Upload assessment',{exact:true}).setInputFiles({name:'competing-keys.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:bytes});
+ await page.getByText('AI-assisted DOCX annotation',{exact:true}).click();
+ await apply(page,proposal);
+ const comparison=page.getByRole('region',{name:'Detect and AI disagreements'});
+ await comparison.locator('summary').filter({hasText:'Key mapping'}).click();
+ await expect(comparison).toContainText('Source line 7');
+ await expect(comparison).toContainText('1. B');
+ await expect(comparison).toContainText('Source B5');
+ await expect(comparison).toContainText('Answer: A');
+ await comparison.getByRole('button',{name:'Review this question'}).click();
+ await expect(page.getByRole('radio',{name:'Correct A',exact:true})).toBeChecked();
+ await page.getByRole('radio',{name:'Correct B',exact:true}).check();
+ await expect(comparison).toContainText('Key mapping · Edited in current draft');
+ page.on('dialog',dialog=>dialog.accept());
+ await accept(page);
+ await generate(page,6,'2d3-reviewed');
+ const word=Object.entries(unzipSync(await download(page,/Word\/DOCX \(ZIP\)/))).filter(([name])=>name.endsWith('.docx'));
+ expect(word).toHaveLength(12);
+ for(const [name,raw] of word){
+  const xml=strFromU8(unzipSync(raw)['word/document.xml']);
+  const paragraphs=xml.split('</w:p>').map(plainXml);
+  const choice=paragraphs.find(paragraph=>/^[A-Z]\. 29$/.test(paragraph));
+  expect(choice).toBeTruthy();
+  if(name.endsWith('-key.docx'))expect(paragraphs).toContain('Answer: '+choice![0]);
+  else expect(paragraphs.some(paragraph=>paragraph.startsWith('Answer:'))).toBe(false);
+ }
 });
