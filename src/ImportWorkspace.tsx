@@ -1,4 +1,4 @@
-import {useState,type ChangeEvent} from 'react';
+import {useRef,useState,type ChangeEvent} from 'react';
 import DOMPurify from 'dompurify';
 import * as mammoth from 'mammoth';
 import {marked} from 'marked';
@@ -7,6 +7,8 @@ import type {MasterTest,QuestionType} from './model';
 import {inspectImportedMedia,applyWordImageDimensions} from './media';
 import {prepareWordMath,restoreWordMath} from './wordMath';
 import {RichEditor} from './Editor';
+import {AnnotationExchange} from './AnnotationExchange';
+import {makeAnnotationSource,MAX_ANNOTATION_DOCX_BYTES,type AnnotationReview,type AnnotationSource} from './annotationImport';
 
 const uid=()=>crypto.randomUUID();
 const asHtml=(value:string)=>value.includes('<')?value:'<p>'+value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p>';
@@ -22,6 +24,13 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  const [mode,setMode]=useState<'replace'|'append'>('replace');
  const [filter,setFilter]=useState<'all'|'warnings'>('all');
  const [expanded,setExpanded]=useState<string|null>(null);
+ const [annotationSource,setAnnotationSource]=useState<AnnotationSource|null>(null);
+ const [annotationReview,setAnnotationReview]=useState<AnnotationReview|null>(null);
+ const [annotationConfirmed,setAnnotationConfirmed]=useState(false);
+ const [annotationEpoch,setAnnotationEpoch]=useState(0);
+ const [annotationError,setAnnotationError]=useState('');
+ const deterministic=useRef<ImportDraft|null>(null);
+ const readEpoch=useRef(0);
  function makeDraft(raw:string,kind:'plain'|'markdown',name='Pasted assessment'){
   // A Word/HTML import is rich source, not a plain-text clipboard paste.
   // Re-running detection without changing the source must never strip its media.
@@ -33,6 +42,8 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
    if(richSource.hasMedia&&!window.confirm('The edited source is plain text. Re-detecting from it will remove embedded images and table structure, as well as equations. Continue and mark this media loss as unresolved?'))return;
   }
   const lostMedia=!!richSource?.hasMedia;
+  readEpoch.current++;
+  setAnnotationSource(null);setAnnotationReview(null);setAnnotationError('');
   setRichSource(null);
   setSourcePreviewHtml('');
   try{
@@ -46,7 +57,11 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  }
  async function readFile(event:ChangeEvent<HTMLInputElement>){
   const file=event.target.files?.[0];if(!file)return;
-  setRichSource(null);setSourcePreviewHtml('');setFileName(file.name);
+  event.target.value='';
+  const currentRead=++readEpoch.current;
+  setAnnotationSource(null);setAnnotationReview(null);setAnnotationConfirmed(false);setAnnotationError('');
+  setAnnotationEpoch(n=>n+1);deterministic.current=null;
+  setRichSource(null);setSourcePreviewHtml('');setFileName(file.name);setDraft(null);
   const title=file.name.replace(/\.(docx|md|markdown|txt|html)$/i,'');
   try{
    if(/\.docx$/i.test(file.name)){
@@ -60,18 +75,28 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     );
     const media=await inspectImportedMedia(restoreWordMath(applyWordImageDimensions(doc.value,wordBytes),math.equations));
     const checkedHtml=DOMPurify.sanitize(media.html);
+    if(currentRead!==readEpoch.current)return;
     setSourcePreviewHtml(checkedHtml);
     const parsed=parseHtml(checkedHtml,title,'docx');
     parsed.warnings.push(...wordConversionWarnings(doc.messages,parsed),...media.warnings,...math.warnings);
+    deterministic.current=parsed;
     setRichSource({originalText:parsed.source,hasMedia:media.imageCount>0||media.tableCount>0||Object.keys(math.equations).length>0,format:'docx'});
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
+    try{
+     if(wordBytes.byteLength>MAX_ANNOTATION_DOCX_BYTES)throw Error('DOCX exceeds the 12 MB annotation limit.');
+     // Heuristic parser warnings are separate from conversion/integrity warnings.
+     const conversion=wordConversionWarnings(doc.messages,parsed).filter(w=>/image|drawing|graphic|picture|media|relationship|linked|unsupported|textbox|object/i.test(w));
+     const annotated=await makeAnnotationSource(wordBytes,checkedHtml,[...conversion,...media.warnings,...math.warnings]);
+     if(currentRead===readEpoch.current)setAnnotationSource(annotated);
+    }catch(error){if(currentRead===readEpoch.current)setAnnotationError(String(error));}
    }else if(/\.(md|markdown)$/i.test(file.name)){
-    const raw=await file.text();setSource(raw);setFormat('markdown');makeDraft(raw,'markdown',title);
+    const raw=await file.text();if(currentRead!==readEpoch.current)return;setSource(raw);setFormat('markdown');makeDraft(raw,'markdown',title);
    }else if(/\.html?$/i.test(file.name)){
-    const raw=await file.text();setSource(raw);
+    const raw=await file.text();if(currentRead!==readEpoch.current)return;setSource(raw);
     const media=await inspectImportedMedia(raw);
     const checkedHtml=DOMPurify.sanitize(media.html);
+    if(currentRead!==readEpoch.current)return;
     setSourcePreviewHtml(checkedHtml);
     const parsed=parseHtml(checkedHtml,title,'html');
     parsed.warnings.push(...media.warnings);
@@ -80,12 +105,12 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setMessage('HTML imported: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Review all questions.');
    }else{
-    const raw=await file.text();setSource(raw);setFormat('plain');makeDraft(raw,'plain',title);
+    const raw=await file.text();if(currentRead!==readEpoch.current)return;setSource(raw);setFormat('plain');makeDraft(raw,'plain',title);
    }
-  }catch(error){setMessage('File import failed: '+String(error));}
-  event.target.value='';
+  }catch(error){if(currentRead===readEpoch.current)setMessage('File import failed: '+String(error));}
  }
  function modify(fn:(copy:ImportDraft)=>void){
+  setAnnotationConfirmed(false);
   setDraft(old=>{if(!old)return old;const next=structuredClone(old);fn(next);return next;});
  }
  function updateSection(id:string,field:keyof ImportSection,value:string){
@@ -133,6 +158,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
  }
  function accept(){
   if(!draft)return;
+  if(annotationReview&&(annotationReview.issues.length||!annotationConfirmed)){setMessage('Resolve the source coverage and confirm the annotation review before accepting.');return;}
   const warnings=reviewWarnings(draft);
   const empty=draft.sections.flatMap(s=>s.questions).filter(q=>!text(q.stem).trim()&&!/<(?:img|table)\b/i.test(q.stem));
   if(empty.length){setMessage('Cannot import empty question prompts. Edit or remove them first.');return;}
@@ -158,6 +184,17 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
     <label>Upload an assessment (.docx, .md, .txt, .html)
      <input aria-label="Upload assessment" type="file" accept=".docx,.md,.markdown,.txt,.html,.htm" onChange={e=>void readFile(e)}/></label>
     {fileName&&<p className="help">Loaded: {fileName}</p>}
+    {annotationError&&<p className="help">Annotation unavailable: {annotationError}</p>}
+    {annotationSource&&<AnnotationExchange key={annotationEpoch} source={annotationSource} filename={fileName} review={annotationReview}
+      confirmed={annotationConfirmed} onConfirm={setAnnotationConfirmed} onReview={review=>{
+       setAnnotationReview(review);setAnnotationConfirmed(false);
+       setDraft(review.draft);setExpanded(review.draft.sections[0]?.questions[0]?.id??null);
+       setMessage('Annotation loaded. Compare the source and proposed structure before accepting.');
+      }} onReset={()=>{
+       setAnnotationReview(null);setAnnotationConfirmed(false);setDraft(deterministic.current);
+       setExpanded(deterministic.current?.sections[0]?.questions[0]?.id??null);
+       setMessage('Returned to deterministic detection.');
+      }}/>}
     <label>Or paste text from Word or Google Docs
      <select aria-label="Pasted input format" value={format} onChange={e=>setFormat(e.target.value as typeof format)}>
       <option value="plain">Plain text</option><option value="markdown">Markdown</option>
@@ -224,7 +261,7 @@ export function ImportWorkspace({master,onAccept,onClose}:{master:MasterTest;onA
      <div className="import-accept">
       <label>Import mode <select aria-label="Import mode" value={mode} onChange={e=>setMode(e.target.value as typeof mode)}><option value="replace">Replace open assessment</option><option value="append">Append sections to open assessment</option></select></label>
       <p className="help">{warnings.length} unresolved warning(s). Incomplete answers will remain incomplete and block version generation until corrected.</p>
-      <button className="primary" disabled={count===0} onClick={accept}>Accept reviewed import</button>
+      <button className="primary" disabled={count===0||!!annotationReview&&(annotationReview.issues.length>0||!annotationConfirmed)} onClick={accept}>Accept reviewed import</button>
      </div>
     </>}
    </section>
