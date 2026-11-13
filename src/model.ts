@@ -94,7 +94,12 @@ export function validateMaster(master:MasterTest):string[] {
     const label='Section '+(si+1);unique(section.id,label);
     if(!section.title.trim()) errors.push(label+' needs a title.');
     for(const warning of [...embeddedAssetWarnings(section.instructions),...equationIntegrityWarnings(section.instructions),...tableIntegrityWarnings(section.instructions)])errors.push(label+': '+warning);
-    for(const item of section.items)if(item.kind==='group')for(const warning of [...equationIntegrityWarnings(item.sharedHtml),...tableIntegrityWarnings(item.sharedHtml)])errors.push(label+' shared question: '+warning);
+    for(const item of section.items)if(item.kind==='group'){
+      unique(item.id,label+' question group');
+      if(!item.items.length)errors.push(label+': group has no questions.');
+      for(const warning of [...embeddedAssetWarnings(item.sharedHtml),...equationIntegrityWarnings(item.sharedHtml),...tableIntegrityWarnings(item.sharedHtml)])
+        errors.push(label+' shared question: '+warning);
+    }
     if(!section.items.length) errors.push(label+' needs at least one question.');
     for(const slot of slotsOf(section)){
       unique(slot.id,label+' question');

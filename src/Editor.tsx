@@ -9,14 +9,15 @@ import {stripExecutableHtml} from './contentIntegrity';
 import DOMPurify from 'dompurify';
 import {TalusImage,TalusTable,TalusMath} from './richNodes';
 
-export function RichEditor({value,onChange,placeholder='Write here…',compact=false}:{value:string;onChange:(html:string)=>void;placeholder?:string;compact?:boolean}){
+export function RichEditor({value,onChange,placeholder='Write here…',compact=false,allowHtmlSource=false}:{value:string;onChange:(html:string)=>void;placeholder?:string;compact?:boolean;allowHtmlSource?:boolean}){
  const [sourceWarning,setSourceWarning]=useState('');
  const changeSource=(raw:string)=>{
   const safe=stripExecutableHtml(raw);
   setSourceWarning(raw!==safe?'Unsafe script or event-handler content was removed. Review the remaining HTML before generating.':'');
   onChange(safe);
  };
- if(/<(?:img|table|math)\b/i.test(value))return <div className="rich-media-editor"><p className="help">Edit surrounding text directly. Use the controls beside each illustration, table or equation. Images, tables and equations are protected against accidental Backspace deletion. Advanced HTML source remains available for intentional structural changes.</p><RichTextTiptap value={value} onChange={onChange} placeholder={placeholder} compact={compact}/><label>Advanced HTML source<textarea aria-label={placeholder+' HTML source'} rows={4} value={value} onChange={e=>changeSource(e.target.value)}/></label>{sourceWarning&&<div role="alert" className="import-flag">{sourceWarning}</div>}<div className="rich-media-preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(value)}}/></div>;
+ const hasRichContent=/<(?:img|table|math)\b/i.test(value);
+ if(hasRichContent||allowHtmlSource)return <div className="rich-media-editor">{hasRichContent&&<p className="help">Edit surrounding text directly. Use the controls beside each illustration, table or equation. Images, tables and equations are protected against accidental Backspace deletion. Advanced HTML source remains available for intentional structural changes.</p>}<RichTextTiptap value={value} onChange={onChange} placeholder={placeholder} compact={compact}/><label>Advanced HTML source<textarea aria-label={placeholder+' HTML source'} rows={4} value={value} onChange={e=>changeSource(e.target.value)}/></label>{sourceWarning&&<div role="alert" className="import-flag">{sourceWarning}</div>}{hasRichContent&&<div className="rich-media-preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(value)}}/>}</div>;
  return <RichTextTiptap value={value} onChange={onChange} placeholder={placeholder} compact={compact}/>;
 }
 function RichTextTiptap({value,onChange,placeholder,compact}:{value:string;onChange:(html:string)=>void;placeholder:string;compact:boolean}){
