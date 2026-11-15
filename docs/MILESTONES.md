@@ -1,6 +1,6 @@
 # Talus milestones and next decisions
 
-**Roadmap updated 2026-11-14 by product-owner decision.** The active future feature sequence is **4A → 5A → 6**. The status and evidence below distinguish what shipped from what independent QA verified. The [README](../README.md) preserves earlier development history.
+**Roadmap updated 2026-11-14 by product-owner decision.** The active future feature sequence is **4A → 5A → 6**. The status and evidence below distinguish what shipped from what independent QA verified. The [development history](DEVELOPMENT_HISTORY.md) preserves earlier implementation notes.
 
 ## Approved remaining roadmap (product direction, not implementation authorization)
 

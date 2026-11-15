@@ -1,0 +1,302 @@
+# Talus development history
+
+Talus imports teacher-authored assessments, lets teachers review or edit their structure, and generates reproducible student versions and matching keys. It runs in the browser and exports editable Word and Markdown. Teachers can author consecutive question groups with shared material, review source-referenced AI annotations, and compare AI proposals against Detect.
+
+**Baseline when these notes were written:** 2D.1 annotation exchange and 2D.3 comparison passed independent live QA after corrective releases. 2D.2 on-device annotation is deployed and its fallback passed a live smoke test. Real-model quality, cached/offline behavior, and target-device timings remain unverified. The 3C grouped-question corrective release passed independent live QA with LibreOffice-rendered Word exports. Desktop Word pagination remains unverified.
+
+The roadmap at that point was **4A → 5A → 6**, with detailed scope and acceptance approval required for each stage. See the [development handoff](HANDOFF.md), [current status and roadmap](MILESTONES.md), [quality gate](QUALITY_GATE.md), and [2D design history](MILESTONE_2D.md). Earlier milestone notes below preserve the development chronology.
+
+---
+
+## Milestone 3B.2 corrective release — 3B2-01 student identification fields
+
+The 2026-11-12 independent acceptance report **ACCEPTED** 3B.2 after 72 rendered
+Word documents / 427 pages, with one P3 formatting issue. In the A4/1.5-inch/
+14-pt/1.5-spacing and Letter/1.25-inch/12-pt/1.15-spacing profiles, the
+student Class or Date label could wrap away from its writing rule.
+
+The correction keeps each label and underline together with a nonbreaking
+space in the editable Word paragraph, while preserving wrapping *between*
+fields. It does not modify page geometry, sections, answers, equations, tables,
+or the six-version generation snapshot. The permanent Playwright test
+`e2e/acceptance3b2-identity.spec.ts` exports 12 Word files for each of the
+two original failing profiles and renders all six student versions with
+LibreOffice/Poppler to verify label-rule integrity on page one. These tests
+are run automatically in the required CI workflow before production deployment.
+
+The screenshot/PDF examples `D1-wide.png` and `D1-middle.png` and the
+original classroom fixture remain in the independent acceptance evidence ZIP
+rather than being committed as large binary regression artifacts.
+
+## Milestone 3B.2 — Customizable Word layout
+
+The **Versions & answer keys** screen now has editable, persistent Word layout settings. Defaults exactly match the validated 3B.1 professional layout. Teachers may choose US Letter/A4, 0.5–1.5 inch margins, body font size 9–14 pt, line spacing (1 / 1.15 / 1.5), optional new-page-per-section, 2/4/6 response lines per kept block, and show/hide running headers and page-number footers. **Restore professional defaults** resets every Word layout option.
+
+The options apply consistently to individual student DOCX, answer-key DOCX, and all twelve DOCX files in the generated ZIP. They persist in the normal JSON backup and browser autosave. Export-only layout changes preserve the assessment's original run ID, version shuffle, variants, reference answers, and already-generated versions; re-download Word to pick up changes. Other formats do not inherit these Word-specific options. The ZIP manifest includes the active Word layout to support reproducibility. Native Word elements remain editable.
+
+The original 3B.1 rendered LibreOffice pagination audit remains mandatory. 3B.2 does not promise identical line/page boundaries between Word and LibreOffice or guarantee that extremely tall content can fit on one page. Settings are validated against the allowed ranges, rather than silently clamped.
+
+## Milestone 3B.1 corrective release v0.3.3 — independent acceptance pagination fixes
+
+The independent 3B.1 Work-mode report (2026-11-12) failed the initial professional Word default layout on **four P1 pagination issues** and **one P2 alignment issue**. All 12 student/key exports retained their mathematics, images, editable tables, correct answers, and source data, and the 3A corrective fixes remained intact.
+
+The corrective implementation addresses:
+
+- **3B1-01 (P1):** Do not export empty imported section-instruction paragraphs (especially `<p></p>`) between section headings and their first question. The heading style's keep-with-next can then bind to substantive content.
+- **3B1-02 (P1):** Use direct `w:keepNext` on question stems and a bounded keep chain for compact (2–5 choice) multiple-choice groups, including the answer on key versions. Longer choice sets remain breakable.
+- **3B1-03 (P1):** Recognize first-row headers in source Word tables built from `<td>` as well as `<th>`, repeat the header when continuing on another page, and chain paragraphs across rows in small (at most five-row) tables to keep them together where space permits. Preserve original rowspan, colspan, media and equations.
+- **3B1-04 (P1):** Place response space in question-number-labelled chunks of up to four lines. Each chunk has a keep-with-next label and chained lines; long written responses can still paginate, but without pages of contextless underscored lines. Apply explicit keep-with-next to the question stem to attach at least its first subsequent content block.
+- **3B1-05 (P2):** Center isolated image elements and image-only paragraphs (including image nodes inside spans) consistently. Prose-only edits and alternative normalization no longer change equivalent figure alignment.
+
+**Regression coverage:** `e2e/acceptance3b1-corrective.spec.ts` checks all five findings across a six-version Word ZIP, retaining original and prose-edited Lab alternatives, compact merged tables, four-choice items, blank imported section instructions, response lines and embedded image bytes. The complete 2C through 3B.1 Vitest/Playwright suite remains the deployment gate.
+
+**Scope and final gate:** These are OOXML-level pagination controls; page breaks depend on the actual Word/Writer layout engine and installed fonts. Local LibreOffice render checks of representative 0.3.2 outputs patched with equivalent rules showed orphan headings and short table fragments moving onto the appropriate pages. Independent Work-mode retesting against the **original Science-Rich-Editing.docx** and all 12 new exports remains mandatory for accepting 3B.1. Previously downloaded bad documents must be regenerated. This release does not promise exact page-for-page source Word formatting.
+
+## Milestone 3B.1 — Professional default editable Word layout (November 2026)
+
+Talus Word exports now use **consistent classroom-ready default formatting** without adding new per-teacher options:
+
+- **Page:** US Letter (8.5 × 11 in), 1-inch top/bottom/left/right margins, header and footer zones, usable content width 6.5 inches.
+- **Typography:** Aptos 11 pt default, 1.15-line spacing, consistent paragraph spacing. Dedicated editable Word styles for title, section headings, question prompts, multiple-choice options, response lines, reference answers, and table cells.
+- **Student identification:** An editable Name / Class / Date line appears in student forms, but not answer keys.
+- **Page navigation:** Running header with title, version and key indicator; dynamic Word PAGE field in the footer. Teacher can edit these elements directly in Word.
+- **Questions and sections:** Consistent question spacing, indentation for choices, heading keep-with-next, question first-line keep-with-next, Word paragraph keep-lines controls, and response-space styles. Pagination is controlled by Word and remains editable.
+- **Tables:** Default borders, cell padding, fixed available width, rows set not to split across pages, and table headers set to repeat on subsequent pages when the source has header cells.
+- **Diagrams:** Standalone images and displayed math are centred. Oversize images are proportionally fitted to the printable page width without modifying or resampling the embedded original image bytes. Embedded images inside table cells remain attached to their editable Word cells.
+- **Safety and fidelity:** Native OMML mathematics, source image data, merged-cell geometry, question alternatives, answer-key correctness and all six DOCX student/key pairs continue through the existing 3A pipeline.
+
+**Limitations:** These are fixed defaults rather than configurable Word templates. Exact pagination, split prevention for arbitrarily large questions, sophisticated anchoring/wrapping, page-specific headers and print-perfect match to the source Word document are not guaranteed. Word and LibreOffice may paginate differently. Fine-grained teacher customization is reserved for Milestone 3B.2.
+
+**Automated checks:** `e2e/docx3b1.spec.ts` validates Word styles, letter pages, field relationships, header/footer contents, student fields, row-split rules, table fidelity, centred images, fit scaling and media byte integrity across student and key documents. The older 3A/2C suites remain mandatory. Independent acceptance must include rendering of Word documents to inspect actual page breaks, edit-save-reopen behaviour and verify nothing semantic was lost.
+
+## Milestone 3A corrective release v0.3.1 — independent acceptance (November 2026)
+
+The independent Milestone 3A Work-mode acceptance report failed two release-blocking cases, both confirmed in the original Word export evidence.
+
+- **3A-01 (P0):** Native Word summation previously emitted empty `m:nary/m:e` followed by a detached summand. The OOXML converter now binds the following MathML operand directly inside the n-ary object, preserving both limits. If the summand is absent or ambiguous, Word export fails visibly instead of emitting an empty formula box.
+- **3A-02 (P0):** The Word Lab table imported inside invalid-but-retained paragraph HTML (`<p><table>…</table></p>`) could previously be flattened into a text run, detaching its diagram from the cell. The block serializer now recursively handles nested block-level table elements rather than treating them as inline text. The result is a native editable Word table with the original rows, cells and in-cell image.
+
+**Test coverage:** `e2e/acceptance3a-corrective.spec.ts` permanently checks native OOXML operands and table/image-cell ancestry in **six student DOCX and six corresponding answer-key DOCX**. Cases include original paragraph-wrapped versus normalized table alternatives and rejection of summations with no operand. These tests run with all earlier Talus regressions in GitHub Actions. This permanent suite uses faithful compact reproductions of the independent evidence patterns, not byte-for-byte copies of every original user fixture.
+
+**Independent acceptance gate:** Retest the original `Science-Rich-Editing.docx` with the original 3A acceptance sequence and compare all 12 exported Word documents to the source, browser preview and Markdown. In particular, verify that the summation has a real editable Word operand and the Lab PNG remains inside its editable table cell in versions A/C/E and their keys. Previous already exported invalid Word documents must be regenerated.
+
+## Milestone 3A — Editable Word/DOCX export (November 2026)
+
+The **Versions & answer keys** view now offers **Student Word (.docx)**, **Answer key Word (.docx)**, and **Word/DOCX (ZIP) — all versions & keys**. For a six-version run the ZIP includes **12 editable DOCX documents (student A–F and keyed A–F)** plus a run manifest. All conversion executes client-side through the existing `fflate` package; no server, Word installation, cloud upload, or hosted document service is needed.
+
+### Supported editable structures
+
+- Word-native paragraphs, headings, question numbers, response lines, multiple-choice letters, and per-version correct answers.
+- Imported bold, italic, superscript and subscript spans as editable Word runs. Chemical notation and scientific exponents retain their script positions.
+- Supported MathML to **Office Math (OMML)** conversion: fractions, sub/superscripts, combined scripts, square and indexed radicals, delimiters, and common under/over limits such as summations. These are Word equation objects, **not images of equations**.
+- PNG, JPEG and GIF image payloads embedded in the DOCX media directory, referenced by valid OOXML relationships. Repeated identical data URIs share one embedded media part. Imported or explicitly resized image dimensions are expressed in EMUs for Word.
+- Native Word tables with cell content, numeric measurements, headers, horizontal spans and vertical merges. Images and equations inside table cells use the same editable structures.
+- Independent deterministic version ordering and alternative choices from the existing generator; each key belongs to its own corresponding student form.
+- A single downloadable ZIP for all versions plus manifest and individual DOCX downloads. Markdown and existing ZIP exports remain unchanged.
+
+### Safety and limitations
+
+The exporter validates the master before emitting a DOCX. Unsupported mathematics **fails visibly** rather than flattening or silently dropping a formula. For complex unsupported Office Math and unusual Word structures, repair or simplify the equation first. The built-in `MathML → OMML` converter is intentionally constrained; it is not an exact inverse for every mathematical layout Word can represent.
+
+**3A prioritizes editable, semantically correct files over page-perfect reproduction.** Word and LibreOffice may paginate differently from the browser. Arbitrary cell insertion/deletion, detailed cell shading, complex custom CSS, exact Word themes, advanced typography, live hyperlinks, nested lists, and polished page headers/footers are outside 3A. Imported lists render as editable paragraphs with bullets/numbers. Preserve the original Word assessment when exact appearance matters.
+
+**Verification:** `e2e/docx3a.spec.ts` inspects the ZIP and all DOCX packages in Chromium. It checks six student/key pairs, complete package parts, valid XML, relationship targets, native OMML fractions, superscript/subscript runs, table spans, embedded media and dimensions, answer separation, response space, and fail-closed unsupported equations. The full 2C.1–2C.3 regression suite remains required for deployment.
+
+**Independent acceptance is still required** with actual classroom Word fixtures: render the downloaded DOCX files in Microsoft Word/LibreOffice; confirm equations are editable, measure image sizes, inspect merged-cell geometry, edit and resave a sample, verify all six student/key pairs, and compare the content against the source and Talus preview. Successful CI is not sufficient proof of all Word rendering/editing behaviours.
+
+## Milestone 2C.3 independent-acceptance corrective release (November 2026)
+
+Independent Work-mode acceptance of 0.2.7 **failed** on eight issues (four P0, three P1, one P2). The original evidence package `Talus-2C3-Acceptance-Evidence.zip` contains Word fixtures, a reproducible audit script, original XML/OMML, browser snapshots and exported student/key files. Its audit script completed successfully and confirmed the reported discrepancies.
+
+This corrective release addresses:
+
+1. **Protected rich objects:** ProseMirror rejects ordinary typing/Backspace transactions that would remove imported images, tables or inline MathML atoms. For intentional structural deletion, use the explicit advanced HTML source.
+2. **Rich table cells:** Cell inputs can append text without replacing embedded fractions, chemistry scripts, styled spans or images. Arbitrary replacement of rich cell content is refused with a visible explanation; intentional restructuring requires the advanced HTML source.
+3. **Advanced mathematical validation:** Unrooted or unclosed MathML fragments, including `<mfrac>19/2</mfrac>` without a `<math>` root, produce non-dismissible generation errors, including after JSON restore.
+4. **Superscript boundary:** Typing whitespace after a superscript exits the script mark so subsequent unit words stay on the baseline. The formatting toolbar still permits deliberate script entry.
+5. **Question-type transitions:** Switching between written response and short answer preserves the same rich reference answer rather than clearing it.
+6. **Dimension-aware Markdown:** Resized standalone images with explicit display dimensions export as self-contained HTML image tags preserving width/height, rather than dimensionless Markdown image syntax.
+7. **Table integrity:** Reject malformed rowspans/colspans and incomplete table geometry before generation, independent of import warning flags.
+8. **Publish-safe markup:** Remove HTML script bodies and inline event handlers from edited HTML and sanitize Markdown exports, while informing the teacher of the removal.
+
+Permanent regressions live in `e2e/acceptance23-corrective.spec.ts` and `src/acceptance23-corrective.test.ts`. All existing 2C.1, 2C.2 and 2C.3 tests remain in the CI workflow. The GitHub CI browser workflow prefers the runner's installed Chrome when present, with Chromium fallback; traces and screenshots are retained for failures.
+
+**Important scope:** This remains a constrained rich-content editor, not a full Word table designer or GUI equation builder. Rich table cells deliberately do not permit arbitrary replacement through the plain text field, to prevent silent data loss. Exports should be reviewed in the desired Markdown renderer. Previously corrupted saved JSON cannot reconstruct removed source material; reimport the original document.
+
+**Final acceptance gate:** Independent retest with the supplied original classroom Word files after deployment. Automated tests are reproducible protections, not a substitute for the original-file visual and semantic audit.
+
+## Milestone 2C.3 — Rich-content review and visual editing (November 2026)
+
+Talus now offers a visual editor for rich assessment content imported from Word or HTML. Instead of forcing teachers to rewrite an entire rich question as HTML, it uses TipTap/ProseMirror atomic nodes for embedded illustrations, table structures and MathML equations:
+
+- **Question text:** Edit prose before, between and after images, tables or equations directly on the page, with familiar text-formatting commands. Atomic media nodes remain intact during nearby typing and question reordering.
+- **Images:** Embedded images display at their imported Word sizes, stay browser-local as original raster data URIs, and support a width-in-CSS-pixels control with aspect-ratio-preserving resizing. No external upload service is used.
+- **Tables:** Tables render visibly and expose a cell editor for adjusting individual cell text. Their existing rows, merged cell geometry and remaining HTML are preserved. This milestone does not add arbitrary row/column insertion or full Word table styling.
+- **Equations:** MathML renders visibly as a protected node. A controlled markup editor allows intentional changes with validation of malformed fractions, scripts and radicals. Invalid changes are rejected; typing around a formula cannot silently flatten or delete it.
+- **Import review:** Rich question prompts, reference answers, mathematical answer choices and rich section instructions support the same visual editing controls before acceptance. Original source and parser warnings remain accessible.
+- **Advanced source:** An explicit HTML source field and live preview remain available for complex corrections and backward compatibility.
+- **Persistence:** Rich edits participate in the existing save, refresh, JSON restore, six-version shuffling, Markdown, ZIP and answer-key workflows. MathML fidelity protection and the 2C.2 invalid-equation generation gate remain enforced.
+
+**Tests:** `e2e/rich23.spec.ts` verifies direct visual prose edits preserving original PNG bytes, tables and fraction structure, edited cells and dimensions across JSON restore, invalid equation edits rejected before generation, valid MathML changes in student output, and rich-content review before acceptance. Earlier 2C.1 and 2C.2 regressions still run.
+
+**Known limits:** Complex equation creation uses a guarded MathML field, not a graphical equation-builder palette. Advanced HTML edits require deliberate care; unsupported Word equation structures still block generation. There is no server-side Word DOCX export yet (Milestone 3). Independent Work-mode testing against varied real classroom DOCX layouts is recommended before formally accepting 2C.3.
+
+## Milestone 2C.2 final integrity gate — independent retest correction (November 2026)
+
+The independent corrective Work-mode retest found that five of six 2C.2 findings had passed. The remaining release-blocking defect was the ability to generate an invalid student assessment after clicking **I verified these document-level source warnings** on a malformed Word fraction import. The question still contained `[Word equation requires manual review: ...]`.
+
+This release adds **non-dismissible, content-level equation validation** independently of `master.importWarnings`:
+
+- Detect unresolved Word-equation placeholders in stems, reference answers, answer choices, general/section instructions and grouped question content.
+- Inspect embedded MathML for missing or empty fraction operands, script operands and root arguments, including when a JSON backup has no source warnings.
+- Ensure clicking a document-level warning acknowledgement never overrides content integrity validation. Generation remains disabled through refresh and JSON restoration until the offending content is actually corrected.
+- Preserve the intact second (9/4) fraction while blocking the malformed (17 over a missing denominator) question.
+
+**Test-first evidence:** The seven new unit checks failed against the prior release, while 34 older unit checks passed. The corrective changes passed the full unit/browser suite including Playwright reproduction of warning acknowledgement and backup restore. The original `F-malformed.docx` is retained in the independent Work-mode evidence ZIP; the permanent Playwright regression uses a compact OOXML reproduction.
+
+A source-warning acknowledgement is not a substitute for repairing a question. Previously exported corrupt assessments and previously corrupted JSON backups do not repair themselves; users should re-import the original Word document or directly fix the content.
+
+## Milestone 2C.2 corrective acceptance release (November 2026)
+
+**Test-first evidence:** Six new browser tests reproduced the six independent Work-mode 2C.2 findings and all failed on the original 2C.2 release (red phase). They passed after the corresponding fixes (green phase); the full existing regression suite remains required before GitHub Pages deployment. The automated tests use compact OOXML reproductions of the exact Word constructs identified in the supplied acceptance evidence. Independent final acceptance with the complete original Word documents is still recommended.
+
+- **2C2-01 (P0):** Preserve explicit OMML delimiter pairs, including absolute-value bars `|...|` and square brackets, rather than replacing all delimiters with parentheses. Grouping and meaning must remain intact.
+- **2C2-02 / 2C2-04 (P0/P1):** Reference-answer parsing now removes only the `Answer:` label while retaining the underlying rich Word HTML. Superscripted scientific exponents and inline MathML with adjacent units survive the review field, answer keys, exports, and backups.
+- **2C2-03 (P0):** Reject incomplete OMML fractions (missing or empty numerator/denominator) and script operands. The importer leaves an actionable placeholder, persists a blocking conversion warning in JSON, and disables generation after reload/restore. Intact neighboring equations continue to import normally.
+- **2C2-05 (P2):** Avoid scrollbars on compact MathML by keeping equation overflow visible; handle genuinely wide content at its parent container.
+- **2C2-06 (P2):** Preserve block/display MathML from Word's `oMathPara` and classify Unicode mathematical minus as an operator (`mo`), rather than an identifier (`mi`).
+- **Additional protection:** Re-detection from intentionally edited plain-text source now explicitly includes Word equations in its media-loss confirmation and blocking warning.
+
+**Coverage:** `e2e/acceptance22-corrective.spec.ts` includes individual Word-style reproductions for each defect, a six-version student/key ZIP integrity test, and persistence of malformed-math blocking warnings across JSON restore. All existing 2C.1 and 2C.2 browser tests still run before release.
+
+**Remaining limitations:** This converter still supports a deliberately constrained OMML subset. Unsupported complex objects require manual correction before generation. External Markdown viewers may render MathML differently, and Word-desktop fidelity remains subject to independent acceptance.
+
+## Milestone 2C.2 — Scientific notation and Word equations (2026-11)
+
+This milestone adds deterministic preservation of common Word Office Math (OMML) expressions while keeping the whole application client-side:
+
+- **Scientific formatting:** Word superscripts, subscripts, chemical formulas, SI units, powers of ten, Greek letters and Unicode mathematics remain rich HTML through import, authoring, version generation and backup.
+- **Word equations:** The importer converts supported OMML structures to browser-native **MathML**, including fractions, ordinary and combined sub/superscripts, square and indexed roots, simple functions, delimiters, summation-style operators, limits, and equation arrays. Inline and standalone display equations are supported.
+- **Fail-closed handling:** Unsupported or empty equation structures are replaced by visible `[Word equation requires manual review]` placeholders, with actionable source warnings that persist in Talus JSON and prevent generation until explicitly corrected.
+- **Editor integrity:** MathML-bearing questions use the raw HTML editor with a live preview, preventing the existing text-only Tiptap extension set from silently stripping equations. Dedicated visual equation editing belongs to 2C.3.
+- **Exports:** MathML survives student/key browser previews, Markdown and six-version ZIP exports as raw embedded MathML, and JSON backup/restore. External Markdown readers vary in their support for MathML; the Talus print preview is the visual reference.
+
+**Important limitations:** This is a supported deterministic OMML subset, **not full Microsoft Word equation fidelity**. Complex matrices, stacked accents, boxes, advanced stretchy delimiters, specialized formatting, handwritten equations, and arbitrary embedded OLE equation objects may require manual correction. Unsupported structures should never disappear without a warning. Existing plain chemical formulas and mathematical Unicode remain supported.
+
+**Acceptance:** Browser tests upload actual OOXML Word files containing inline and block OMML, fractions, powers, combined subscripts and superscripts, radical expressions, chemical formula markup, Greek symbols and an unsupported equation construct. The tests verify review fidelity, author text edits, six versions, backup/restore, student Markdown and ZIP content, and generation blocking for unsupported elements. Independent Work-mode classroom-document acceptance remains the final release gate.
+
+## Milestone 2C.1 corrective release — independent acceptance fixes (2026-11-10)
+
+This release uses a documented **red → green** regression workflow against the Work-mode 2C.1 acceptance findings. The five new Chromium tests first failed on the existing app, then passed after the corrections; unit regressions check persistence and proficiency formatting.
+
+- **2C1-01 (P0):** Pressing Detect again on an unchanged Word/HTML import now keeps the same rich reviewed draft, source title, embedded images, tables, and prior review edits. If a teacher edits the text-only source of a rich import, re-detection explicitly warns that it will drop the rich media and requires confirmation. That intentional downgrade retains a blocking media-loss warning in the accepted JSON.
+- **2C1-02 (P1):** Mammoth conversion warnings about missing external images, links, and other graphical media are carried through acceptance into persistent `importWarnings`. Version generation remains disabled after refresh and JSON restore until a teacher repairs/explicitly resolves the problem.
+- **2C1-03 (P1):** Raster files must actually decode (using the browser image decoder) in addition to passing the format, base64, and size checks. Corrupt PNGs become visible placeholders and produce blocking, persisted warnings. Earlier demonstration fixtures had an invalid PNG CRC; their regression media were corrected rather than weakening this validation.
+- **2C1-04 (P2):** Original Word `wp:extent` image sizes are converted from English Metric Units to CSS pixels (96 px/inch) when the embedded images can be mapped unambiguously. Responsive CSS still scales down to the available column width.
+- **2C1-05 (P3):** A proficiency suffix already present in the section heading is not duplicated in the browser preview or exported Markdown.
+
+**Verification:** `e2e/acceptance21-followup.spec.ts` contains reproductions of the original A/D/K/L Word OOXML structures, including linked and corrupt media, five drawings, tables and original display geometry; `src/acceptance21-followup.test.ts` covers persistence and headings. The original Word binaries are retained separately in the independent Work-mode evidence ZIP. The tests intentionally use compact reproducible documents rather than claiming to contain byte-for-byte copies of all original fixtures.
+
+**Residual limitations:** Linked Word images cannot be fetched; embed them in the DOCX instead. Image dimensions are mapped only where image/drawing ordering is unambiguous. An independent post-deployment Work-mode retest using the exact original fixtures remains recommended before closing acceptance.
+
+## Milestone 2C.1 — Embedded images and structured tables (November 2026)
+
+Talus now preserves common Word illustrations and tables in the existing client-side assessment workflow:
+
+- **Import:** Word `.docx` images are converted to self-contained raster data URIs, including pictures in otherwise textless paragraphs. Word tables retain their rows, cells and supported HTML structure. HTML uploads with embedded images and tables also work.
+- **Side-by-side review:** Word/HTML source illustrations and tables are visible on the left, with the proposed question content on the right. The review preview preserves image sources, alt text and table contents.
+- **Editing safety:** Authoring text containing images or tables uses a preview plus an HTML source editor instead of Tiptap, because the current rich-text extension set would otherwise strip those unsupported structures. Full visual editing of diagrams and tables is reserved for Milestone 2C.3.
+- **Generation and portability:** Versioned print previews, JSON backups, browser refresh/restore, Markdown exports, and the complete ZIP batch retain supported embedded images and tables. Markdown tables are retained as raw HTML; illustrations use data-URI references so they do not require a server or temporary browser URL.
+- **Fail closed:** Unsupported/remote image formats, images larger than **1 MiB each**, and more than **2 MiB of unique embedded image data** are flagged instead of silently dropped. The complete JSON backup is capped at **3.5 MB**, to leave headroom for synchronous browser recovery storage. Unresolved media-loss warnings persist and block generation until the source is corrected and explicitly reviewed. Malformed table content also produces a warning.
+- **Formats:** PNG, JPEG, GIF, and WebP raster images. Vector-only Word drawings, embedded Office shapes/charts, complex equation objects, and full table editing fidelity are not yet supported.
+
+**Compatibility:** Some Markdown readers block or fail to display `data:` image URLs and raw HTML tables. Talus's browser print preview remains the most reliable visual check; editable Word export is planned for Milestone 3. Always compare student forms with the original Word document before classroom distribution.
+
+**Regression coverage:** A generated realistic Word OOXML fixture containing a PNG and a three-row table is imported, reviewed, generated into six versions, backed up/restored, and checked in the single Markdown and ZIP exports. HTML image/table import, source-preview fidelity, rejected remote/oversized images, and JSON asset-validation checks are also covered. GitHub Actions runs these tests before deploying.
+
+## Milestone 2.1 — Import correctness and review reliability (November 2026)
+
+The 2A/2B independent Work-mode acceptance report identified three release blockers and additional review issues. Corrective release 2.1 addresses them:
+
+- **P0 malformed multiple choice:** preserve empty or out-of-order answer choices and reject keys that do not match them. No silent downgrade to a valid short-answer question. Missing/invalid choices and unresolved source mappings disable version generation, including after importing a JSON backup.
+- **P1 compact Markdown:** parse original source lines rather than relying on Markdown paragraph spacing, preserving numbered questions, lettered answers, bold/italic and scientific HTML scripts. Lists are represented as real list elements.
+- **P1 detached Word answer keys:** recognize a separate *Answer Key* heading and map numbered entries back to their uniquely numbered source questions. Unmapped or ambiguous key entries are flagged and block generation until explicitly reviewed; key entries never become student questions.
+- **P2 review reliability:** warn on merging separately keyed questions; retain staged review while moving between Import and Author; strip Word question numbering even inside emphasis; expose section-removal relocation and discarded instructions in a confirmation; provide Move up/Move down buttons for explicit question ordering.
+- **P2 document metadata and formatting:** recognize a Word title plus preamble, or a Markdown H1 title and preamble, without creating an artificial instructions-only section. Preserve Markdown lists.
+- **P3 accessibility:** per-choice removal buttons have distinct accessible names. Browser regression tests include tablet viewports.
+- **Fail-closed validation:** unresolved *question-level* and important *document-level* source warnings persist in Talus JSON backups. The authoring interface displays them and requires an explicit acknowledgment after correction; they prevent version generation until resolved. Existing version 1 backups remain importable.
+
+Regression tests cover representative content and reproduction sequences from the Work-mode report, including its exact malformed-MC input and compact chemistry Markdown, synthetic DOCX documents based on the reported Word contents, document/key boundaries, output answer keys and student Markdown, and review controls. The standard Vitest and Chromium Playwright checks run automatically on every push and block deployment on failure.
+
+**Important:** Deterministic parsing is still not a general guarantee that every unusual document can be interpreted perfectly. Compare parsed questions and keys with the original before accepting and distributing forms. Complex images, diagrams, tables and equation fidelity remain planned for Milestone 2C. The Work-mode acceptance report's own DOCX binary fixtures should also be retested independently in a real browser.
+
+# Talus Test Versioner
+
+**Live application:** https://ccheng.github.io/talus1/
+
+Talus is a client-side assessment authoring and test versioning application. No hosted account or backend is required.
+
+## Milestone 2A + 2B — importing and reviewing existing assessments
+
+Use **Import assessment** in the header to open a two-pane workflow.
+
+- **Input:** Paste plain text or Markdown copied from Word/Google Docs; upload `.docx`, `.md`, `.txt`, or `.html` documents. Word files are converted entirely in the browser using Mammoth, and Markdown is rendered locally using Marked.
+- **Deterministic detection:** Identify numbered questions (e.g. `1.`), section/part headings, lettered options (`A.`), explicit answer lines (`Answer: B` or `Answer: A, C`), and point values (`(2 marks)`). Section order is preserved. Unrecognized text stays in the source/review area rather than being silently discarded.
+- **Review:** Keep the source on the left and the parsed assessment on the right. Edit the test title, section names and proficiency tags, prompts, choices, correct-answer selections, reference answers, marks, response lines, and question types. Split or merge questions, move them to other sections, and add/remove questions or sections.
+- **Safe acceptance:** Nothing changes in the active master until **Accept reviewed import**. Choose to replace the open assessment or append the reviewed sections. Replacement requires confirmation. Missing answers are flagged; accepting unresolved warnings requires confirmation and the resulting assessment remains invalid for version generation until corrected.
+- **After import:** Use the existing authoring, shuffle/version generation, answer key, ZIP batch export, autosave, and JSON backup features normally.
+
+**Format limits (Milestone 2A/B):** Deterministic parsing handles common numbered formats, not every Word numbering or layout convention. The preview preserves supported inline formatting, but splitting a question and some imported structures may require manual correction. Embedded diagrams/images, complex tables/equations, and high-fidelity document formatting are Milestone 2C work. Browser-local AI parsing is deferred to Milestone 2D. Text pasted into the plain-text field does not preserve clipboard rich text; upload the Word document instead for supported inline formatting. Verify imported assessment content and answers before distributing versions.
+
+The browser CI suite now includes actual paste/Markdown/DOCX import tests, warning resolution, split/merge review, and an end-to-end import-to-version-generation/persistence test. Parser unit tests verify section boundaries, answer keys, section appending and missing-key warnings.
+
+## Milestone 1.1 — corrective release (November 8, 2026)
+
+- T1: One ZIP file contains all student forms, answer keys, and a generation manifest, avoiding browser multi-download limits.
+- T2: Each edit is synchronously saved in local browser storage; IndexedDB remains an additional copy. If both fail, the UI warns and attempts to prevent closing with unsaved work.
+- T3: Saved generation count, seed, immutable run ID, and per-version slot/variant/choice manifests. The UI restores generated versions from validated saved metadata after refresh.
+- T4: Editing invalidates versions and replaces stale success banners with an explicit regeneration message.
+- T5: Customizable response lines (defaults: 2 for short answers, 8 for written responses), shown in both preview and Markdown.
+- T6: Correct singular/plural mark labels in both preview and Markdown.
+
+Old schemaVersion 1 backups remain importable; the new optional fields are backward compatible. A generated run ID is tied to its source assessment revision. This is a browser-local app; users should export JSON backups routinely. For storage failures, navigation warning support varies by browser.
+
+## Milestone 1 functionality
+
+- Create assessments with independently shuffled sections; section order remains fixed.
+- Rich-text editing of prompts, instructions, answers and answer choices (bold, italic, lists, code blocks, superscript, subscript).
+- Single-answer multiple choice, multiple-select, short answer, and written-response questions.
+- Each question slot appears exactly once per version. Create complete alternative question variants; deterministic rotation distributes alternatives across versions.
+- Deterministically shuffle question positions and answer choices using a seed. Individual question positions can be fixed.
+- Validate question prompts, selected correct answers, answer references, and equivalent marks before generating.
+- Automatically number questions continuously across sections and produce answer keys with the correct letters after shuffling.
+- Preview student versions and answer keys, print them, or export Markdown files.
+- Autosave to IndexedDB on the device, import/export portable `.talus.json` master backups.
+
+**Important:** Work is stored locally in the browser. Export a JSON backup frequently. Clearing site data or changing devices can remove local tests.
+
+**Current limitations:** Only JSON test importing is supported. Word/DOCX import/export, pasted-test parsing, advanced tables/images/equations and offline AI import assistance are future work. Markdown conversions may lose advanced rich-text formatting. Grouped question blocks are modeled and supported by the generator but do not yet have an authoring control.
+
+## Cloud build and deployment
+
+GitHub Actions handles `npm install`, `npm test`, `npm run build`, and GitHub Pages publication of `dist/` on push to `main`. Vite base is `/talus1/`.
+
+Optional development commands: `npm install`, `npm test`, `npm run build`, `npm run dev`.
+
+## Automated browser regression testing
+
+Playwright Chromium tests are stored in `e2e/regressions.spec.ts` with deterministic sample assessments in `e2e/fixtures.ts`. Configuration is in `playwright.config.ts`.
+
+The required GitHub Actions pipeline runs the following checks **before deployment**:
+
+1. `npm test` — Vitest unit and logic regression tests.
+2. `npm run build` — TypeScript production build.
+3. `npx playwright install --with-deps chromium` — browser installation on GitHub's cloud runner.
+4. `npm run test:e2e` — Playwright tests using the compiled Vite preview site at `/talus1/`.
+5. Publish to GitHub Pages only after all checks pass.
+
+The nine Chromium scenarios cover: immediate-refresh autosave (T2), restored generated versions/count/seed (T3), older JSON import precedence both with and without saved runs, complete single-ZIP batch downloads (T1), correctness of questions/sections/alternatives/answer keys, stale success banners (T4), response space and mark labels (T5/T6), and rich-text preview rendering. Every test uses a fresh isolated browser context and local data. GitHub uploads an HTML report, screenshots, trace files, and videos as `playwright-evidence` even if the tests fail (14-day retention).
+
+To run the browser tests independently where Playwright is installed, execute `npm run build`, `npx playwright install chromium`, then `npm run test:e2e`. This is optional: GitHub Actions performs these steps automatically on every push and pull request.
+
+**Limitations:** The CI browser suite currently targets desktop Chromium. It does not yet test Safari/WebKit, Firefox, mobile responsive layouts, or native OS printing. In-browser workflows are exercised rather than the publicly deployed URL, so deployment itself is checked separately by GitHub Actions.

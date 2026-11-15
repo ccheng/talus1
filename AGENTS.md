@@ -5,7 +5,7 @@
 2. [docs/QUALITY_GATE.md](docs/QUALITY_GATE.md): required approval, red/green regressions, CI, deploy and independent Work-mode QA gates.
 3. [docs/MILESTONES.md](docs/MILESTONES.md): current status, acceptance evidence, and approved roadmap.
 4. [docs/MILESTONE_2D.md](docs/MILESTONE_2D.md): AI-assisted import design history and product invariants.
-5. [README.md](README.md): detailed historical implementations. Older “future work” lines are not current status; verify live code.
+5. [Development history](docs/DEVELOPMENT_HISTORY.md): detailed historical implementations. Older “future work” lines are not current status; verify live code.
 
 ## Product invariants
 
