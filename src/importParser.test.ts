@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {parseText,parseLines,toTalusSections,reviewWarnings,mergeIntoMaster,wordConversionWarnings} from './importParser';
+import {parseText,parseLines,textLines,toTalusSections,reviewWarnings,mergeIntoMaster,wordConversionWarnings} from './importParser';
 import {createMaster,validateMaster} from './model';
 const sample=`Title: Science 10
 Section 1: Foundations
@@ -179,5 +179,17 @@ describe('Word Title-style diagnostic regression',()=>{
  it('retains Title warning if title recognition did not succeed',()=>{
   const parsed=draft();parsed.title='science10';
   expect(wordConversionWarnings([{message:"Unrecognised paragraph style: 'Title' (Style ID: Title)"}],parsed)).toHaveLength(1);
+ });
+});
+
+describe('5A DOCX title interoperability',()=>{
+ it('takes the leading native Title paragraph as the title and keeps nearby instructions separate',()=>{
+  const lines=textLines('Water Filter Lab\nUse the laboratory measurements.\n## Section A — Lab Analysis\n1. Which filter?\nAnswer: Sand');
+  const titleLine={...lines[0],wordTitle:true};
+  const draft=parseLines([titleLine,...lines.slice(1)],'source-google-docs','docx');
+  expect(draft.title).toBe('Water Filter Lab');
+  expect(draft.instructions).toBe('<p>Use the laboratory measurements.</p>');
+  expect(draft.lines[0]).toEqual(titleLine);
+  expect(draft.sections[0].questions).toHaveLength(1);
  });
 });
