@@ -1,11 +1,21 @@
 import Dexie, { type Table } from 'dexie';
-import type { MasterTest } from './model';
+import {masterSchema,type MasterTest} from './model';
 class TalusDB extends Dexie {
   masters!:Table<MasterTest,string>;
-  constructor(){super('talus-v1');this.version(1).stores({masters:'id,updatedAt'});}
+  active!:Table<{key:'current';id:string},string>;
+  constructor(){
+    super('talus-v1');
+    this.version(1).stores({masters:'id,updatedAt'});
+    this.version(2).stores({masters:'id,updatedAt',active:'key'});
+  }
 }
 export const db=new TalusDB();
-export async function saveMaster(master:MasterTest){await db.masters.put(master);}
+export async function saveMaster(master:MasterTest){
+  await db.transaction('rw',db.masters,db.active,async()=>{
+    await db.masters.put(master);
+    await db.active.put({key:'current',id:master.id});
+  });
+}
 export function saveDraftSync(master:MasterTest):boolean{
   try{localStorage.setItem('talus-draft-v1',JSON.stringify(master));return true;}
   catch{
@@ -16,7 +26,11 @@ export function saveDraftSync(master:MasterTest):boolean{
   }
 }
 export function loadDraftSync():MasterTest|undefined{
-  try{const raw=localStorage.getItem('talus-draft-v1');return raw?JSON.parse(raw) as MasterTest:undefined;}
+  try{
+    const raw=localStorage.getItem('talus-draft-v1');
+    const draft:unknown=raw?JSON.parse(raw):undefined;
+    return masterSchema.safeParse(draft).success?draft as MasterTest:undefined;
+  }
   catch{return undefined;}
 }
 // The synchronous draft represents the user's explicitly selected open assessment.
@@ -28,7 +42,12 @@ export function selectActiveMaster(draft:MasterTest|undefined, stored:MasterTest
 export async function loadLatest():Promise<MasterTest|undefined>{
  const draft=loadDraftSync();
  if(draft)return draft;
- return db.masters.orderBy('updatedAt').last();
+ const selection=await db.active.get('current');
+ const selected=selection?await db.masters.get(selection.id):undefined;
+ if(selected&&masterSchema.safeParse(selected).success)return selected;
+ // Recovery for browsers migrating a version-one database without a pointer.
+ const latest=await db.masters.orderBy('updatedAt').last();
+ return latest&&masterSchema.safeParse(latest).success?latest:undefined;
 }
 export function exportBackup(master:MasterTest):void{
   download(JSON.stringify(master,null,2),fileBase(master)+'.talus.json','application/json');

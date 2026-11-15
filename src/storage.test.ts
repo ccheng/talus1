@@ -61,3 +61,8 @@ describe('immediate autosave regression',()=>{
   expect(loadDraftSync()).toBeUndefined();
  });
 });
+
+it('ignores parseable but invalid local recovery data without making it the active assessment',()=>{
+ vi.stubGlobal('localStorage',{getItem:()=>JSON.stringify({schemaVersion:1,title:'Incomplete stored draft'})});
+ expect(loadDraftSync()).toBeUndefined();
+});
