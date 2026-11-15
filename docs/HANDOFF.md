@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-14. **Audience:** incoming developer ChatGPT/Codex agent and independent Work-mode QA agent. **Repository:** [ccheng/talus1](https://github.com/ccheng/talus1). **Production:** https://ccheng.github.io/talus1/.
 
-> **Start here, then read [QUALITY_GATE.md](QUALITY_GATE.md) and [MILESTONES.md](MILESTONES.md).** See [MILESTONE_2D.md](MILESTONE_2D.md) for the AI import design history. The detailed README is a chronological changelog and contains historical passages whose “future work” descriptions are now stale. Current status below takes precedence over older README passages; current code is the ultimate authority. Verify GitHub main, CI and deployed commit before modifying anything.
+> **Start here, then read [QUALITY_GATE.md](QUALITY_GATE.md) and [MILESTONES.md](MILESTONES.md).** See [MILESTONE_2D.md](MILESTONE_2D.md) for the AI import design history. The [development history](DEVELOPMENT_HISTORY.md) is a chronological changelog. For historical claims about future work, verify against the current code. Verify GitHub main, CI and deployed commit before modifying anything.
 
 ## Product vision / user constraints
 
@@ -44,7 +44,7 @@ Talus is a **client-only assessment versioner for teachers**, not a substitute f
 | Browser storage and JSON | `src/storage.ts` |
 | E2E fixtures, acceptance regressions | `e2e/`, including `e2e/acceptance3b1-rendered.spec.ts`, `e2e/annotation2d1.spec.ts`, `e2e/local2d2.spec.ts`, `e2e/group3c.spec.ts` |
 | Test/deployment pipeline | `.github/workflows/deploy.yml`, `playwright.config.ts`, `package.json` |
-| Detailed historical chronology | `README.md` |
+| Detailed historical chronology | [Development history](DEVELOPMENT_HISTORY.md) |
 
 **Master model:** `MasterTest.schemaVersion:1`; sections contain question slots and optionally groups, slots contain complete alternative variants, variant types `singleChoice`/`multipleSelect`/`shortAnswer`/`writtenResponse`. Generated snapshot includes count, seed, runId, sourceUpdatedAt, and per-version manifests mapping slot/variant/choice order. `wordLayout` is separately stored export configuration. Validate and retain backwards-compatible JSON.
 
@@ -58,7 +58,7 @@ Talus is a **client-only assessment versioner for teachers**, not a substitute f
 - LibreOffice and Microsoft Word may paginate differently. Current CI targets desktop Chromium/Chrome and Writer-rendered test scenarios; native Word/Safari/Firefox/device coverage is not guaranteed.
 - Local browser storage is not cross-device sync; backups are essential.
 - Invalid source math/media and unresolved warnings must not be bypassed via “verified” acknowledgments or saved/restore paths.
-- Historic “no Word import/export” language near the README bottom predates later milestones and is obsolete.
+- Historic “no Word import/export” language in the development history predates later milestones and is obsolete.
 
 ## Incoming developer: first actions
 
