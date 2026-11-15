@@ -185,7 +185,7 @@ describe('Word Title-style diagnostic regression',()=>{
 describe('5A DOCX title interoperability',()=>{
  it('takes the leading native Title paragraph as the title and keeps nearby instructions separate',()=>{
   const lines=textLines('Water Filter Lab\nUse the laboratory measurements.\n## Section A — Lab Analysis\n1. Which filter?\nAnswer: Sand');
-  const titleLine={...lines[0],wordTitle:true};
+  const titleLine={...lines[0],wordTitle:true as const};
   const draft=parseLines([titleLine,...lines.slice(1)],'source-google-docs','docx');
   expect(draft.title).toBe('Water Filter Lab');
   expect(draft.instructions).toBe('<p>Use the laboratory measurements.</p>');

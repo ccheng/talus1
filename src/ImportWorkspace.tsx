@@ -2,7 +2,7 @@ import {useMemo,useRef,useState,type ChangeEvent} from 'react';
 import DOMPurify from 'dompurify';
 import * as mammoth from 'mammoth';
 import {marked} from 'marked';
-import {parseText,parseHtml,parseLines,textLines,reviewWarnings,wordConversionWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
+import {docxStyleMap,parseText,parseHtml,parseLines,textLines,reviewWarnings,wordConversionWarnings,mergeIntoMaster,type ImportDraft,type ImportQuestion,type ImportSection} from './importParser';
 import type {MasterTest,QuestionType} from './model';
 import {inspectImportedMedia,applyWordImageDimensions} from './media';
 import {prepareWordMath,restoreWordMath} from './wordMath';
@@ -84,7 +84,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
     const math=prepareWordMath(wordBytes);
     const doc=await mammoth.convertToHtml(
       {arrayBuffer:math.arrayBuffer},
-      {convertImage:mammoth.images.imgElement(async image=>({
+      {styleMap:docxStyleMap,convertImage:mammoth.images.imgElement(async image=>({
         src:'data:'+image.contentType+';base64,'+await image.read('base64')
       }))}
     );

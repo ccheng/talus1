@@ -243,3 +243,28 @@ test('tablet Chromium touch emulation: source, review and accept are usable',asy
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
  }finally{await context.close();}
 });
+
+test('5A retains a native DOCX title with lettered headings and preserves annotation source order',async({page})=>{
+ await openImport(page);
+ const paras=[
+  {text:'Water Filter Lab',style:'Title'},
+  {text:'Use the laboratory measurements.'},
+  {text:'Section A — Lab Analysis',style:'Heading1'},
+  {text:'1. Which filter?'},{text:'Answer: Sand'}
+ ];
+ await page.getByLabel('Upload assessment').setInputFiles({
+  name:'source-google-docs.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  buffer:Buffer.from(docx(paras))
+ });
+ await expect(page.getByLabel('Imported assessment title')).toHaveValue('Water Filter Lab');
+ await page.getByText('AI-assisted DOCX annotation',{exact:true}).click();
+ const request=page.getByLabel('Annotation request');
+ await expect(request).toHaveValue(/"id": "B1",\s*"text": "Water Filter Lab"/);
+ await expect(request).toHaveValue(/"id": "B2",\s*"text": "Use the laboratory measurements\."/);
+ await accept(page);
+ const master=await backup(page);
+ expect(master.title).toBe('Water Filter Lab');
+ expect(master.instructions).toContain('Use the laboratory measurements.');
+ expect(master.instructions).not.toContain('Water Filter Lab');
+ expect(master.sections[0].items).toHaveLength(1);
+});

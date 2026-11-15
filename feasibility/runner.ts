@@ -4,7 +4,7 @@ import {localInference,modelId,modelLib,openLocalRuntime,revision} from '../src/
 import DOMPurify from 'dompurify';
 import * as mammoth from 'mammoth';
 import {makeAnnotationSource,reviewAnnotation,MAX_ANNOTATION_DOCX_BYTES} from '../src/annotationImport';
-import {parseHtml,wordConversionWarnings} from '../src/importParser';
+import {docxStyleMap,parseHtml,wordConversionWarnings} from '../src/importParser';
 import {runLocalAnnotation} from '../src/localAnnotation';
 import {applyWordImageDimensions,inspectImportedMedia} from '../src/media';
 import {prepareWordMath,restoreWordMath} from '../src/wordMath';
@@ -59,7 +59,7 @@ run.onclick=async()=>{
  try{
   if(selected.size>MAX_ANNOTATION_DOCX_BYTES)throw Error('DOCX exceeds the 12 MB annotation limit.');
   const bytes=await selected.arrayBuffer(),math=prepareWordMath(bytes);
-  const document=await mammoth.convertToHtml({arrayBuffer:math.arrayBuffer},{convertImage:mammoth.images.imgElement(async image=>({
+  const document=await mammoth.convertToHtml({arrayBuffer:math.arrayBuffer},{styleMap:docxStyleMap,convertImage:mammoth.images.imgElement(async image=>({
    src:'data:'+image.contentType+';base64,'+await image.read('base64')
   }))});
   const media=await inspectImportedMedia(restoreWordMath(applyWordImageDimensions(document.value,bytes),math.equations));
