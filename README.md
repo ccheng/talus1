@@ -9,10 +9,10 @@ Make several versions of one classroom assessment, with a matching answer key fo
 ## 1. Import an existing test
 
 1. Choose **Import assessment** and upload your Word `.docx`. In Google Docs, use **File → Download → Microsoft Word (.docx)** first. Use a file upload when your test has a table, diagram, or equation. For a quick text-only import, paste into the source box and choose **Detect sections and questions**.
-2. In **Review proposed structure**, compare the proposed sections and questions with **Original source**. Open each question to check its type, marks, choices, and correct answer or reference answer. Fix any split or merged questions and review the warnings.
+2. In **Review proposed structure**, compare the proposed sections and questions with **Original source**. Open each question to check its type, marks, choices, and correct answer or reference answer. Fix any split or merged questions and review the warnings. If you see a line of underscores in a written-response prompt, remove it if you want to use the response space Talus adds.
 3. If the review shows **Shared question ranges**, confirm only the ranges that match the source. When the review is complete, choose **Accept reviewed import**. If you're replacing a test you want to keep, download **Backup JSON** first.
 
-![Talus import review showing the sample Word document on the left and a proposed Questions 7–9 group with the shared diagram and table on the right](docs/teacher/talus-import.jpg)
+![Talus import review showing the source text from the sample Word document on the left and a proposed Questions 7–9 group with the shared diagram and table on the right](docs/teacher/talus-import.jpg)
 
 *The sample uses source numbers 7–9 for its shared lab questions. Talus uses those numbers to identify the group and renumbers the questions in each generated form.*
 
@@ -22,7 +22,7 @@ If Talus detected a group during import, select one of its questions in **1. Aut
 
 The group stays together when the section shuffles. Leave **Shuffle questions within this group** off when students need to answer the questions in sequence. Talus updates the displayed range on each form, so keep the shared material free of hard-coded question numbers.
 
-![Talus Author view showing Questions 2–4 together in the sidebar, the Question group 2–4 heading, and Generate versions on the right](docs/teacher/talus-author.jpg)
+![Talus Author editor showing the instructions, diagram, measurement table, and equation shared by Questions 2–4](docs/teacher/talus-author.jpg)
 
 ## 3. Make and export versions
 
