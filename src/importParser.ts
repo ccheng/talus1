@@ -1,7 +1,9 @@
 import {confirmedImportRange,createImportRange,readRangeCue,restoreOrdinaryRangePlacement,type ImportRange} from './rangeImport';
 import { createSection,createSlot,createVariant,uid,type MasterTest,type QuestionType,type Section } from './model';
 
-export interface SourceLine { text:string; html:string; number:number }
+const DOCX_TITLE_CLASS='talus-docx-title';
+export const docxStyleMap=["p.Title => p."+DOCX_TITLE_CLASS+":fresh"];
+export interface SourceLine { text:string; html:string; number:number; wordTitle?:true }
 export interface ImportQuestion {
  id:string; sourceStart:number; sourceEnd:number; sourceNumber?:number;
  sourceStemLines?:number[]; sourceChoiceLines?:number[]; sourceKeyLines?:number[]; sourceMarkLines?:number[]; stem:string; choices:string[]; correct:number[];
@@ -19,9 +21,9 @@ export function textLines(source:string):SourceLine[] {
 export function htmlLines(html:string):SourceLine[]{
  const document=new DOMParser().parseFromString(html,'text/html');
  const output:SourceLine[]=[];
- function append(html:string,text:string){
+ function append(html:string,text:string,wordTitle=false){
   // Word drawings can have no textContent. Keep the HTML as source content.
-  if(text.trim()||/<(?:img|table)\b/i.test(html))output.push({text:text.trim(),html:html.trim(),number:output.length+1});
+  if(text.trim()||/<(?:img|table)\b/i.test(html))output.push({text:text.trim(),html:html.trim(),number:output.length+1,...(wordTitle?{wordTitle:true as const}:{})});
  }
  function walk(root:Element){
   for(const child of Array.from(root.children)){
@@ -48,7 +50,7 @@ export function htmlLines(html:string):SourceLine[]{
    }
    if(['p','h1','h2','h3','h4','li','pre','blockquote'].includes(tag)){
     const heading=tag.startsWith('h')?'#'.repeat(Number(tag[1]))+' ':'';
-    append(heading+child.innerHTML,heading+(child.textContent??''));continue;
+    append(heading+child.innerHTML,heading+(child.textContent??''),tag==='p'&&child.classList.contains(DOCX_TITLE_CLASS));continue;
    }
    if(['div','section','article','body'].includes(tag)){walk(child);continue;}
    append(child.innerHTML,child.textContent??'');
@@ -187,6 +189,9 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   }
   if(!seenQuestions&&!q&&/^title\s*:/i.test(raw)){
    title=raw.replace(/^title\s*:/i,'').trim()||title;sourceTitle=true;continue;
+  }
+  if(format==='docx'&&i===0&&line.wordTitle&&!/<(?:img|table|math)\b/i.test(line.html)){
+   title=raw;sourceTitle=true;continue;
   }
   if(!seenQuestions&&!q&&/^#\s+/.test(raw)&&!/(?:section|part|topic|level)\s+\w+/i.test(raw)){
    title=raw.replace(/^#\s+/,'').trim();sourceTitle=true;continue;
