@@ -1,6 +1,8 @@
-# Proposed Milestone 2D — AI-assisted Word import (design handoff)
+# Milestone 2D — AI-assisted Word import design history
 
-**Status: prioritized product direction, not yet built and not yet finally scoped.** This document captures decisions and proposals from the user/developer discussion; it is not permission to silently implement local inference, modify generation, or send documents externally.
+**Current status:** 2D.1 and 2D.3 are deployed and independently passed after corrections. 2D.2 is deployed with working fallback verified on managed Linux Chromium. Real-model output, cached/offline inference, and target-device timings remain unverified. See the [current milestone status](MILESTONES.md#current-milestone-status) for evidence and the [feasibility harness](../feasibility/README.md) for target-device testing.
+
+The sections below record the original design and validation proposals. The current schema and supported behavior are defined by the source and tests.
 
 ## Why
 
@@ -56,7 +58,7 @@ This is illustrative, not yet a strict schema. Sections, provenance, ignored mat
 
 ## Proposed submilestones
 
-### 2D.1 — source-referenced contract + external LLM exchange (**next**)
+### 2D.1 — source-referenced contract + external LLM exchange
 
 **Include:** lossless/stable source-unit extraction; self-contained copyable prompt with rules/schema; upload/paste structured annotation; deterministic schema and source-reference verification; unresolved-coverage UI; side-by-side teacher review; no reliance on external credentials or network APIs; integration with current accepted import and six-version workflows; optional explicit metadata about model/source provenance; JSON backup and refresh behavior for staged work (define the contract first).
 
@@ -74,11 +76,11 @@ This is illustrative, not yet a strict schema. Sections, provenance, ignored mat
 
 **Open engineering questions:** precise source-block/span design; whether the exported annotation request serializes rich objects by reference only or embeds safe context representations; stable canonical fingerprint; how to bridge paragraphs containing several questions; correct choice labels when options share paragraphs; treating external LLM output as fully untrusted; which information is allowed in a prompt when user wants privacy.
 
-### 2D.2 — optional browser-local inference (deferred)
+### 2D.2 — optional browser-local inference
 
 Use **exact same annotation schema** as 2D.1. Evaluate compatible on-device inference libraries / WebGPU / hardware/model size, performance and cancellation; no model required for app to function. Download progress/opt-in, local-only claims and fallback need independent verification. Don't choose one technology in advance or assume every browser/device supports it.
 
-### 2D.3 — targeted AI-versus-deterministic review (deferred)
+### 2D.3 — targeted AI-versus-deterministic review
 
 Compare AI suggestions with deterministic parser and direct teacher attention to disagreements, incomplete key associations, uncertain section boundaries and rich-object placement. Preserve explicit accepted source and audit trail.
 

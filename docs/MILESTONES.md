@@ -1,6 +1,6 @@
 # Talus milestones and next decisions
 
-**Roadmap updated 2026-11-14 by product-owner decision.** The active future feature sequence is **4A → 5A → 6**. See the approved roadmap immediately below. The milestone-status table farther down is a **2026-11-12 historical snapshot**; its old 2D/3C entries are known to be stale after PRs #19–25 and will be reconciled separately by the development chat. Do not use those entries to infer that implemented work is absent. The chronological [README](../README.md) contains full engineering history; actual source, latest GitHub PRs, CI and independent acceptance evidence govern implementation status.
+**Roadmap updated 2026-11-14 by product-owner decision.** The active future feature sequence is **4A → 5A → 6**. The status and evidence below distinguish what shipped from what independent QA verified. The [README](../README.md) preserves earlier development history.
 
 ## Approved remaining roadmap (product direction, not implementation authorization)
 
@@ -45,13 +45,7 @@ Systematically audit what is already built rather than initiate another large fe
 
 These are **backlog ideas, not scheduled milestones**. Do not implement or prioritize them as part of 4A, 5A or 6 without an explicit product decision.
 
-### Immediate housekeeping (separate from this roadmap decision)
-
-The incoming development chat should reconcile the stale **2D.1–2D.3 and 3C implementation/independent-acceptance statuses** in this historical table, README, HANDOFF and related documents against merged PRs #19–25, live deployment and QA evidence. Close any remaining 2D.2 real-model or 3C focused-retake acceptance gaps before claiming complete closure. This documentation refresh is separate from scoping 4A.
-
----
-
-## Prior milestone status snapshot (as recorded 2026-11-12; 2D/3C entries outdated)
+## Current milestone status
 
 | Milestone | Purpose | Status / evidence |
 |---|---|---|
@@ -66,10 +60,21 @@ The incoming development chat should reconcile the stale **2D.1–2D.3 and 3C im
 | 3A | Editable DOCX student/key export | Corrected, independently accepted |
 | 3B.1 | Professional pagination/styles | Corrected, independently accepted; 3B1-04 continuation cases passed |
 | 3B.2 | Word layout controls/persistence | **Accepted and closed**; initial P3 3B2-01 corrected, focused retest passed, regression-hardened PR #17 merged |
-| **2D.1 (proposed)** | Source-referenced AI annotation contract and external-LLM copy/paste import | **Selected as next direction, not implemented; formal acceptance details awaiting owner signoff** |
-| 2D.2 (proposed) | Optional in-browser local model using 2D.1 contract | Deferred; feasibility/device compatibility to evaluate |
-| 2D.3 (proposed) | AI/deterministic parser comparison and ambiguity-focused review | Deferred |
-| 3C (proposed) | Further authoring organization/rich editing | Not prioritized/approved |
+| **2D.1** | Source-referenced annotation exchange with teacher review | **Deployed and independently passed** after the corrective release. [PR #19](https://github.com/ccheng/talus1/pull/19) · [PR #20](https://github.com/ccheng/talus1/pull/20) · [Tested deployment](https://github.com/ccheng/talus1/actions/runs/43369804567) |
+| **2D.2** | Optional WebGPU inference using the 2D.1 contract | **Deployed.** Independent production smoke verified opt-in and fallback when WebGPU hardware was unavailable. Real-model acceptance remains open. [PR #21](https://github.com/ccheng/talus1/pull/21) · [Tested deployment](https://github.com/ccheng/talus1/actions/runs/43442665443) |
+| **2D.3** | Source-linked Detect and AI comparison, with teacher reconciliation | **Deployed and independently passed** after correcting the competing-key resolution flow. [PR #22](https://github.com/ccheng/talus1/pull/22) · [PR #23](https://github.com/ccheng/talus1/pull/23) · [Tested deployment](https://github.com/ccheng/talus1/actions/runs/43447895921) |
+| **3C** | Manual authoring and management of consecutive groups sharing rich context | **Deployed and independently passed** after grouped run-ID restoration and compact Word pagination fixes. [PR #24](https://github.com/ccheng/talus1/pull/24) · [PR #25](https://github.com/ccheng/talus1/pull/25) · [Tested deployment](https://github.com/ccheng/talus1/actions/runs/43494560488) |
+
+## Independent evidence and outstanding verification
+
+The following QA files are held outside Git. Request them from the owner or QA when reproducing a case.
+
+| Milestone | Evidence and scope |
+|---|---|
+| **2D.1** | `acceptance-report.md` and `talus-2d1-live-acceptance.zip`. The corrected fixture passed rich source preservation, missing and ambiguous key handling, invalid-input protection, and repeatable Word exports across six student/key pairs. QA used a synthetic source and a hand-authored, source-valid annotation. |
+| **2D.2** | `2d2-production-smoke.md`, `2d2-production-smoke-word.zip`, and `benchmark-and-oracle.md`. The smoke passed on managed Linux Chromium without a hardware WebGPU adapter, including deterministic and external-annotation fallback and six Word pairs. Real-model quality, successful cancellation during real inference, cached/offline inference, and timing and review-time targets on Chrome on Apple silicon macOS and Windows desktops are unverified. Use the [feasibility harness](../feasibility/README.md) for target-device trials. |
+| **2D.3** | `2d3-live-acceptance.md` and `2d3-live-evidence.zip`. The corrected build surfaced conflicting keys, kept acceptance blocked after an unrelated edit, allowed explicit reconciliation of the supported source, and produced six correctly keyed Word pairs. Agreement stayed quiet. QA used a source-valid stand-in for the AI proposal. |
+| **3C** | `3c-live-acceptance.md` and `3c-live-evidence.zip`. The corrected run preserved run ID `1vq0qac` and reproduced its manifest on JSON restore. The shared passage, PNG, merged table, native fraction and first grouped child appeared on the same page in all 12 student/key copies rendered in LibreOffice. Desktop Microsoft Word pagination remains unverified. |
 
 ## Actual 3B.2 acceptance baseline
 
@@ -77,25 +82,6 @@ Independent Work-mode accepted functionality after testing live production 2026-
 
 The P3 3B2-01 label/rule wrapping finding was corrected in PR #16 and independently focused-retested **PASS** on both problematic layouts; permanent test `e2e/acceptance3b2-identity.spec.ts` introduced. PR #17 test-only strengthened content and key exclusions; merged commit `a50c70852a5237aa45d637f760d8999891caaaa3`. The original Work-mode report and evidence packages are not in Git; ask the owner for them if an exact reproduction is required. Separate what the external tests establish from what CI establishes.
 
-## Product strategy
+## Product strategy and next approval
 
-The authoring workflow is **Word-first** (Google Docs is an alternative; export/download as DOCX when needed). Talus should be a dependable assessment structure interpreter, validator, seeded versioner, and **editable** Word exporter. Avoid building a complete Word clone. Important prioritization choice: **return to 2D AI-assisted importing before pursuing further 3C editor work**.
-
-## Forward milestone discipline
-
-2D is intentionally split into contract and safe external-LLM exchange (**2D.1**), optional browser-local integration (**2D.2**), and deeper comparison/review (**2D.3**). These are *proposals* from the scoping discussion, not authorization to implement all three. Details and open decisions are in [MILESTONE_2D.md](MILESTONE_2D.md).
-
-Each milestone requires owner's scope signoff, red/green tests, a production deployment gate, separate live Work-mode acceptance, and regression capture before closure.
-
-## Open decisions, not implied decisions
-
-- Final 2D.1 annotation schema/version and source-block granularity; treatment of mixed rich content, partial paragraph ranges and heading/answer lists.
-- What teachers may designate as “ignored” source material, and which ambiguities block vs need explicit review.
-- How to deliver a frontier model the complete information without encouraging content rewriting; whether to allow the full source DOCX attachment alongside the block extraction.
-- Local model choices and performance budgets; deferred until 2D.1 is accepted.
-- Google Docs integration scope: there is no direct hosted Google Docs sync/import commitment. DOCX export/import is supported.
-- Subsequent roadmap direction is now approved as **4A → 5A → 6** above; older 3C wording in this snapshot is outdated.
-
-## Next developer deliverable
-
-**Not a bulk implementation.** Produce a bounded 2D.1 specification with threat model, annotation example, schema/validation rules, UI sequence, failure-handling matrix, fixture plan and independent acceptance prompt. Get owner's agreement and only then code the first thin vertical slice.
+Teachers author and finish assessments in Word or Google Docs. Talus interprets source structure, validates a teacher-reviewed master, generates seeded variants and exports editable Word. The next deliverable is a bounded 4A scope proposal with non-goals, fixture-based tests and independent acceptance criteria for owner signoff. Follow the [quality gate](QUALITY_GATE.md) and retain the outstanding 2D.2 verification as a separate record.

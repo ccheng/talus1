@@ -1,8 +1,10 @@
-# Current development status and handoff (2026-11-12)
+# Talus Test Versioner
 
-**Incoming developer or agent:** Start with [docs/HANDOFF.md](docs/HANDOFF.md) (product and code map), [docs/QUALITY_GATE.md](docs/QUALITY_GATE.md) (development/QA protocol), [docs/MILESTONES.md](docs/MILESTONES.md) (accepted status), and [docs/MILESTONE_2D.md](docs/MILESTONE_2D.md) (next proposed AI-assisted import scope). Current source and latest CI/PRs are authoritative.
+Talus imports teacher-authored assessments, lets teachers review or edit their structure, and generates reproducible student versions and matching keys. It runs in the browser and exports editable Word and Markdown. Teachers can author consecutive question groups with shared material, review source-referenced AI annotations, and compare AI proposals against Detect.
 
-**Current status:** Milestone **3B.2 accepted and closed**, including 3B2-01 corrected and independently retested; **2D AI-assisted import is not implemented**. The product owner has prioritized 2D over further Word-like editing; **2D.1 contract/scope awaits explicit approval**. Historical sections below are a chronological development record and may refer to subsequently completed features as “future work.” Do not interpret those older statements as current status.
+**Current baseline:** 2D.1 annotation exchange and 2D.3 comparison passed independent live QA after corrective releases. 2D.2 on-device annotation is deployed and its fallback passed a live smoke test. Real-model quality, cached/offline behavior, and target-device timings remain unverified. The 3C grouped-question corrective release passed independent live QA with LibreOffice-rendered Word exports. Desktop Word pagination remains unverified.
+
+The approved roadmap is **4A → 5A → 6**, with detailed scope and acceptance approval required for each stage. See the [development handoff](docs/HANDOFF.md), [current status and roadmap](docs/MILESTONES.md), [quality gate](docs/QUALITY_GATE.md), and [2D design history](docs/MILESTONE_2D.md). Earlier milestone notes below preserve the development chronology.
 
 ---
 

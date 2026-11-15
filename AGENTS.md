@@ -3,8 +3,8 @@
 **Read before modifying code:**
 1. [docs/HANDOFF.md](docs/HANDOFF.md): current product vision, accepted release baseline, code map, known limitations and new-chat handoff prompt.
 2. [docs/QUALITY_GATE.md](docs/QUALITY_GATE.md): required approval, red/green regressions, CI, deploy and independent Work-mode QA gates.
-3. [docs/MILESTONES.md](docs/MILESTONES.md): status table; proposals are **not** implemented/approved.
-4. [docs/MILESTONE_2D.md](docs/MILESTONE_2D.md): next prioritized AI-assisted import direction, open questions and non-negotiables.
+3. [docs/MILESTONES.md](docs/MILESTONES.md): current status, acceptance evidence, and approved roadmap.
+4. [docs/MILESTONE_2D.md](docs/MILESTONE_2D.md): AI-assisted import design history and product invariants.
 5. [README.md](README.md): detailed historical implementations. Older “future work” lines are not current status; verify live code.
 
 ## Product invariants
@@ -14,7 +14,7 @@
 - Never change deterministic generation (question slot appears once per version; proficiency/section constraints; alternatives, choice mapping, key correctness, run ID and manifest) as a side effect of import/format changes.
 - Original assessment wording, numbers, answers, equation semantics, media bytes and tables must not silently mutate.
 - Imported untrusted content/model output must pass schema/integrity checks; unresolved critical warnings block generation even after restore/acknowledgment.
-- **AI-assisted import is prioritized but not yet implemented.** Proposed first stage: external-model annotation exchange using source references, strict Talus validation and teacher review. Local inference follows only if approved.
+- AI-assisted import uses source references, strict Talus validation and teacher review. The on-device path is optional and its real-model evidence remains open. See the current milestone status.
 
 ## Working agreement
 
