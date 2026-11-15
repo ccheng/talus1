@@ -6,24 +6,35 @@ import { GroupAuthoring } from './GroupAuthoring';
 import { removeQuestion } from './groupAuthoring';
 import { createMaster,createSection,createSlot,slotsOf,isChoiceType,masterSchema,uid,validateMaster,markLabel,responseLineCount,sectionHeading,wordLayout,DEFAULT_WORD_LAYOUT,type WordLayoutSettings,type MasterTest,type Section,type Slot,type Variant } from './model';
 import { generateVersions,generationRecord,restoreGenerated,type GeneratedVersion } from './generate';
-import { db,download,downloadBytes,exportBackup,fileBase,loadLatest,saveDraftSync,saveMaster } from './storage';
+import { download,downloadBytes,exportBackup,fileBase,loadLatest,saveDraftSync,saveMaster } from './storage';
 import { exportFilename,versionMarkdown,bundleZip } from './export';
 import {versionDocx,docxFilename,bundleDocx} from './docxExport';
 
 const safe=(html:string)=>({__html:DOMPurify.sanitize(html)});
+function savedVersions(master:MasterTest){
+ try{return restoreGenerated(master);}
+ catch{return [];}
+}
 export default function App(){
  const [master,setMaster]=useState<MasterTest|null>(null),[saved,setSaved]=useState('Loading…'),[tab,setTab]=useState<'author'|'preview'|'import'>('author');
  const [sectionIndex,setSectionIndex]=useState(0),[selectedId,setSelectedId]=useState(''),[altIndex,setAltIndex]=useState(0);
  const [count,setCount]=useState(3),[seed,setSeed]=useState('talus-2026'),[versions,setVersions]=useState<GeneratedVersion[]>([]);
  const [importEpoch,setImportEpoch]=useState(0);
  const [versionIndex,setVersionIndex]=useState(0),[showKey,setShowKey]=useState(false),[notice,setNotice]=useState('');
- const inputRef=useRef<HTMLInputElement>(null),ready=useRef(false),masterRef=useRef<MasterTest|null>(null),unsavedRef=useRef(false);
+ const inputRef=useRef<HTMLInputElement>(null),masterRef=useRef<MasterTest|null>(null),unsavedRef=useRef(false);
  function commitMaster(m:MasterTest){
    masterRef.current=m;
    const durable=saveDraftSync(m);
    unsavedRef.current=!durable;
-   setSaved(durable?'Saved locally':'Unsaved — download a JSON backup');
+   setSaved(durable?'Saved locally':'Saving locally…');
    setMaster(m);
+   // The fallback commits the assessment and its active selection together.
+   // A completion for a prior draft cannot change the latest save indicator.
+   void saveMaster(m).then(()=>{
+    if(masterRef.current===m){unsavedRef.current=false;setSaved('Saved locally');}
+   }).catch(()=>{
+    if(masterRef.current===m&&!durable)setSaved('Unsaved — download a JSON backup');
+   });
  }
  useEffect(()=>{const before=(event:BeforeUnloadEvent)=>{if(unsavedRef.current){event.preventDefault();event.returnValue='';}};
    window.addEventListener('beforeunload',before);
@@ -32,12 +43,8 @@ export default function App(){
    const value=m??createMaster();commitMaster(value);setSelectedId((value.sections[0]&&slotsOf(value.sections[0])[0]?.id)??'');
    setCount(value.generationSettings?.count??value.lastGeneration?.count??3);
    setSeed(value.generationSettings?.seed??value.lastGeneration?.seed??'talus-2026');
-   try{setVersions(restoreGenerated(value));}catch{setVersions([]);}
-   ready.current=true;
- }).catch(()=>{const value=createMaster();commitMaster(value);setSelectedId(value.sections[0].items[0].id);ready.current=true;});},[]);
- useEffect(()=>{if(!master||!ready.current)return;
-   void saveMaster(master).catch(()=>{if(unsavedRef.current)setSaved('Unsaved — download a JSON backup');});
- },[master]);
+   setVersions(savedVersions(value));
+ }).catch(()=>{const value=createMaster();commitMaster(value);setSelectedId(value.sections[0].items[0].id);});},[]);
  function update(fn:(m:MasterTest)=>MasterTest){
    const current=masterRef.current;if(!current)return;
    const next={...fn(current),updatedAt:new Date().toISOString(),lastGeneration:undefined};
@@ -68,7 +75,7 @@ export default function App(){
  function addSection(){const s=createSection();update(m=>({...m,sections:[...m.sections,s]}));setSectionIndex(master!.sections.length);setSelectedId(s.items[0].id);setAltIndex(0);}
  function addAlternative(){if(!variant)return;const choices=variant.choices.map(c=>({...c,id:uid()}));const correctChoiceIds=choices.filter((_,i)=>variant.correctChoiceIds.includes(variant.choices[i].id)).map(c=>c.id);
  editSlot(s=>({...s,variants:[...s.variants,{...variant,id:uid(),choices,correctChoiceIds}]}));setAltIndex(slot!.variants.length);}
- async function importJson(file:File){try{const raw=JSON.parse(await file.text());const result=masterSchema.safeParse(raw);if(!result.success)throw Error('Invalid Talus JSON schema');if(!confirm('Replace the open test with this JSON backup?'))return;const m=result.data as MasterTest;await db.masters.put(m);commitMaster(m);setCount(m.generationSettings?.count??m.lastGeneration?.count??3);setSeed(m.generationSettings?.seed??m.lastGeneration?.seed??'talus-2026');setSectionIndex(0);setSelectedId((m.sections[0]&&slotsOf(m.sections[0])[0]?.id)??'');setAltIndex(0);setVersions(restoreGenerated(m));setTab('author');setNotice('Imported backup.');}catch(e){setNotice('Import failed: '+String(e));}}
+ async function importJson(file:File){try{const raw=JSON.parse(await file.text());const result=masterSchema.safeParse(raw);if(!result.success)throw Error('Invalid Talus JSON schema');if(!confirm('Replace the open test with this JSON backup?'))return;const m=result.data as MasterTest;const versions=savedVersions(m);commitMaster(m);setCount(m.generationSettings?.count??m.lastGeneration?.count??3);setSeed(m.generationSettings?.seed??m.lastGeneration?.seed??'talus-2026');setSectionIndex(0);setSelectedId((m.sections[0]&&slotsOf(m.sections[0])[0]?.id)??'');setAltIndex(0);setVersions(versions);setVersionIndex(0);setTab('author');setNotice('Imported backup.');}catch(e){setNotice('Import failed: '+String(e));}}
  function generate(){if(!master)return;try{
    const generated=generateVersions(master,count,seed);
    const record=generationRecord(master,generated,count,seed);
@@ -84,7 +91,7 @@ export default function App(){
  return <div className="app">
  <header className="app-header"><div className="brand"><span className="brand-mark">T</span><strong>Talus</strong><span className="pill">Milestone 3B.2</span></div><small className="save-state">{saved}</small><div className="header-actions"><input ref={inputRef} type="file" hidden accept=".json,application/json" onChange={e=>{const f=e.target.files?.[0];if(f)void importJson(f);e.target.value='';}}/><button className="secondary" onClick={()=>setTab('import')}>Import assessment</button><button className="secondary" onClick={()=>inputRef.current?.click()}>Import JSON</button><button className="secondary" onClick={()=>exportBackup(master)}>Backup JSON</button><button className="secondary" onClick={()=>{if(!confirm('Create a new test? Backup your current test first.'))return;const m=createMaster();commitMaster(m);setCount(3);setSeed('talus-2026');setVersions([]);setNotice('');setSectionIndex(0);setSelectedId(m.sections[0].items[0].id);setAltIndex(0);setTab('author');}}>New test</button></div></header>
  <nav className="nav-tabs"><button className={tab==='import'?'active':''} onClick={()=>setTab('import')}>Import existing test</button><button className={tab==='author'?'active':''} onClick={()=>setTab('author')}>1. Author</button><button className={tab==='preview'?'active':''} onClick={()=>setTab('preview')}>2. Versions &amp; answer keys</button></nav>
- {notice&&<div className="notice">{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss">×</button></div>}
+ {notice&&<div className="notice" role="status">{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss">×</button></div>}
  <div style={{display:tab==='import'?'block':'none'}}><ImportWorkspace key={importEpoch} master={master} active={tab==='import'} onAccept={acceptImported} onClose={()=>setTab('author')}/></div>
  {tab==='author'?<div className="workspace">
   <aside className="sidebar"><div className="side-title">Sections <button onClick={addSection} title="Add section">+</button></div>{master.sections.map((s,i)=><button key={s.id} className={'side-item '+(i===sectionIndex?'selected':'')} onClick={()=>{setSectionIndex(i);setSelectedId(slotsOf(s)[0]?.id??'');setAltIndex(0);}}>{s.title||'Untitled section'} <small>{slotsOf(s).length}</small></button>)}<div className="side-title">Questions <button onClick={addQuestion} title="Add question">+</button></div>{section?.items.map(item=>{

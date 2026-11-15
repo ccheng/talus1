@@ -76,7 +76,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
   const currentRead=++readEpoch.current;
   setAnnotationSource(null);setAnnotationReview(null);setAnnotationConfirmed(false);setAnnotationError('');setLocalAnnotationRunning(false);
   setAnnotationEpoch(n=>n+1);deterministic.current=null;
-  setRichSource(null);setSourcePreviewHtml('');setFileName(file.name);setDraft(null);
+  setRichSource(null);setSourcePreviewHtml('');setFileName('');setSource('');setDraft(null);setMessage('Reading '+file.name+'…');
   const title=file.name.replace(/\.(docx|md|markdown|txt|html)$/i,'');
   try{
    if(/\.docx$/i.test(file.name)){
@@ -97,7 +97,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
     deterministic.current=parsed;
     setRichSource({originalText:parsed.source,hasMedia:media.imageCount>0||media.tableCount>0||Object.keys(math.equations).length>0,format:'docx'});
     setDraft(parsed);setExpanded(parsed.sections[0]?.questions[0]?.id??null);
-    setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
+    setFileName(file.name);setSource(parsed.source);setMessage('Word file parsed: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Verify all source illustrations and question boundaries.');
     try{
      if(wordBytes.byteLength>MAX_ANNOTATION_DOCX_BYTES)throw Error('DOCX exceeds the 12 MB annotation limit.');
      // Heuristic parser warnings are separate from conversion/integrity warnings.
@@ -106,7 +106,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
      if(currentRead===readEpoch.current)setAnnotationSource(annotated);
     }catch(error){if(currentRead===readEpoch.current)setAnnotationError(String(error));}
    }else if(/\.(md|markdown)$/i.test(file.name)){
-    const raw=await file.text();if(currentRead!==readEpoch.current)return;setSource(raw);setFormat('markdown');makeDraft(raw,'markdown',title);
+    const raw=await file.text();if(currentRead!==readEpoch.current)return;setFileName(file.name);setSource(raw);setFormat('markdown');makeDraft(raw,'markdown',title);
    }else if(/\.html?$/i.test(file.name)){
     const raw=await file.text();if(currentRead!==readEpoch.current)return;setSource(raw);
     const media=await inspectImportedMedia(raw);
@@ -120,9 +120,9 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
     setExpanded(parsed.sections[0]?.questions[0]?.id??null);
     setMessage('HTML imported: '+media.imageCount+' image(s), '+media.tableCount+' table(s). Review all questions.');
    }else{
-    const raw=await file.text();if(currentRead!==readEpoch.current)return;setSource(raw);setFormat('plain');makeDraft(raw,'plain',title);
+    const raw=await file.text();if(currentRead!==readEpoch.current)return;setFileName(file.name);setSource(raw);setFormat('plain');makeDraft(raw,'plain',title);
    }
-  }catch(error){if(currentRead===readEpoch.current)setMessage('File import failed: '+String(error));}
+  }catch(error){if(currentRead===readEpoch.current)setMessage('File import failed ('+file.name+'): '+String(error));}
  }
  function modify(fn:(copy:ImportDraft)=>void){
   setAnnotationConfirmed(false);setConfirmedKeys([]);
@@ -248,9 +248,9 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
       {s.questions.map((q,qi)=>{
        const flags=reviewWarnings({title:'',format:'plain',source:'',lines:[],sections:[{...s,questions:[q]}],warnings:[]});
        if(filter==='warnings'&&!flags.length)return null;
-       return <div className="import-question" key={q.id}><button id={'review-'+q.id} className="import-question-toggle" onClick={()=>setExpanded(expanded===q.id?null:q.id)}>
+       return <div className="import-question" key={q.id}><button id={'review-'+q.id} aria-expanded={expanded===q.id} aria-controls={'review-body-'+q.id} className="import-question-toggle" onClick={()=>setExpanded(expanded===q.id?null:q.id)}>
         <strong>Question {qi+1}</strong><span>{text(q.stem).slice(0,85)||'(empty prompt)'}</span>{flags.length?<span className="import-flag">Needs review</span>:<span className="import-ok">Ready</span>}
-       </button>{expanded===q.id&&<div className="import-question-body">
+       </button>{expanded===q.id&&<div id={'review-body-'+q.id} className="import-question-body">
         <div className="import-question-actions"><span className="help">Source lines {q.sourceStart}–{q.sourceEnd}</span>
          <button className="secondary" disabled={qi===0} onClick={()=>modify(d=>{const sec=d.sections.find(x=>x.id===s.id);if(sec){const index=sec.questions.findIndex(x=>x.id===q.id);if(index>0)[sec.questions[index-1],sec.questions[index]]=[sec.questions[index],sec.questions[index-1]];}})}>Move up</button>
          <button className="secondary" disabled={qi===s.questions.length-1} onClick={()=>modify(d=>{const sec=d.sections.find(x=>x.id===s.id);if(sec){const index=sec.questions.findIndex(x=>x.id===q.id);if(index<sec.questions.length-1)[sec.questions[index+1],sec.questions[index]]=[sec.questions[index],sec.questions[index+1]];}})}>Move down</button>
