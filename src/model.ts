@@ -11,7 +11,7 @@ export interface Variant {
   points: number; shuffleChoices: boolean; responseLines?: number; importWarnings?: string[];
 }
 export interface Slot { kind: 'slot'; id: string; shufflePosition: boolean; variants: Variant[] }
-export interface Group { kind: 'group'; id: string; sharedHtml: string; shuffleWithinGroup: boolean; items: Slot[] }
+export interface Group { kind: 'group'; id: string; sharedHtml: string; shuffleWithinGroup: boolean; items: Slot[]; rangeLabel?: true }
 export type TestItem = Slot | Group;
 export interface Section {
   id: string; title: string; proficiency: string; instructions: string;
@@ -60,7 +60,7 @@ const variantSchema = z.object({
   referenceAnswer: z.string(), points: z.number().nonnegative().finite(), shuffleChoices: z.boolean(), responseLines:z.number().int().min(1).max(30).optional(), importWarnings:z.array(z.string()).optional()
 });
 const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shufflePosition:z.boolean(),variants:z.array(variantSchema)});
-const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema)});
+const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema),rangeLabel:z.literal(true).optional()});
 const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficiency:z.string(),instructions:z.string(),shuffleQuestions:z.boolean(),items:z.array(z.union([slotSchema,groupSchema]))});
 export const masterSectionsSchema=z.array(sectionSchema);
 export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:masterSectionsSchema,updatedAt:z.string(),

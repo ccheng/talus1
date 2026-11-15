@@ -36,6 +36,7 @@ export function GroupAuthoring({section,slot,group,onEdit}:{
  const validDestination=destination==='section'||children.some(item=>item.id===destination);
  return <section className="panel group-authoring">
   <h2>Question group {range.length===1?range[0]:range[0]+'–'+range.at(-1)}</h2>
+  {group.rangeLabel&&<p className="help">Generated forms show the current question range automatically.</p>}
   {!/<(?:img|table|math)\b/i.test(group.sharedHtml)&&<button className="secondary" onClick={()=>setSharedSourceOpen(open=>!open)}>{sharedSourceOpen?'Close HTML entry':'Add or edit shared HTML source'}</button>}
   <RichEditor allowHtmlSource={sharedSourceOpen} value={group.sharedHtml} placeholder="Shared group material" onChange={sharedHtml=>onEdit(s=>updateGroup(s,group.id,item=>({...item,sharedHtml})))}/>
   <label className="check"><input type="checkbox" checked={group.shuffleWithinGroup}
