@@ -2,7 +2,8 @@ import {describe,expect,it} from 'vitest';
 import {mergeIntoMaster,parseLines,textLines} from './importParser';
 import {createMaster,masterSchema} from './model';
 import {generateVersions,generationRunId} from './generate';
-import {resolveImportRange,unresolvedImportRanges} from './rangeImport';
+import {ungroupQuestions} from './groupAuthoring';
+import {locateImportRange,resolveImportRange,unresolvedImportRanges} from './rangeImport';
 
 const fixture='Section A: Base\n1. Before?\nAnswer: First\nUse the following for Questions 2–3:\nShared stimulus.\n2. Second?\nAnswer: Second\n3. Third?\nAnswer: Third\n4. After?\nAnswer: Fourth';
 const draftFor=(text=fixture)=>parseLines(textLines(text),'Range fixture','docx');
@@ -49,4 +50,27 @@ describe('4A explicit DOCX range cues',()=>{
   draft.sections[0].questions.splice(2,1);
   expect(unresolvedImportRanges(draft)).toHaveLength(1);
  });
+ it('supports detached keys on a range DOCX with spaced inline choices and square-bracket marks',()=>{
+  const input=['Section A — Base','Q6. Before? [1 mark]','A. First    B. Second',
+   'Use the following information to answer Questions 7–8.','Stimulus with 60 mL.',
+   'Q7. First child? [2 marks]','A. Oxygen    B. Nitrogen',
+   'Q8. Second child? [3 marks]','A. Iron    B. Zinc',
+   'Answer Key','Section A — Base','6. A','7. B','8. B'].join('\n');
+  const draft=draftFor(input),section=draft.sections[0];
+  expect(section.questions.map(q=>[q.sourceNumber,q.marks,q.correct])).toEqual([[6,1,[0]],[7,2,[1]],[8,3,[1]]]);
+  expect(resolveImportRange(draft,draft.ranges![0].id,'group',7,8)).toBe(true);
+  const master=mergeIntoMaster(createMaster(),draft,'replace'),group=master.sections[0].items[1];
+  if(group.kind!=='group')throw Error();
+  master.sections[0]=ungroupQuestions(master.sections[0],group.id,group.items[0].id);
+  const result=generateVersions(master,1,'ungroup')[0].sections[0].questions;
+  expect(result.every(q=>!q.groupHtml&&!q.stem.includes('Questions 7–8'))).toBe(true);
+  expect(result.filter(q=>q.stem.includes('60 mL'))).toHaveLength(1);
+ });
+ it('offers an explicit adjustment for missing numbers only when a shorter span is consecutive',()=>{
+  const draft=draftFor(fixture.replace('2–3','2–4').replace('4. After?','5. After?'));
+  const range=draft.ranges![0];
+  expect(locateImportRange(draft,range).reason).toContain('Source question 4 is missing');
+  expect(resolveImportRange(draft,range.id,'group',2,3)).toBe(true);
+ });
+
 });

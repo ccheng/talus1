@@ -10,6 +10,8 @@ import {RichEditor} from './Editor';
 import {AnnotationExchange} from './AnnotationExchange';
 import {ImportComparison,normalizeHtml,richAssets} from './ImportComparison';
 import {reconcilableSourceKeys} from './importComparison';
+import {ImportRanges} from './ImportRanges';
+import {resolveImportRange} from './rangeImport';
 import {makeAnnotationSource,MAX_ANNOTATION_DOCX_BYTES,type AnnotationReview,type AnnotationSource} from './annotationImport';
 
 const uid=()=>crypto.randomUUID();
@@ -226,6 +228,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
       <button className="secondary" onClick={()=>modify(d=>{d.sections.push({id:uid(),title:'New section',proficiency:'',instructions:'',questions:[]});})}>+ Section</button>
       <button className="secondary" onClick={()=>modify(d=>{const s=d.sections.at(-1);if(s)s.questions.push({id:uid(),sourceStart:0,sourceEnd:0,stem:'',choices:[],correct:[],answer:'',type:'shortAnswer',marks:1,responseLines:2,warnings:['Provide a prompt and answer']});})}>+ Question</button>
      </div>
+     <ImportRanges draft={draft} onResolve={(id,kind,first,last)=>modify(next=>{resolveImportRange(next,id,kind,first,last);})}/>
      {annotationReview&&deterministic.current&&<ImportComparison key={annotationReview.draft.sections[0]?.id} detect={deterministic.current} ai={annotationReview.draft} current={draft}
       reconciliations={reconciliations} confirmed={confirmedKeys} onConfirmKey={(id,checked)=>{
        setAnnotationConfirmed(false);

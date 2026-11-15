@@ -207,3 +207,64 @@ test('2D.3 surfaces source-backed competing keys and exports the teacher correct
   else expect(paragraphs.some(paragraph=>paragraph.startsWith('Answer:'))).toBe(false);
  }
 });
+
+test('4A groups exactly the source range and regenerates its cue in all student and key exports',async({page})=>{
+ const body=p('Section A — Base')+p('Q6. Outside before? [1 mark]')+p('A. First    B. Second')+
+  p('Use the following information to answer Questions 7–8.')+p('Use the 60 mL shared stimulus.')+fraction+table+image+
+  p('Q7. First grouped prompt? [2 marks]')+p('A. Oxygen    B. Nitrogen')+
+  p('Q8. Second grouped prompt? [3 marks]')+p('A. Iron    B. Zinc')+
+  p('Q11. Outside after? [1 mark]')+p('A. Yes    B. No')+
+  ['Answer Key','Section A — Base','6. A','7. B','8. B','11. A'].map(p).join('');
+ const bytes=fixture(true,false,body);
+ await page.goto('./');
+ await page.getByRole('button',{name:'Import assessment',exact:true}).click();
+ await page.getByLabel('Upload assessment',{exact:true}).setInputFiles({name:'range-lab.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:bytes});
+ const review=page.getByRole('region',{name:'Shared question ranges'});
+ await expect(review).toContainText('Source question 7');
+ await expect(review).toContainText('Source question 8');
+ await expect(review.getByRole('img',{name:'Test image',exact:true})).toBeVisible();
+ await review.getByLabel('Last source question').fill('9');
+ await expect(review.getByRole('button',{name:'Confirm question group'})).toBeDisabled();
+ await review.getByRole('button',{name:'Decline grouping'}).click();
+ await expect(review).toContainText('ordinary import');
+ await review.getByLabel('Last source question').fill('8');
+ await review.getByRole('button',{name:'Confirm question group'}).click();
+ await expect(review).toContainText('Confirmed source questions 7–8.');
+ page.on('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Accept reviewed import'}).click();
+ await expect(page.getByText('Validation: Ready')).toBeVisible();
+ await generate(page,6,'4a-range');
+ await expect(page.locator('.print-page')).toContainText(/Questions [1-3]–[2-4]/);
+ const word=unzipSync(await download(page,/Word\/DOCX \(ZIP\)/));
+ const markdown=unzipSync(await download(page,'Download all versions & keys (ZIP)'));
+ for(const [name,raw] of Object.entries(word).filter(([name])=>name.endsWith('.docx'))){
+  const parts=unzipSync(raw),xml=strFromU8(parts['word/document.xml']);
+  const paragraphs=xml.split('</w:p>').map(plainXml);
+  const first=paragraphs.find(value=>value.includes('First grouped prompt?'))!;
+  const second=paragraphs.find(value=>value.includes('Second grouped prompt?'))!;
+  expect(paragraphs).toContain('Use the following for Questions '+first[0]+'–'+second[0]+':');
+  expect(paragraphs.filter(value=>value.includes('60 mL shared stimulus'))).toHaveLength(1);
+  expect(first).toContain('2 marks');expect(second).toContain('3 marks');
+  expect(xml).toContain('<m:f>');expect(xml).toContain('<w:gridSpan w:val="2"/>');
+  expect(Buffer.from(Object.entries(parts).find(([part])=>part.startsWith('word/media/'))![1])).toEqual(png);
+  const answers=paragraphs.filter(v=>v.startsWith('Answer: '));
+  if(name.endsWith('-key.docx')){
+   expect(answers).toHaveLength(4);
+   const grouped=paragraphs.slice(paragraphs.indexOf(first),paragraphs.indexOf(second));
+   const nitrogen=grouped.find(v=>/^[A-Z]\. Nitrogen$/.test(v))!;
+   expect(grouped).toContain('Answer: '+nitrogen[0]);
+  }else expect(answers).toHaveLength(0);
+ }
+ for(const [name,raw] of Object.entries(markdown).filter(([name])=>name.endsWith('.md'))){
+  const md=strFromU8(raw);
+  expect(md).toMatch(/Use the following for Questions [1-3]–[2-4]/);
+  expect(md).not.toContain('Questions 7–8');
+  expect(md.includes('**Answer:**')).toBe(name.endsWith('-key.md'));
+ }
+ const backup=await download(page,'Backup JSON');
+ await page.locator('.header-actions input[type=file]').setInputFiles({name:'range-restored.talus.json',mimeType:'application/json',buffer:backup});
+ await expect(page.getByText('Imported backup.')).toBeVisible();
+ await page.getByRole('button',{name:'2. Versions & answer keys'}).click();
+ const restored=unzipSync(await download(page,/Word\/DOCX \(ZIP\)/));
+ expect(restored['generation-manifest.json']).toEqual(word['generation-manifest.json']);
+});

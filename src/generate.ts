@@ -37,7 +37,8 @@ export function generateVersions(master:MasterTest,count:number,seed:string):Gen
         if(item.kind==='slot') addSlot(item);
         else{
           const children=item.shuffleWithinGroup?shuffled(item.items,random):item.items;
-          children.forEach((child,i)=>addSlot(child,i===0?item.sharedHtml:undefined));
+          const cue=item.rangeLabel&&children.length>1?'<p>Use the following for Questions '+(number+1)+'–'+(number+children.length)+':</p>':'';
+          children.forEach((child,i)=>addSlot(child,i===0?cue+item.sharedHtml:undefined));
         }
       }
       return {id:section.id,title:section.title,proficiency:section.proficiency,instructions:section.instructions,questions};
@@ -53,7 +54,7 @@ export function generationRunId(master:MasterTest,count:number,seed:string):stri
  // The schema gives slots, variants and sections one field order regardless of
  // property insertion order in a backup. Keep 3C's original authored group order.
  const sections=masterSectionsSchema.parse(master.sections).map(section=>({...section,items:section.items.map(item=>
-  item.kind==='slot'?item:{kind:item.kind,id:item.id,items:item.items,sharedHtml:item.sharedHtml,shuffleWithinGroup:item.shuffleWithinGroup}
+  item.kind==='slot'?item:{kind:item.kind,id:item.id,items:item.items,sharedHtml:item.sharedHtml,shuffleWithinGroup:item.shuffleWithinGroup,rangeLabel:item.rangeLabel}
  )}));
  return hashGeneration(master,count,seed,sections);
 }

@@ -1,3 +1,4 @@
+import {confirmedImportRange,createImportRange,readRangeCue,restoreOrdinaryRangePlacement,type ImportRange} from './rangeImport';
 import { createSection,createSlot,createVariant,uid,type MasterTest,type QuestionType,type Section } from './model';
 
 export interface SourceLine { text:string; html:string; number:number }
@@ -9,7 +10,7 @@ export interface ImportQuestion {
 export interface ImportSection {
  id:string; title:string; proficiency:string; instructions:string; questions:ImportQuestion[];
 }
-export interface ImportDraft { title:string; instructions?:string; source:string; lines:SourceLine[]; sections:ImportSection[]; warnings:string[]; format:'plain'|'markdown'|'docx'|'html' }
+export interface ImportDraft { title:string; instructions?:string; source:string; lines:SourceLine[]; sections:ImportSection[]; warnings:string[]; ranges?:ImportRange[]; format:'plain'|'markdown'|'docx'|'html' }
 
 const escape=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 export function textLines(source:string):SourceLine[] {
@@ -132,12 +133,39 @@ function paragraph(html:string):string {
  if(/^\s*<(?:p|ul|ol|li|h[1-6]|blockquote)\b/i.test(html))return html;
  return '<p>'+html+'</p>';
 }
+function splitInlineChoices(html:string,raw:string):string[]|undefined{
+ const labels=[...raw.matchAll(/(?:^|[ \t\u00a0]{2,})([A-H])[.)]\s+/g)];
+ if(labels.length<2||labels[0].index!==0||labels.some((label,i)=>label[1]!==String.fromCharCode(65+i)))return;
+ const spans=labels.map((label,i)=>[label.index+label[0].length,labels[i+1]?.index??raw.length] as const);
+ if(!/<[a-z][\s\S]*>/i.test(html)||typeof DOMParser==='undefined')
+  return spans.map(([start,end])=>escape(raw.slice(start,end).trim()));
+ const document=new DOMParser().parseFromString(html,'text/html');
+ const root=document.body,all=root.textContent??'',offset=all.indexOf(raw);
+ if(offset<0)return;
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+ const nodes:Text[]=[];
+ for(let node=walker.nextNode();node;node=walker.nextNode())nodes.push(node as Text);
+ function point(index:number):[Text,number]{
+  let remaining=index+offset;
+  for(const node of nodes){if(remaining<=node.length)return [node,remaining];remaining-=node.length;}
+  return [nodes.at(-1)!,nodes.at(-1)!.length];
+ }
+ return spans.map(([start,end])=>{
+  const range=document.createRange(),container=document.createElement('div');
+  range.setStart(...point(start));range.setEnd(...point(end));
+  container.append(range.cloneContents());
+  return container.innerHTML.trim();
+ });
+}
 export function parseLines(lines:SourceLine[],title='Imported assessment',format:ImportDraft['format']='plain'):ImportDraft {
  const sections:ImportSection[]=[];let current=newSection('Section 1');
  let q:ImportQuestion|undefined;let seenQuestions=false;let keyMode=false;
  let preamble:string[]=[];let instructions='';let sourceTitle=false;
- const warnings:string[]=[];const detachedKeys:{number:number;value:string;line:number}[]=[];
+ const warnings:string[]=[],ranges:ImportRange[]=[];const detachedKeys:{number:number;value:string;line:number;sectionId?:string}[]=[];
  const meaningful=lines.filter(line=>line.text.trim()||/<(?:img|table)\b/i.test(line.html));
+ const explicitRanges=format==='docx'&&meaningful.some(line=>readRangeCue(line));
+ const rangeSection=(value:string)=>explicitRanges&&/^(?:section|part)\s+[\w\d]+\s+[–—]+\s+\S/i.test(value);
+ let keySection:ImportSection|undefined;
  const flush=()=>{if(q){classify(q);current.questions.push(q);q=undefined;seenQuestions=true;}};
  for(let i=0;i<meaningful.length;i++){
   const line=meaningful[i],raw=line.text.trim(),next=meaningful[i+1];
@@ -146,8 +174,14 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    current=newSection('Section 1');keyMode=true;continue;
   }
   if(keyMode){
+   if(explicitRanges&&(isHeader(raw,next)||rangeSection(raw))){
+    const header=raw.replace(/^#{1,4}\s*/,'');
+    const matched=sections.filter(section=>section.title.toLowerCase()===header.toLowerCase());
+    keySection=matched.length===1?matched[0]:undefined;
+    if(keySection)continue;
+   }
    const match=numberedKey.exec(raw);
-   if(match)detachedKeys.push({number:Number(match[1]),value:match[2].trim(),line:line.number});
+   if(match)detachedKeys.push({number:Number(match[1]),value:match[2].trim(),line:line.number,sectionId:keySection?.id});
    else if(raw)warnings.push('Unmapped answer-key content: '+raw);
    continue;
   }
@@ -157,7 +191,19 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   if(!seenQuestions&&!q&&/^#\s+/.test(raw)&&!/(?:section|part|topic|level)\s+\w+/i.test(raw)){
    title=raw.replace(/^#\s+/,'').trim();sourceTitle=true;continue;
   }
-  if(isHeader(raw,next)){
+  if(format==='docx'&&readRangeCue(line)){
+   const shared:SourceLine[]=[];
+   for(let j=i+1;j<meaningful.length;j++){
+    const upcoming=meaningful[j],value=upcoming.text.trim();
+    if(readRangeCue(upcoming)||numbered.test(value)||keyHeading.test(value)||isHeader(value,meaningful[j+1])||rangeSection(value)||answer.test(value)||choice.test(value))break;
+    shared.push(upcoming);
+   }
+   const fallback=q?'question':!seenQuestions&&!sections.length&&current.title==='Section 1'?'assessment':'section';
+   const offset=q?.stem.length??(fallback==='assessment'?preamble.map(paragraph).join('\n').length:current.instructions.length);
+   ranges.push(createImportRange(line,shared,current,q?.id,fallback,offset));
+   flush();i+=shared.length;continue;
+  }
+  if(isHeader(raw,next)||rangeSection(raw)){
    flush();
    if(current.questions.length||current.instructions.trim())sections.push(current);
    current=newSection(raw.replace(/^#{1,4}\s*/, '').trim());continue;
@@ -165,14 +211,17 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
   // DOCX Title is often its first plain paragraph, followed by instructions and a section.
   if(!seenQuestions&&!q&&!sourceTitle&&!sections.length&&current.title==='Section 1'&&i===0&&
      !numbered.test(raw)&&!choice.test(raw)&&!/^[-*]\s/.test(raw)&&
-     (format==='docx'||format==='html') && meaningful.some(l=>/^(?:#{1,6}\s*)?(?:section|part)\s+\d+/i.test(l.text.trim()))){
+     (format==='docx'||format==='html') && meaningful.some(l=>/^(?:#{1,6}\s*)?(?:section|part)\s+\d+/i.test(l.text.trim())||rangeSection(l.text.trim()))){
     title=raw.replace(/^#{1,6}\s*/,'');sourceTitle=true;continue;
   }
   const n=numbered.exec(raw);
   if(n){
    flush();
-   const marksMatch=marks.exec(n[2]),stem=marksMatch?n[2].replace(marks,'').trim():n[2].trim();
-   q=newQuestion(line.number,stem,stripPrefix(line.html,numberedPrefix,raw));
+   const markPattern=explicitRanges&&/\[\d/.test(n[2])?/\s*\[(\d+(?:\.\d+)?)\s*(?:marks?|pts?|points?)\]\s*$/i:marks;
+   const marksMatch=markPattern.exec(n[2]),stem=marksMatch?n[2].replace(markPattern,'').trim():n[2].trim();
+   let stemHtml=stripPrefix(line.html,numberedPrefix,raw);
+   if(explicitRanges&&marksMatch)stemHtml=stemHtml.replace(/\s*[\[(]\d+(?:\.\d+)?\s*(?:marks?|pts?|points?)[\])]\s*(?=(?:<\/[\w:-]+>\s*)*$)/i,'');
+   q=newQuestion(line.number,stem,stemHtml);
    q.sourceStemLines=[line.number];
    q.sourceNumber=Number(n[1]);if(marksMatch){q.marks=Number(marksMatch[1]);q.sourceMarkLines=[line.number];}
    continue;
@@ -191,6 +240,12 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    continue;
   }
   const choiceMatch=choice.exec(raw);
+  if(explicitRanges&&q&&choiceMatch&&!q.choices.length){
+   const combined=splitInlineChoices(line.html,raw);
+   if(combined){
+    q.choices=combined;q.sourceChoiceLines=[line.number];q.sourceEnd=line.number;continue;
+   }
+  }
   if(choiceMatch&&q){
    (q.sourceChoiceLines??=[]).push(line.number);
    const index=(choiceMatch[1]||choiceMatch[2]).toUpperCase().charCodeAt(0)-65;
@@ -229,7 +284,8 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
    numbers.set(k,[...(numbers.get(k)??[]),item]);
   }
   for(const key of detachedKeys){
-   const matches=numbers.get(key.number)??[];
+   const pool=key.sectionId?sections.find(section=>section.id===key.sectionId)?.questions.filter(q=>q.sourceNumber===key.number):numbers.get(key.number);
+   const matches=pool??[];
    if(matches.length!==1){
     warnings.push('Answer-key entry '+key.number+' could not be matched uniquely: '+key.value);continue;
    }
@@ -254,7 +310,7 @@ export function parseLines(lines:SourceLine[],title='Imported assessment',format
     if(/\b(?:Answer|Key)\s*:/i.test(question.stem))question.reviewFlags?.push('Possible answer-key text embedded in student prompt');
    }
  }
- return {title,instructions,source:lines.map(x=>x.text).join('\n'),lines,sections,warnings,format};
+ return {title,instructions,source:lines.map(x=>x.text).join('\n'),lines,sections,warnings,format,ranges:ranges.length?ranges:undefined};
 }
 export function parseText(source:string,title='Imported assessment'):ImportDraft{return parseLines(textLines(source),title,'plain');}
 export function parseHtml(html:string,title='Imported assessment',format:ImportDraft['format']='html'):ImportDraft{return parseLines(htmlLines(html),title,format);}
@@ -278,10 +334,12 @@ export function reviewWarnings(draft:ImportDraft):string[]{
  return [...draft.warnings,...warnings];
 }
 export function toTalusSections(draft:ImportDraft):Section[]{
- return draft.sections.filter(s=>s.questions.length>0||s.instructions.trim()).map(s=>{
+ const ordinary=restoreOrdinaryRangePlacement(draft);
+ return ordinary.sections.filter(s=>s.questions.length>0||s.instructions.trim()).map(s=>{
   const section=createSection();
   section.title=s.title;section.proficiency=s.proficiency;section.instructions=s.instructions.includes('<')?s.instructions:'<p>'+escape(s.instructions)+'</p>';
-  section.items=s.questions.map(q=>{
+  section.items=[];
+  const slots=s.questions.map(q=>{
    const slot=createSlot();const type=q.type;const variant=createVariant(type);
    variant.stem=q.stem.includes('<')?q.stem:'<p>'+escape(q.stem)+'</p>';
    variant.points=q.marks;variant.responseLines=q.responseLines;variant.importWarnings=[...(q.reviewFlags??[])];
@@ -291,6 +349,20 @@ export function toTalusSections(draft:ImportDraft):Section[]{
    }else variant.referenceAnswer=q.answer.includes('<')?q.answer:'<p>'+escape(q.answer)+'</p>';
    slot.variants=[variant];return slot;
   });
+  const groups=new Map<string,{range:ImportRange;count:number}>();
+  for(const range of draft.ranges??[]){
+   if(range.sectionId!==s.id)continue;
+   const children=confirmedImportRange(draft,range);
+   if(children)groups.set(children[0].id,{range,count:children.length});
+  }
+  for(let i=0;i<slots.length;){
+   const group=groups.get(s.questions[i].id);
+   if(group){
+    section.items.push({kind:'group',id:group.range.id,sharedHtml:group.range.sharedHtml,
+     shuffleWithinGroup:false,items:slots.slice(i,i+group.count),rangeLabel:true});
+    i+=group.count;
+   }else {section.items.push(slots[i]);i++;}
+  }
   return section;
  });
 }
@@ -299,7 +371,7 @@ export function mergeIntoMaster(base:MasterTest,draft:ImportDraft,mode:'replace'
  if(!sections.length)throw Error('No sections or questions to import.');
  const critical=draft.warnings.filter(w=>/unmapped|answer-key|numbered questions detected|ambiguous|student-facing|embedded image|image format|image reference|image exceeds|images exceed|table contains no cells|unsupported media|rich-content source media loss|Word equation|equation structure|equation content/i.test(w)||/Word conversion:.*(?:image|drawing|graphic|picture|media|relationship|linked)/i.test(w));
  if(mode==='append')return {...base,sections:[...base.sections,...sections],importWarnings:[...(base.importWarnings??[]),...critical],lastGeneration:undefined,updatedAt:new Date().toISOString()};
- return {...base,title:draft.title,instructions:draft.instructions??'',sections,importWarnings:critical,lastGeneration:undefined,updatedAt:new Date().toISOString()};
+ return {...base,title:draft.title,instructions:restoreOrdinaryRangePlacement(draft).instructions??'',sections,importWarnings:critical,lastGeneration:undefined,updatedAt:new Date().toISOString()};
 }
 
 /**
