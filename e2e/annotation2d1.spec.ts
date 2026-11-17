@@ -234,6 +234,7 @@ test('4A groups exactly the source range and regenerates its cue in all student 
  await page.getByRole('button',{name:'Accept reviewed import'}).click();
  await expect(page.getByText('Validation: Ready')).toBeVisible();
  await generate(page,6,'4a-range');
+ await page.getByRole('checkbox',{name:'Show marks beside questions'}).check();
  await expect(page.locator('.print-page')).toContainText(/Questions [1-3]–[2-4]/);
  const word=unzipSync(await download(page,/Word\/DOCX \(ZIP\)/));
  const markdown=unzipSync(await download(page,'Download all versions & keys (ZIP)'));
