@@ -34,7 +34,7 @@ export function versionMarkdown(master:MasterTest,v:GeneratedVersion,answers=fal
     if(md(s.instructions))out+=md(s.instructions)+'\n\n';
     for(const q of s.questions){
       if(q.groupHtml)out+=md(q.groupHtml)+'\n\n';
-      out+='**'+q.number+'.** '+md(q.stem)+' *('+markLabel(q.points)+')*\n\n';
+      out+='**'+q.number+'.** '+md(q.stem)+(master.showQuestionMarks?' *('+markLabel(q.points)+')*':'')+'\n\n';
       if(q.choices.length)q.choices.forEach((c,i)=>{out+='   '+String.fromCharCode(65+i)+'. '+md(c.html)+'\n\n';});
       if(answers)out+='**Answer:** '+answerFor(q)+'\n\n';
       else if(q.type==='shortAnswer'||q.type==='writtenResponse')out+=Array.from({length:responseLineCount(q.type,q.responseLines)},()=>String.raw`\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_`).join('\n\n')+'\n\n';

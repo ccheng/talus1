@@ -39,6 +39,8 @@ Select a version in **Versions & answer keys** and choose **Download receipt (PD
 
 To verify an exact Word export later, download the student form, key, or Word ZIP first. Then choose **Download receipt (JSON)** for that version and keep it with the export. Use **Verify a Word export** to select the saved JSON and the individual DOCX file. Renaming a file still matches. Editing and saving in Word can change the file's bytes, so keep the unedited export if you need to verify it later. Exporting again replaces the recorded fingerprint for that file type in new receipts.
 
+Talus hides marks beside questions by default. Turn on **Show marks beside questions** in **Versions & answer keys** to include them in the preview, browser print, and Word and Markdown exports for students and answer keys. The switch saves with your test. You can toggle it and export again without regenerating versions.
+
 ## Back up and reuse a test
 
 - **Backup JSON** saves an editable Talus project. Keep it alongside the source Word file and exported versions. Use **Import JSON** to reopen it in Talus or move it to another browser. Clearing browser data can erase the local working copy.

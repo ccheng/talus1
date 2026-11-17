@@ -91,7 +91,7 @@ function mathTree(e:Element):string{
 interface Media {path:string;rid:string;mime:string;bytes:Uint8Array}
 class WordWriter {
  media:Media[]=[];private nextDrawing=1;
- constructor(private readonly layout:WordLayoutSettings){}
+ constructor(private readonly layout:WordLayoutSettings,private readonly showQuestionMarks:boolean){}
  private get pageWidthInches(){return this.layout.paper==='letter'?8.5:210/25.4;}
  private get printableWidthPx(){return (this.pageWidthInches-2*this.layout.marginInches)*96;}
  private mediaBySource=new Map<string,Media>();
@@ -265,7 +265,7 @@ class WordWriter {
     return opening.includes('<w:pPr>')?opening.replace('<w:pPr>','<w:pPr><w:keepNext/>'):'<w:p><w:pPr><w:keepNext/></w:pPr>';
    });
   }
-  let stemXml=this.labelledHtml(q.stem,q.number+'. ','  ('+markLabel(q.points)+')');
+  let stemXml=this.labelledHtml(q.stem,q.number+'. ',this.showQuestionMarks?'  ('+markLabel(q.points)+')':'');
   // Word cannot repeat a question heading when a multi-page stem continues.
   // Put small, numbered continuation cues immediately before independently
   // paginating rich-content blocks, with keepNext binding cue to its content.
@@ -398,7 +398,7 @@ class WordWriter {
 }
 export function versionDocx(master:MasterTest,version:GeneratedVersion,answers=false):Uint8Array{
  const errors=validateMaster(master);if(errors.length)throw Error('DOCX export blocked by validation: '+errors.join('; '));
- return new WordWriter(wordLayout(master.wordLayout)).build(master,version,answers);
+ return new WordWriter(wordLayout(master.wordLayout),master.showQuestionMarks??false).build(master,version,answers);
 }
 export function docxFilename(master:MasterTest,version:GeneratedVersion,answers=false):string{
  return fileBase(master)+'-V'+version.label+(answers?'-key':'')+'.docx';
