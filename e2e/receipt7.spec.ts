@@ -43,7 +43,7 @@ test('Word-import receipt downloads a PDF and verifies the exact DOCX from indiv
   expect(text.stdout).toContain('Water Filter Lab');
   expect(text.stdout).toContain(individualReceipt.runId);
   expect(text.stdout).toContain('Choice mapping');
-  expect(text.stdout).toMatch(/A\s*→\s*[ABCD]/);
+  expect(text.stdout).toMatch(/A\s+to\s+[ABCD]/);
 
   const bundle=await download(page,/Word\/DOCX \(ZIP\).*all versions/);
   const files=unzipSync(bundle.buffer);
