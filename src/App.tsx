@@ -9,6 +9,15 @@ import { generateVersions,generationRecord,restoreGenerated,type GeneratedVersio
 import { download,downloadBytes,exportBackup,fileBase,loadLatest,saveDraftSync,saveMaster } from './storage';
 import { exportFilename,versionMarkdown,bundleZip } from './export';
 import {versionDocx,docxFilename,bundleDocx} from './docxExport';
+import { ReceiptDownloads, ReceiptVerifier } from './ReceiptControls';
+import { sha256, type ReceiptFile } from './wordReceiptFiles';
+
+type WordExport = {
+  version: string;
+  role: ReceiptFile['role'];
+  filename: string;
+  bytes: Uint8Array;
+};
 
 const safe=(html:string)=>({__html:DOMPurify.sanitize(html)});
 function savedVersions(master:MasterTest){
@@ -20,6 +29,7 @@ export default function App(){
  const [sectionIndex,setSectionIndex]=useState(0),[selectedId,setSelectedId]=useState(''),[altIndex,setAltIndex]=useState(0);
  const [count,setCount]=useState(3),[seed,setSeed]=useState('talus-2026'),[versions,setVersions]=useState<GeneratedVersion[]>([]);
  const [importEpoch,setImportEpoch]=useState(0);
+ const [exportingWord,setExportingWord]=useState(false);
  const [versionIndex,setVersionIndex]=useState(0),[showKey,setShowKey]=useState(false),[notice,setNotice]=useState('');
  const inputRef=useRef<HTMLInputElement>(null),masterRef=useRef<MasterTest|null>(null),unsavedRef=useRef(false);
  function commitMaster(m:MasterTest){
@@ -47,7 +57,7 @@ export default function App(){
  }).catch(()=>{const value=createMaster();commitMaster(value);setSelectedId(value.sections[0].items[0].id);});},[]);
  function update(fn:(m:MasterTest)=>MasterTest){
    const current=masterRef.current;if(!current)return;
-   const next={...fn(current),updatedAt:new Date().toISOString(),lastGeneration:undefined};
+   const next={...fn(current),updatedAt:new Date().toISOString(),lastGeneration:undefined,wordReceiptFiles:undefined};
    commitMaster(next);setVersions([]);setNotice('Assessment changed. Generate versions again.');
  }
  function setWordLayoutSetting<K extends keyof WordLayoutSettings>(key:K,value:WordLayoutSettings[K]){
@@ -86,8 +96,54 @@ export default function App(){
  if(!master)return <div className="loading">Opening Talus…</div>;
  const errors=validateMaster(master),current=versions[versionIndex];
  function exportFile(v:GeneratedVersion,key:boolean){download(versionMarkdown(master!,v,key),exportFilename(master!,v,key),'text/markdown;charset=utf-8');}
- function exportWord(v:GeneratedVersion,key:boolean){try{downloadBytes(versionDocx(master!,v,key),docxFilename(master!,v,key));}catch(e){setNotice('Word export blocked: '+String(e));}}
- function exportWordBundle(){try{downloadBytes(bundleDocx(master!,versions),fileBase(master!)+'-run-'+(master!.lastGeneration?.runId??'export')+'-word.zip');}catch(e){setNotice('Word export blocked: '+String(e));}}
+ async function recordWordExports(source:MasterTest, exports:WordExport[]) {
+   const run = source.lastGeneration;
+   if (!run) return;
+   const entries = await Promise.all(exports.map(async file => ({
+     version:file.version,
+     fingerprint:{filename:file.filename,role:file.role,sha256:await sha256(file.bytes)},
+   })));
+   const latest=masterRef.current;
+   if (!latest || latest.id!==source.id || latest.updatedAt!==source.updatedAt
+     || latest.lastGeneration?.runId!==run.runId) return;
+   const previous = latest.wordReceiptFiles;
+   const versions = previous?.runId===run.runId && previous.sourceUpdatedAt===source.updatedAt
+     ? {...previous.versions} : {};
+   for (const {version,fingerprint} of entries) {
+     versions[version]=[...(versions[version]??[]).filter(file=>file.role!==fingerprint.role),fingerprint];
+   }
+   commitMaster({...latest,wordReceiptFiles:{runId:run.runId,sourceUpdatedAt:source.updatedAt,versions}});
+ }
+ async function exportWord(v:GeneratedVersion,key:boolean) {
+   if(!master || exportingWord)return;
+   setExportingWord(true);
+   try {
+     const filename=docxFilename(master,v,key);
+     const bytes=versionDocx(master,v,key);
+     await recordWordExports(master,[{version:v.label,role:key?'key':'student',filename,bytes}]);
+     downloadBytes(bytes,filename,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+   } catch(e) {
+     setNotice('Word export blocked: '+String(e));
+   } finally {
+     setExportingWord(false);
+   }
+ }
+ async function exportWordBundle() {
+   if(!master || exportingWord)return;
+   setExportingWord(true);
+   try {
+     const exports:WordExport[]=[];
+     const zip=bundleDocx(master,versions,(v,key,filename,bytes)=>{
+       exports.push({version:v.label,role:key?'key':'student',filename,bytes});
+     });
+     await recordWordExports(master,exports);
+     downloadBytes(zip,fileBase(master)+'-run-'+(master.lastGeneration?.runId??'export')+'-word.zip');
+   } catch(e) {
+     setNotice('Word export blocked: '+String(e));
+   } finally {
+     setExportingWord(false);
+   }
+ }
  return <div className="app">
  <header className="app-header"><div className="brand"><span className="brand-mark">T</span><strong>Talus</strong><span className="pill">Milestone 3B.2</span></div><small className="save-state">{saved}</small><div className="header-actions"><input ref={inputRef} type="file" hidden accept=".json,application/json" onChange={e=>{const f=e.target.files?.[0];if(f)void importJson(f);e.target.value='';}}/><button className="secondary" onClick={()=>setTab('import')}>Import assessment</button><button className="secondary" onClick={()=>inputRef.current?.click()}>Import JSON</button><button className="secondary" onClick={()=>exportBackup(master)}>Backup JSON</button><button className="secondary" onClick={()=>{if(!confirm('Create a new test? Backup your current test first.'))return;const m=createMaster();commitMaster(m);setCount(3);setSeed('talus-2026');setVersions([]);setNotice('');setSectionIndex(0);setSelectedId(m.sections[0].items[0].id);setAltIndex(0);setTab('author');}}>New test</button></div></header>
  <nav className="nav-tabs"><button className={tab==='import'?'active':''} onClick={()=>setTab('import')}>Import existing test</button><button className={tab==='author'?'active':''} onClick={()=>setTab('author')}>1. Author</button><button className={tab==='preview'?'active':''} onClick={()=>setTab('preview')}>2. Versions &amp; answer keys</button></nav>
@@ -126,6 +182,8 @@ export default function App(){
  <label className="check"><input aria-label="Word running header" type="checkbox" checked={wordLayout(master.wordLayout).showHeader} onChange={e=>setWordLayoutSetting('showHeader',e.target.checked)}/> Running assessment/version header</label>
  <label className="check"><input aria-label="Word page numbers" type="checkbox" checked={wordLayout(master.wordLayout).showPageNumbers} onChange={e=>setWordLayoutSetting('showPageNumbers',e.target.checked)}/> Page-number footer</label>
  <button className="secondary" onClick={()=>{const current=masterRef.current;if(current){commitMaster({...current,wordLayout:{...DEFAULT_WORD_LAYOUT}});setNotice('Word layout restored to the 3B.1 professional defaults.');}}}>Restore professional defaults</button>
- </section><div className="export-actions"><button onClick={()=>exportFile(current,false)}>Student Markdown</button><button onClick={()=>exportFile(current,true)}>Answer key Markdown</button><button className="secondary" onClick={()=>downloadBytes(bundleZip(master,versions),fileBase(master)+'-run-'+(master.lastGeneration?.runId??'export')+'.zip')}>Download all versions &amp; keys (ZIP)</button><button className="secondary" onClick={()=>exportWord(current,false)}>Student Word (.docx)</button><button className="secondary" onClick={()=>exportWord(current,true)}>Answer key Word (.docx)</button><button className="primary" onClick={exportWordBundle}>Word/DOCX (ZIP) — all versions &amp; keys</button><button className="secondary" onClick={()=>window.print()}>Print</button></div><div className="print-page"><h1>{master.title} — {showKey?'Answer Key':'Version'} {current.label}</h1>{master.lastGeneration&&<p className="run-id">Run ID: {master.lastGeneration.runId}</p>}<div dangerouslySetInnerHTML={safe(master.instructions)}/>{current.sections.map(s=><section key={s.id}><h2>{sectionHeading(s.title,s.proficiency)}</h2><div dangerouslySetInnerHTML={safe(s.instructions)}/>{s.questions.map(q=><article key={q.slotId} className="print-question">{q.groupHtml&&<div dangerouslySetInnerHTML={safe(q.groupHtml)}/>}<div className="question-stem"><strong>{q.number}.</strong><div dangerouslySetInnerHTML={safe(q.stem)}/><small>({markLabel(q.points)})</small></div>{q.choices.map((c,i)=><div className="print-choice" key={c.id}><strong>{String.fromCharCode(65+i)}.</strong><div dangerouslySetInnerHTML={safe(c.html)}/></div>)}{showKey?<div className="key"><strong>Answer: </strong>{q.choices.length?q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):'').filter(Boolean).join(', '):<span dangerouslySetInnerHTML={safe(q.referenceAnswer)}/>}</div>:q.choices.length===0?<div className="response-lines">{Array.from({length:responseLineCount(q.type,q.responseLines)},(_,i)=><div key={i} className="response-line">________________________________________________________________</div>)}</div>:null}</article>)}</section>)}</div></>:<div className="panel"><h2>No current versions</h2><p>{errors.length?'Complete the assessment, then generate versions.':'Assessment changed or no saved generation found. Generate versions again.'}</p><button onClick={()=>setTab('author')}>Return to authoring</button></div>}</div>:null}
+ </section><div className="export-actions"><button onClick={()=>exportFile(current,false)}>Student Markdown</button><button onClick={()=>exportFile(current,true)}>Answer key Markdown</button><button className="secondary" onClick={()=>downloadBytes(bundleZip(master,versions),fileBase(master)+'-run-'+(master.lastGeneration?.runId??'export')+'.zip')}>Download all versions &amp; keys (ZIP)</button><button className="secondary" disabled={exportingWord} onClick={()=>void exportWord(current,false)}>Student Word (.docx)</button><button className="secondary" disabled={exportingWord} onClick={()=>void exportWord(current,true)}>Answer key Word (.docx)</button><button className="primary" disabled={exportingWord} onClick={()=>void exportWordBundle()}>Word/DOCX (ZIP) — all versions &amp; keys</button><button className="secondary" onClick={()=>window.print()}>Print</button></div>
+ <ReceiptDownloads key={current.label} master={master} version={current} exporting={exportingWord}/>
+ <div className="print-page"><h1>{master.title} — {showKey?'Answer Key':'Version'} {current.label}</h1>{master.lastGeneration&&<p className="run-id">Run ID: {master.lastGeneration.runId}</p>}<div dangerouslySetInnerHTML={safe(master.instructions)}/>{current.sections.map(s=><section key={s.id}><h2>{sectionHeading(s.title,s.proficiency)}</h2><div dangerouslySetInnerHTML={safe(s.instructions)}/>{s.questions.map(q=><article key={q.slotId} className="print-question">{q.groupHtml&&<div dangerouslySetInnerHTML={safe(q.groupHtml)}/>}<div className="question-stem"><strong>{q.number}.</strong><div dangerouslySetInnerHTML={safe(q.stem)}/><small>({markLabel(q.points)})</small></div>{q.choices.map((c,i)=><div className="print-choice" key={c.id}><strong>{String.fromCharCode(65+i)}.</strong><div dangerouslySetInnerHTML={safe(c.html)}/></div>)}{showKey?<div className="key"><strong>Answer: </strong>{q.choices.length?q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):'').filter(Boolean).join(', '):<span dangerouslySetInnerHTML={safe(q.referenceAnswer)}/>}</div>:q.choices.length===0?<div className="response-lines">{Array.from({length:responseLineCount(q.type,q.responseLines)},(_,i)=><div key={i} className="response-line">________________________________________________________________</div>)}</div>:null}</article>)}</section>)}</div></>:<div className="panel"><h2>No current versions</h2><p>{errors.length?'Complete the assessment, then generate versions.':'Assessment changed or no saved generation found. Generate versions again.'}</p><button onClick={()=>setTab('author')}>Return to authoring</button></div>}<ReceiptVerifier/></div>:null}
  </div>;
 }

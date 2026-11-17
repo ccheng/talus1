@@ -63,3 +63,5 @@
 .group-authoring>h2{margin-top:0}
 .group-actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .tiptap-content:focus-visible{outline:2px solid #254d7d;outline-offset:-2px}
+
+@media print{.receipt-controls{display:none!important}}

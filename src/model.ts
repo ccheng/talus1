@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {receiptFileSchema, type ReceiptFile} from './wordReceiptFiles';
 import { embeddedAssetWarnings } from './media';
 import { equationIntegrityWarnings } from './equationSafety';
 import {tableIntegrityWarnings} from './contentIntegrity';
@@ -47,8 +48,15 @@ export const wordLayoutSchema=z.object({
 export function wordLayout(settings?:Partial<WordLayoutSettings>):WordLayoutSettings {
  return wordLayoutSchema.parse({...DEFAULT_WORD_LAYOUT,...settings});
 }
+interface WordReceiptFiles {
+  runId: string;
+  sourceUpdatedAt: string;
+  versions: Record<string, ReceiptFile[]>;
+}
 export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string;
   generationSettings?:{count:number;seed:string}; wordLayout?:WordLayoutSettings; lastGeneration?:GenerationRecord; importWarnings?:string[];
+  wordQuestionNumbers?: Record<string, number>;
+  wordReceiptFiles?: WordReceiptFiles;
 }
 export type RichText = string;
 export const uid = (): string => crypto.randomUUID();
@@ -65,6 +73,8 @@ const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficienc
 export const masterSectionsSchema=z.array(sectionSchema);
 export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:masterSectionsSchema,updatedAt:z.string(),
  generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(), wordLayout:wordLayoutSchema.optional(), importWarnings:z.array(z.string()).optional(),
+ wordQuestionNumbers:z.record(z.string(),z.number().int().nonnegative()).optional(),
+ wordReceiptFiles:z.object({runId:z.string(),sourceUpdatedAt:z.string(),versions:z.record(z.string(),z.array(receiptFileSchema).max(2))}).optional(),
  lastGeneration:z.object({count:z.number().int().min(1).max(30),seed:z.string(),runId:z.string(),sourceUpdatedAt:z.string(),
   manifests:z.array(z.object({label:z.string(),entries:z.array(z.object({slotId:z.string(),variantId:z.string(),choiceOrder:z.array(z.string()),number:z.number().int()}))}))}).optional()
 });
