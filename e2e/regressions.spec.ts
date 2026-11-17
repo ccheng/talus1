@@ -142,6 +142,23 @@ test('T4 — editing clears generated success notice and explains regeneration',
 
 test('T5 and T6 — preview and Markdown use matching response space and mark labels',async ({page})=>{
  await importAssessment(page,fixture());await generate(page);
+ const showMarks=page.getByRole('checkbox',{name:'Show marks beside questions'});
+ const run=await page.locator('.run-id').innerText();
+ await expect(showMarks).not.toBeChecked();
+ await expect(page.locator('.question-stem small')).toHaveCount(0);
+ const word=async()=>{
+  const pending=page.waitForEvent('download');
+  await page.getByRole('button',{name:'Student Word (.docx)',exact:true}).click();
+  const bytes=await readFile(await (await pending).path()!);
+  return strFromU8(unzipSync(bytes)['word/document.xml']);
+ };
+ expect(await word()).not.toContain('(4 marks)');
+ await showMarks.check();
+ expect(await word()).toContain('(4 marks)');
+ await page.reload();
+ await page.getByRole('button',{name:'2. Versions & answer keys'}).click();
+ await expect(showMarks).toBeChecked();
+ await expect(page.locator('.run-id')).toHaveText(run);
  const written=page.locator('.print-question').filter({hasText:'Distance and displacement'});
  await expect(written.locator('.response-line')).toHaveCount(9);
  await expect(written.locator('.question-stem small')).toHaveText('(4 marks)');

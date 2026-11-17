@@ -55,6 +55,7 @@ interface WordReceiptFiles {
 }
 export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string;
   generationSettings?:{count:number;seed:string}; wordLayout?:WordLayoutSettings; lastGeneration?:GenerationRecord; importWarnings?:string[];
+  showQuestionMarks?: boolean;
   wordQuestionNumbers?: Record<string, number>;
   wordReceiptFiles?: WordReceiptFiles;
 }
@@ -73,6 +74,7 @@ const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficienc
 export const masterSectionsSchema=z.array(sectionSchema);
 export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:masterSectionsSchema,updatedAt:z.string(),
  generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(), wordLayout:wordLayoutSchema.optional(), importWarnings:z.array(z.string()).optional(),
+ showQuestionMarks:z.boolean().optional(),
  wordQuestionNumbers:z.record(z.string(),z.number().int().nonnegative()).optional(),
  wordReceiptFiles:z.object({runId:z.string(),sourceUpdatedAt:z.string(),versions:z.record(z.string(),z.array(receiptFileSchema).max(2))}).optional(),
  lastGeneration:z.object({count:z.number().int().min(1).max(30),seed:z.string(),runId:z.string(),sourceUpdatedAt:z.string(),

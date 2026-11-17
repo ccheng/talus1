@@ -25,7 +25,8 @@ describe('Milestone 1.1 exports',()=>{
   const m=fixture();const [v]=generateVersions(m,1,'test');
   const markdown=versionMarkdown(m,v);
   expect((markdown.match(/\\_\\_/g)||[]).length).toBe(9*10);
-  expect(markdown).toContain('(4 marks)');
+  expect(markdown).not.toContain('(4 marks)');
+  expect(versionMarkdown({...m,showQuestionMarks:true},v)).toContain('(4 marks)');
   expect(markLabel(1)).toBe('1 mark');
   expect(markLabel(2)).toBe('2 marks');
   expect(responseLineCount('shortAnswer')).toBe(2);
