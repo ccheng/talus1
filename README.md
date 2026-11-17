@@ -33,6 +33,12 @@ The group stays together when the section shuffles. Leave **Shuffle questions wi
 
 ![Talus showing Word download buttons above the Water Filter Lab Version B answer key](docs/teacher/talus-versions.jpg)
 
+## Keep a record of the shuffle
+
+Select a version in **Versions & answer keys** and choose **Download receipt (PDF)**. The teacher copy lists the original reviewed section and question, the selected alternative, the version's question number, and how each choice letter moved. The **Key** column shows the correct letters in the generated version.
+
+To verify an exact Word export later, download the student form, key, or Word ZIP first. Then choose **Download receipt (JSON)** for that version and keep it with the export. Use **Verify a Word export** to select the saved JSON and the individual DOCX file. Renaming a file still matches. Editing and saving in Word can change the file's bytes, so keep the unedited export if you need to verify it later. Exporting again replaces the recorded fingerprint for that file type in new receipts.
+
 ## Back up and reuse a test
 
 - **Backup JSON** saves an editable Talus project. Keep it alongside the source Word file and exported versions. Use **Import JSON** to reopen it in Talus or move it to another browser. Clearing browser data can erase the local working copy.

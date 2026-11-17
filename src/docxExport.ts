@@ -403,9 +403,13 @@ export function versionDocx(master:MasterTest,version:GeneratedVersion,answers=f
 export function docxFilename(master:MasterTest,version:GeneratedVersion,answers=false):string{
  return fileBase(master)+'-V'+version.label+(answers?'-key':'')+'.docx';
 }
-export function bundleDocx(master:MasterTest,versions:GeneratedVersion[]):Uint8Array{
+export function bundleDocx(master:MasterTest,versions:GeneratedVersion[], onFile?:(version:GeneratedVersion, key:boolean, filename:string, bytes:Uint8Array)=>void):Uint8Array{
  const files:Record<string,Uint8Array>={};
- for(const v of versions)for(const key of [false,true])files[docxFilename(master,v,key)]=versionDocx(master,v,key);
+ for(const v of versions)for(const key of [false,true]){
+  const filename=docxFilename(master,v,key), bytes=versionDocx(master,v,key);
+  files[filename]=bytes;
+  onFile?.(v,key,filename,bytes);
+ }
  files['generation-manifest.json']=strToU8(JSON.stringify({testId:master.id,title:master.title,generation:master.lastGeneration,format:'editable-docx',wordLayout:wordLayout(master.wordLayout)},null,2));
  return zipSync(files,{level:6});
 }

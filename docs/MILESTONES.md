@@ -85,3 +85,7 @@ The P3 3B2-01 label/rule wrapping finding was corrected in PR #16 and independen
 ## Product strategy and next approval
 
 Teachers author and finish assessments in Word or Google Docs. Talus interprets source structure, validates a teacher-reviewed master, generates seeded variants and exports editable Word. The next deliverable is a bounded 4A scope proposal with non-goals, fixture-based tests and independent acceptance criteria for owner signoff. Follow the [quality gate](QUALITY_GATE.md) and retain the outstanding 2D.2 verification as a separate record.
+
+## Milestone 7 — Version receipts
+
+See the [scope and acceptance checks](MILESTONE_7.md).

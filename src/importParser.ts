@@ -5,7 +5,7 @@ const DOCX_TITLE_CLASS='talus-docx-title';
 export const docxStyleMap=["p.Title => p."+DOCX_TITLE_CLASS+":fresh"];
 export interface SourceLine { text:string; html:string; number:number; wordTitle?:true }
 export interface ImportQuestion {
- id:string; sourceStart:number; sourceEnd:number; sourceNumber?:number;
+ id:string; sourceStart:number; sourceEnd:number; sourceNumber?:number; ambiguousReceiptSource?:true;
  sourceStemLines?:number[]; sourceChoiceLines?:number[]; sourceKeyLines?:number[]; sourceMarkLines?:number[]; stem:string; choices:string[]; correct:number[];
  answer:string; type:QuestionType; marks:number; responseLines:number; warnings:string[]; reviewFlags?:string[];
 }
@@ -338,7 +338,7 @@ export function reviewWarnings(draft:ImportDraft):string[]{
  }));
  return [...draft.warnings,...warnings];
 }
-export function toTalusSections(draft:ImportDraft):Section[]{
+export function toTalusSections(draft:ImportDraft, wordQuestionNumbers?:Record<string,number>):Section[]{
  const ordinary=restoreOrdinaryRangePlacement(draft);
  return ordinary.sections.filter(s=>s.questions.length>0||s.instructions.trim()).map(s=>{
   const section=createSection();
@@ -352,7 +352,13 @@ export function toTalusSections(draft:ImportDraft):Section[]{
     variant.choices=q.choices.map(html=>({id:uid(),html:html.includes('<')?html:'<p>'+escape(html)+'</p>'}));
     variant.correctChoiceIds=q.correct.filter(i=>i>=0&&i<variant.choices.length).map(i=>variant.choices[i].id);
    }else variant.referenceAnswer=q.answer.includes('<')?q.answer:'<p>'+escape(q.answer)+'</p>';
-   slot.variants=[variant];return slot;
+   slot.variants=[variant];
+   const number=q.sourceNumber;
+   if(wordQuestionNumbers && draft.format==='docx' && number!==undefined && Number.isSafeInteger(number)
+     && !q.ambiguousReceiptSource && s.questions.filter(other=>other.sourceNumber===number).length===1) {
+    wordQuestionNumbers[variant.id]=number;
+   }
+   return slot;
   });
   const groups=new Map<string,{range:ImportRange;count:number}>();
   for(const range of draft.ranges??[]){
@@ -372,11 +378,12 @@ export function toTalusSections(draft:ImportDraft):Section[]{
  });
 }
 export function mergeIntoMaster(base:MasterTest,draft:ImportDraft,mode:'replace'|'append'):MasterTest{
- const sections=toTalusSections(draft);
+ const wordQuestionNumbers = mode==='append' ? {...base.wordQuestionNumbers} : {};
+ const sections=toTalusSections(draft,wordQuestionNumbers);
  if(!sections.length)throw Error('No sections or questions to import.');
  const critical=draft.warnings.filter(w=>/unmapped|answer-key|numbered questions detected|ambiguous|student-facing|embedded image|image format|image reference|image exceeds|images exceed|table contains no cells|unsupported media|rich-content source media loss|Word equation|equation structure|equation content/i.test(w)||/Word conversion:.*(?:image|drawing|graphic|picture|media|relationship|linked)/i.test(w));
- if(mode==='append')return {...base,sections:[...base.sections,...sections],importWarnings:[...(base.importWarnings??[]),...critical],lastGeneration:undefined,updatedAt:new Date().toISOString()};
- return {...base,title:draft.title,instructions:restoreOrdinaryRangePlacement(draft).instructions??'',sections,importWarnings:critical,lastGeneration:undefined,updatedAt:new Date().toISOString()};
+ if(mode==='append')return {...base,sections:[...base.sections,...sections],wordQuestionNumbers,wordReceiptFiles:undefined,importWarnings:[...(base.importWarnings??[]),...critical],lastGeneration:undefined,updatedAt:new Date().toISOString()};
+ return {...base,title:draft.title,instructions:restoreOrdinaryRangePlacement(draft).instructions??'',sections,wordQuestionNumbers,wordReceiptFiles:undefined,importWarnings:critical,lastGeneration:undefined,updatedAt:new Date().toISOString()};
 }
 
 /**

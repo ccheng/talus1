@@ -153,6 +153,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
     }
     if(!text(first)||!text(last))return;
     q.stem=first;
+    q.ambiguousReceiptSource=true;
     const next:ImportQuestion={...structuredClone(q),id:uid(),stem:last,choices:[],correct:[],answer:'',type:'shortAnswer',warnings:['Review split question and provide its answer']};
     s.questions.splice(index+1,0,next);setExpanded(next.id);return;
    }});
@@ -161,6 +162,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
   modify(d=>{for(const s of d.sections){
     const index=s.questions.findIndex(q=>q.id===id);if(index<=0)continue;
     const previous=s.questions[index-1],current=s.questions[index];
+    previous.ambiguousReceiptSource=true;
     previous.stem+='\n'+current.stem;previous.sourceEnd=Math.max(previous.sourceEnd,current.sourceEnd);
     if(current.choices.length)previous.choices.push(...current.choices);
     if(current.answer){
