@@ -31,7 +31,7 @@ export async function downloadReceiptPdf(receipt: VersionReceipt, filename: stri
             ...receipt.questions.map(row => [
               'Section '+row.sectionNumber+' · '+row.sectionTitle+' · Q'+row.sourceQuestion,
               row.wordQuestion===undefined ? '—' : String(row.wordQuestion),
-              String(row.generatedNumber),
+              row.generatedLabel ?? String(row.generatedNumber),
               String(row.alternative),
               row.choices.map(choice => choice.source+' to '+choice.generated).join(', ') || '—',
               row.choices.filter(choice => choice.correct).map(choice => choice.generated).sort().join(', ') || '—',

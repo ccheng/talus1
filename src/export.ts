@@ -1,5 +1,5 @@
 import TurndownService from 'turndown';
-import { markLabel,responseLineCount,sectionHeading,type MasterTest } from './model';
+import { isChoiceType,markLabel,responseLineCount,sectionHeading,type MasterTest } from './model';
 import type { GeneratedVersion, RenderedQuestion } from './generate';
 import { fileBase } from './storage';
 import { zipSync,strToU8 } from 'fflate';
@@ -20,7 +20,7 @@ td.addRule('sizedEmbeddedImage',{
 td.addRule('embeddedTable',{filter:'table',replacement:(_content,node)=>'\n\n'+(node as HTMLElement).outerHTML+'\n\n'});
 function md(html:string):string{const safe=stripExecutableHtml(html||'');return td.turndown(typeof DOMPurify.sanitize==='function'?DOMPurify.sanitize(safe):safe).trim();}
 function answerFor(q:RenderedQuestion):string {
-  if(q.type==='singleChoice'||q.type==='multipleSelect') {
+  if(isChoiceType(q.type)) {
     const letters=q.choices.map((c,i)=>q.correctChoiceIds.includes(c.id)?String.fromCharCode(65+i):null).filter(Boolean);
     return letters.join(', ');
   }return md(q.referenceAnswer)||'(No reference answer)';
@@ -34,10 +34,10 @@ export function versionMarkdown(master:MasterTest,v:GeneratedVersion,answers=fal
     if(md(s.instructions))out+=md(s.instructions)+'\n\n';
     for(const q of s.questions){
       if(q.groupHtml)out+=md(q.groupHtml)+'\n\n';
-      out+='**'+q.number+'.** '+md(q.stem)+(master.showQuestionMarks?' *('+markLabel(q.points)+')*':'')+'\n\n';
+      out+='**'+q.label+'.** '+md(q.stem)+(master.showQuestionMarks?' *('+markLabel(q.points)+')*':'')+'\n\n';
       if(q.choices.length)q.choices.forEach((c,i)=>{out+='   '+String.fromCharCode(65+i)+'. '+md(c.html)+'\n\n';});
       if(answers)out+='**Answer:** '+answerFor(q)+'\n\n';
-      else if(q.type==='shortAnswer'||q.type==='writtenResponse')out+=Array.from({length:responseLineCount(q.type,q.responseLines)},()=>String.raw`\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_`).join('\n\n')+'\n\n';
+      else if(!isChoiceType(q.type))out+=Array.from({length:responseLineCount(q.type,q.responseLines)},()=>String.raw`\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_`).join('\n\n')+'\n\n';
     }
   }
   return out;

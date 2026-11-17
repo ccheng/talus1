@@ -264,7 +264,7 @@ export function ImportWorkspace({master,active,onAccept,onClose}:{master:MasterT
         <RichEditor placeholder="Review question prompt visually" value={q.stem} onChange={html=>updateQuestion(q.id,q=>{q.stem=html;})}/>
         <div className="import-rendered" aria-label="Question rich-content preview" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(asHtml(q.stem))}}/>
         <div className="columns"><label>Question type<select aria-label={'Question '+(qi+1)+' type in section '+(si+1)} value={q.type} onChange={e=>updateQuestion(q.id,q=>{q.type=e.target.value as QuestionType;})}>
-         <option value="singleChoice">Multiple choice</option><option value="multipleSelect">Select all that apply</option><option value="shortAnswer">Short answer</option><option value="writtenResponse">Written response</option>
+         <option value="singleChoice">Multiple choice</option><option value="multipleSelect">Select all that apply</option><option value="numericalResponse">Numerical response</option><option value="shortAnswer">Short answer</option><option value="writtenResponse">Written response</option>
         </select></label><label>Marks<input aria-label={'Question '+(qi+1)+' marks in section '+(si+1)} type="number" min="0" value={q.marks} onChange={e=>updateQuestion(q.id,q=>{q.marks=Number(e.target.value);})}/></label></div>
         {q.type==='singleChoice'||q.type==='multipleSelect'?<div className="import-choices"><strong>Answer choices</strong>
          {q.choices.map((choice,i)=><div className="import-choice" key={i}>

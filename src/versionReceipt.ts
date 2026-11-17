@@ -11,6 +11,7 @@ const questionSchema = z.object({
   sourceQuestion: z.number().int().positive(),
   wordQuestion: z.number().int().nonnegative().optional(),
   generatedNumber: z.number().int().positive(),
+  generatedLabel: z.string().regex(/^(?:NR|WR)?[1-9]\d*$/).optional(),
   alternative: z.number().int().positive(),
   choices: z.array(z.object({source:z.string().length(1),generated:z.string().length(1),correct:z.boolean()})),
 });
@@ -54,6 +55,7 @@ export function buildVersionReceipt(master: MasterTest, version: GeneratedVersio
       sourceQuestion:origin.sourceQuestion,
       wordQuestion:master.wordQuestionNumbers?.[variant.id],
       generatedNumber:question.number,
+      generatedLabel:run.algorithm ? question.label : undefined,
       alternative:alternativeIndex+1,
       choices,
     };

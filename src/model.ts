@@ -4,7 +4,7 @@ import { embeddedAssetWarnings } from './media';
 import { equationIntegrityWarnings } from './equationSafety';
 import {tableIntegrityWarnings} from './contentIntegrity';
 
-export type QuestionType = 'singleChoice' | 'multipleSelect' | 'shortAnswer' | 'writtenResponse';
+export type QuestionType = 'singleChoice' | 'multipleSelect' | 'shortAnswer' | 'writtenResponse' | 'numericalResponse';
 export interface Choice { id: string; html: string }
 export interface Variant {
   id: string; type: QuestionType; stem: string; choices: Choice[];
@@ -18,9 +18,12 @@ export interface Section {
   id: string; title: string; proficiency: string; instructions: string;
   shuffleQuestions: boolean; items: TestItem[];
 }
+export type QuestionNumbering = 'byType' | 'continuous';
 export interface GenerationRecord {
   count:number; seed:string; runId:string; sourceUpdatedAt:string;
-  manifests: {label:string;entries:{slotId:string;variantId:string;choiceOrder:string[];number:number}[]}[];
+  algorithm?: 'diverse-v1';
+  numbering?: QuestionNumbering;
+  manifests: {label:string;entries:{slotId:string;variantId:string;choiceOrder:string[];number:number;label?:string}[]}[];
 }
 export interface WordLayoutSettings {
   paper: 'letter'|'a4';
@@ -54,7 +57,7 @@ interface WordReceiptFiles {
   versions: Record<string, ReceiptFile[]>;
 }
 export interface MasterTest { schemaVersion: 1; id: string; title: string; instructions: string; sections: Section[]; updatedAt: string;
-  generationSettings?:{count:number;seed:string}; wordLayout?:WordLayoutSettings; lastGeneration?:GenerationRecord; importWarnings?:string[];
+  generationSettings?:{count:number;seed:string;numbering?:QuestionNumbering}; wordLayout?:WordLayoutSettings; lastGeneration?:GenerationRecord; importWarnings?:string[];
   showQuestionMarks?: boolean;
   wordQuestionNumbers?: Record<string, number>;
   wordReceiptFiles?: WordReceiptFiles;
@@ -64,7 +67,7 @@ export const uid = (): string => crypto.randomUUID();
 
 const choiceSchema = z.object({ id: z.string().min(1), html: z.string() });
 const variantSchema = z.object({
-  id: z.string().min(1), type: z.enum(['singleChoice','multipleSelect','shortAnswer','writtenResponse']),
+  id: z.string().min(1), type: z.enum(['singleChoice','multipleSelect','shortAnswer','writtenResponse','numericalResponse']),
   stem: z.string(), choices: z.array(choiceSchema), correctChoiceIds: z.array(z.string()),
   referenceAnswer: z.string(), points: z.number().nonnegative().finite(), shuffleChoices: z.boolean(), responseLines:z.number().int().min(1).max(30).optional(), importWarnings:z.array(z.string()).optional()
 });
@@ -72,13 +75,15 @@ const slotSchema = z.object({kind:z.literal('slot'),id:z.string().min(1),shuffle
 const groupSchema = z.object({kind:z.literal('group'),id:z.string().min(1),sharedHtml:z.string(),shuffleWithinGroup:z.boolean(),items:z.array(slotSchema),rangeLabel:z.literal(true).optional()});
 const sectionSchema = z.object({id:z.string().min(1),title:z.string(),proficiency:z.string(),instructions:z.string(),shuffleQuestions:z.boolean(),items:z.array(z.union([slotSchema,groupSchema]))});
 export const masterSectionsSchema=z.array(sectionSchema);
+const numberingSchema=z.enum(['byType','continuous']);
 export const masterSchema = z.object({schemaVersion:z.literal(1),id:z.string().min(1),title:z.string(),instructions:z.string(),sections:masterSectionsSchema,updatedAt:z.string(),
- generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string()}).optional(), wordLayout:wordLayoutSchema.optional(), importWarnings:z.array(z.string()).optional(),
+ generationSettings:z.object({count:z.number().int().min(1).max(30),seed:z.string(),numbering:numberingSchema.optional()}).optional(), wordLayout:wordLayoutSchema.optional(), importWarnings:z.array(z.string()).optional(),
  showQuestionMarks:z.boolean().optional(),
  wordQuestionNumbers:z.record(z.string(),z.number().int().nonnegative()).optional(),
  wordReceiptFiles:z.object({runId:z.string(),sourceUpdatedAt:z.string(),versions:z.record(z.string(),z.array(receiptFileSchema).max(2))}).optional(),
  lastGeneration:z.object({count:z.number().int().min(1).max(30),seed:z.string(),runId:z.string(),sourceUpdatedAt:z.string(),
-  manifests:z.array(z.object({label:z.string(),entries:z.array(z.object({slotId:z.string(),variantId:z.string(),choiceOrder:z.array(z.string()),number:z.number().int()}))}))}).optional()
+  algorithm:z.literal('diverse-v1').optional(),numbering:numberingSchema.optional(),
+  manifests:z.array(z.object({label:z.string(),entries:z.array(z.object({slotId:z.string(),variantId:z.string(),choiceOrder:z.array(z.string()),number:z.number().int(),label:z.string().optional()}))}))}).optional()
 });
 
 export function createVariant(type: QuestionType = 'singleChoice'): Variant {
