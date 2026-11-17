@@ -27,7 +27,7 @@ test('Word-import receipt downloads a PDF and verifies the exact DOCX from indiv
   await page.getByRole('button',{name:'Accept reviewed import'}).click();
   await expect(page.getByText('Validation: Ready')).toBeVisible();
   await page.getByRole('button',{name:'Generate',exact:true}).click();
-  await page.getByLabel('Version',{exact:true}).selectOption({label:'Version B'});
+  await page.locator('.versions-choice select').selectOption({label:'Version B'});
 
   const student=await download(page,'Student Word (.docx)');
   const individual=await download(page,'Download receipt (JSON)');
@@ -50,7 +50,7 @@ test('Word-import receipt downloads a PDF and verifies the exact DOCX from indiv
   const manifest=JSON.parse(strFromU8(files['generation-manifest.json']));
   await page.reload();
   await openVersions(page);
-  await page.getByLabel('Version',{exact:true}).selectOption({label:'Version B'});
+  await page.locator('.versions-choice select').selectOption({label:'Version B'});
   const saved=await download(page,'Download receipt (JSON)');
   const receipt=JSON.parse(saved.buffer.toString()) as VersionReceipt;
   expect(receipt.runId).toBe(manifest.generation.runId);
