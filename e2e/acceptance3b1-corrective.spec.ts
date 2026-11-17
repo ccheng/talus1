@@ -97,7 +97,7 @@ test('3B1-04: response rules are in kept, question-number-labelled chunks, not c
   const labels=paragraphs.filter(p=>p.style==='ResponseLabel');
   expect(labels.length,filename).toBeGreaterThanOrEqual(2);
   for(const label of labels){
-   expect(label.text).toMatch(/Question \d+ — response space/i);
+   expect(label.text).toMatch(/Question WR\d+ — response space/i);
    expect(label.keep).toBe(true);
   }
   expect(paragraphs.filter(p=>p.style==='ResponseLine')).toHaveLength(18);

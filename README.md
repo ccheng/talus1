@@ -41,6 +41,8 @@ To verify an exact Word export later, download the student form, key, or Word ZI
 
 Talus hides marks beside questions by default. Turn on **Show marks beside questions** in **Versions & answer keys** to include them in the preview, browser print, and Word and Markdown exports for students and answer keys. The switch saves with your test. You can toggle it and export again without regenerating versions.
 
+New runs number multiple-choice and select-all questions as **1, 2, 3**, numerical responses as **NR1, NR2**, and short and written responses as **WR1, WR2**. To use a single sequence, choose **Continuous** under **Question numbering** before generating. Choose **Numerical response** as a question type during import review or in the authoring view. Sections and pinned questions constrain how far questions can move, and saved runs reopen with the labels and order they had when generated.
+
 ## Back up and reuse a test
 
 - **Backup JSON** saves an editable Talus project. Keep it alongside the source Word file and exported versions. Use **Import JSON** to reopen it in Talus or move it to another browser. Clearing browser data can erase the local working copy.

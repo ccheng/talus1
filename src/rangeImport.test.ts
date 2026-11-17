@@ -28,7 +28,7 @@ describe('4A explicit DOCX range cues',()=>{
    const questions=version.sections[0].questions,first=questions.findIndex(q=>q.groupHtml);
    const question=questions[first];
    numbers.add(question.number);
-   expect(question.groupHtml).toBe('<p>Use the following for Questions '+question.number+'–'+(question.number+1)+':</p><p>Shared stimulus.</p>');
+   expect(question.groupHtml).toBe('<p>Use the following for Questions WR'+question.number+'–WR'+(question.number+1)+':</p><p>Shared stimulus.</p>');
    expect(questions.slice(first,first+2).map(q=>q.referenceAnswer)).toEqual(['<p>Second</p>','<p>Third</p>']);
   }
   expect(numbers.size).toBeGreaterThan(1);

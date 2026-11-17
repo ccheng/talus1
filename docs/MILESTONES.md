@@ -89,3 +89,7 @@ Teachers author and finish assessments in Word or Google Docs. Talus interprets 
 ## Milestone 7 — Version receipts
 
 See the [scope and acceptance checks](MILESTONE_7.md).
+
+## Milestone 8 — Build identity, question numbering, and shuffle diversity
+
+See the [scope and acceptance checks](MILESTONE_8.md).

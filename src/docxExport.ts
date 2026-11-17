@@ -265,12 +265,12 @@ class WordWriter {
     return opening.includes('<w:pPr>')?opening.replace('<w:pPr>','<w:pPr><w:keepNext/>'):'<w:p><w:pPr><w:keepNext/></w:pPr>';
    });
   }
-  let stemXml=this.labelledHtml(q.stem,q.number+'. ',this.showQuestionMarks?'  ('+markLabel(q.points)+')':'');
+  let stemXml=this.labelledHtml(q.stem,q.label+'. ',this.showQuestionMarks?'  ('+markLabel(q.points)+')':'');
   // Word cannot repeat a question heading when a multi-page stem continues.
   // Put small, numbered continuation cues immediately before independently
   // paginating rich-content blocks, with keepNext binding cue to its content.
   // They are editable Word text, not layout-time overlays or page counts.
-  const continuation=()=>this.plain('Question '+q.number+' — continued','Continuation')
+  const continuation=()=>this.plain('Question '+q.label+' — continued','Continuation')
    .replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
   const lastTableEnd=stemXml.lastIndexOf('</w:tbl>');
   const richTail=lastTableEnd>=0 && stemXml.slice(lastTableEnd+9).includes('<m:oMath>');
@@ -309,7 +309,7 @@ class WordWriter {
    const groupSize=this.layout.responseLinesPerGroup;
    for(let start=0;start<count;start+=groupSize){
     const size=Math.min(groupSize,count-start);
-    out+=this.plain('Question '+q.number+' — response space'+(start?' (continued)':''),'ResponseLabel')
+    out+=this.plain('Question '+q.label+' — response space'+(start?' (continued)':''),'ResponseLabel')
       .replace(/<w:pPr>/,'<w:pPr><w:keepNext/>');
     for(let i=0;i<size;i++){
      const line=this.plain('________________________________________________','ResponseLine');

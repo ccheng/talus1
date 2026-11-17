@@ -25,6 +25,7 @@ it('traces shuffled group children and the selected alternative through the revi
   for (const version of versions) {
     const receipt = buildVersionReceipt(restored, version);
     expect(receipt.questions.map(row => row.generatedNumber)).toEqual([1,2,3]);
+    expect(receipt.questions.map(row => row.generatedLabel)).toEqual(['1','2','WR1']);
     const row = receipt.questions.find(entry => entry.sourceQuestion === 1 && entry.sectionNumber === 1)!;
     const question = version.sections[0].questions.find(question => question.slotId === first.id)!;
     const source = first.variants.find(variant => variant.id === question.variantId)!;
@@ -47,6 +48,9 @@ it('matches renamed original bytes and distinguishes malformed receipts and alte
   const receipt = { format:'talus-version-receipt', schemaVersion:1, assessmentTitle:'Test', runId:'abc0000',
     version:'A', questions:[{sectionNumber:1,sectionTitle:'Section A',sourceQuestion:1,generatedNumber:1,alternative:1,choices:[]}], files:[file] };
   const loaded = readVersionReceipt(JSON.stringify(receipt));
+  expect(loaded.questions[0].generatedLabel).toBeUndefined();
+  expect(readVersionReceipt(JSON.stringify({...receipt, questions: [{...receipt.questions[0], generatedLabel:'NR1'}]}))
+    .questions[0].generatedLabel).toBe('NR1');
   expect(await verifyReceiptFile(loaded, bytes)).toEqual([file]);
   expect(await verifyReceiptFile(loaded, new TextEncoder().encode('changed'))).toEqual([]);
   expect(() => readVersionReceipt(JSON.stringify({...receipt, files:[{...file,sha256:'wrong'}]}))).toThrow();

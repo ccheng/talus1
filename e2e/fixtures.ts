@@ -6,7 +6,7 @@ export type Variant = { id: string; type: string; stem: string; choices: Choice[
 export type Slot = { kind: 'slot'; id: string; shufflePosition: boolean; variants: Variant[] };
 export type Section = { id: string; title: string; proficiency: string; instructions: string; shuffleQuestions: boolean; items: Slot[] };
 export type Assessment = { schemaVersion: 1; id: string; title: string; instructions: string; updatedAt: string;
-  sections: Section[]; generationSettings?: { count: number; seed: string }; lastGeneration?: unknown };
+  sections: Section[]; generationSettings?: { count: number; seed: string; numbering?: "byType" | "continuous" }; lastGeneration?: unknown };
 
 const html=(s:string)=>'<p>'+s+'</p>';
 let nextId=1;
@@ -39,7 +39,7 @@ export function fixture(title='Science 10 E2E Assessment',updatedAt='2026-01-01T
  const written=slot([response('Distance and displacement','18 m, 6 m east','writtenResponse',4,9)]);
  const mass=slot([response('Closed flask mass','180 g','shortAnswer',3,2)]);
  return {schemaVersion:1,id:id(),title,instructions:'<p><strong>Show work.</strong></p><ul><li><p>Include units.</p></li></ul>',
- updatedAt,generationSettings:{count:6,seed:'science10-qa-2026'},
+ updatedAt,generationSettings:{count:6,seed:'science10-qa-2026',numbering:'continuous'},
  sections:[
   {id:id(),title:'Foundations',proficiency:'Base',instructions:'<p><em>Choose carefully.</em></p>',shuffleQuestions:true,items:[first,speed,fixed]},
   {id:id(),title:'Applications',proficiency:'Proficient',instructions:'',shuffleQuestions:true,items:[accel,chemical,graph]},

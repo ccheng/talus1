@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
+import type { MasterTest, QuestionType, Slot } from '../src/model';
 import type { VersionReceipt } from '../src/versionReceipt';
 
 const fixture=fileURLToPath(new URL('../docs/teacher/water-filter-lab.docx',import.meta.url));
@@ -87,4 +88,72 @@ test('Word-import receipt downloads a PDF and verifies the exact DOCX from indiv
   await page.getByLabel('Receipt JSON').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{}')});
   await page.getByRole('button',{name:'Verify file',exact:true}).click();
   await expect(page.getByRole('status').filter({hasText:/Invalid Talus receipt/})).toBeVisible();
+});
+
+test('typed question labels agree in preview, Word, Markdown, and both receipts', async ({page}) => {
+  const slot = (id: string, type: QuestionType, stem: string, referenceAnswer = ''): Slot => {
+    const choices = type === 'singleChoice' || type === 'multipleSelect'
+      ? [{id: id+'-a', html: '<p>Red</p>'}, {id: id+'-b', html: '<p>Blue</p>'}]
+      : [];
+    return {kind: 'slot', id, shufflePosition: false, variants: [{id: id+'-variant', type, stem,
+      choices, correctChoiceIds: choices.slice(0, type === 'multipleSelect' ? 2 : 1).map(choice => choice.id),
+      referenceAnswer, points: 1, shuffleChoices: false}]};
+  };
+  const groupedWriting = '<p>Explain the observation.</p><table><tbody><tr><td><p>Three leaves</p></td></tr></tbody></table>'
+    + '<p><math><mfrac><mn>1</mn><mn>2</mn></mfrac></math></p>';
+  const master: MasterTest = {
+    schemaVersion: 1, id: 'plant-lab', title: 'Plant measurements', instructions: '', updatedAt: '2026-11-01T00:00:00Z',
+    sections: [
+      {id: 'leaves', title: 'Leaves', proficiency: '', instructions: '', shuffleQuestions: false, items: [
+        {kind: 'group', id: 'observations', sharedHtml: '<p>Use the growth log.</p>', shuffleWithinGroup: false, rangeLabel: true,
+          items: [slot('colour', 'singleChoice', '<p>Choose the colour.</p>'),
+            slot('count', 'numericalResponse', '<p>Give the leaf count.</p>', '<p>3</p>'),
+            slot('explain', 'writtenResponse', groupedWriting, '<p>Sample explanation</p>')]},
+      ]},
+      {id: 'stems', title: 'Stems', proficiency: '', instructions: '', shuffleQuestions: false, items: [
+        slot('name', 'shortAnswer', '<p>Name the part.</p>', '<p>Stem</p>'),
+        slot('select', 'multipleSelect', '<p>Select the colours.</p>'),
+        slot('height', 'numericalResponse', '<p>Give the height.</p>', '<p>4</p>'),
+      ]},
+    ],
+  };
+
+  await page.goto('./');
+  page.on('dialog', dialog => dialog.accept());
+  await page.locator('.header-actions input[type=file]').setInputFiles({
+    name: 'plant-lab.talus.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(master)),
+  });
+  await expect(page.getByText('Validation: Ready')).toBeVisible();
+  await page.getByRole('button', {name: 'Generate', exact: true}).click();
+  const labels = ['1', 'NR1', 'WR1', 'WR2', '2', 'NR2'];
+  await expect(page.locator('.print-page .question-stem > strong')).toHaveText(labels.map(label => label+'.'));
+  const groupCue = 'Use the following for Questions 1, NR1, and WR1:';
+  await expect(page.locator('.print-page')).toContainText(groupCue);
+
+  for (const [wordButton, markdownButton] of [
+    ['Student Word (.docx)', 'Student Markdown'], ['Answer key Word (.docx)', 'Answer key Markdown'],
+  ]) {
+    const word = await download(page, wordButton);
+    const xml = strFromU8(unzipSync(word.buffer)['word/document.xml']);
+    expect(xml).toContain(groupCue);
+    expect(xml).toContain('Question WR1 — continued');
+    const markdown = (await download(page, markdownButton)).buffer.toString();
+    expect(markdown).toContain(groupCue);
+    expect([...markdown.matchAll(/^\*\*((?:NR|WR)?\d+)\.\*\*/gm)].map(match => match[1])).toEqual(labels);
+    for (const label of labels) expect(xml).toContain('>'+label+'. </w:t>');
+    if (wordButton === 'Student Word (.docx)') {
+      expect(xml).toContain('Question NR1 — response space');
+      expect(markdown.split('**NR1.**')[1].split('**WR1.**')[0]).toContain('\\_');
+    } else {
+      expect(markdown.split('**NR1.**')[1].split('**WR1.**')[0]).toContain('**Answer:** 3');
+    }
+  }
+
+  const json = JSON.parse((await download(page, 'Download receipt (JSON)')).buffer.toString()) as VersionReceipt;
+  expect(json.questions.map(row => row.generatedLabel)).toEqual(labels);
+  expect(json.questions.map(row => row.generatedNumber)).toEqual([1, 2, 3, 4, 5, 6]);
+  const pdf = await download(page, 'Download receipt (PDF)');
+  const text = spawnSync('pdftotext', ['-layout', pdf.location, '-'], {encoding: 'utf8'});
+  expect(text.status, text.stderr).toBe(0);
+  for (const label of ['NR1', 'NR2', 'WR1', 'WR2']) expect(text.stdout).toContain(label);
 });
