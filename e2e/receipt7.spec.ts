@@ -55,7 +55,7 @@ test('Word-import receipt downloads a PDF and verifies the exact DOCX from indiv
   const receipt=JSON.parse(saved.buffer.toString()) as VersionReceipt;
   expect(receipt.runId).toBe(manifest.generation.runId);
   expect(receipt.questions).toHaveLength(5);
-  expect(receipt.questions.map(q=>q.wordQuestion).sort()).toEqual([6,7,8,9,11]);
+  expect(receipt.questions.map(q=>q.wordQuestion).sort((a,b)=>(a??0)-(b??0))).toEqual([6,7,8,9,11]);
   expect(receipt.questions).toEqual(individualReceipt.questions);
   expect(receipt.files).toHaveLength(2);
   for(const entry of receipt.files) expect(entry.sha256).toBe(sha256(files[entry.filename]));
